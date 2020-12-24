@@ -1,0 +1,10580 @@
+# web version
+library(tidyverse)
+# install.packages("remotes")
+# remotes::install_github("jbisanz/qiime2R")
+library(qiime2R)
+library(plyr)
+library(kableExtra)
+library(shinyFiles)
+library(myip)
+library(shiny)
+library(shinybusy)
+library(vegan)
+options(shiny.maxRequestSize = 30*1024^2)
+
+# library(reticulate)
+
+server <- function(session, input, output) {
+  
+  
+  observe({
+    # system("sudo service nginx start")
+    # system("sudo chmod -R 777 /var/www/html")
+    system("sed -i 's/Eukaryota;//g' /home/imuser/taxa_database/PR2/18S/taxonomy/pr2_version_4.12.0_18S_mothur.tax")
+  })
+  
+  # observe({
+  #   Sys.sleep(5)
+  #   showModal(modalDialog(
+  #     title = "Message",
+  #     HTML("<p>Welcome to MOCHI! Click <b> Sequecne Preprocessing/Step 1. Sequence summary</b> on top bar to start analysis.</p>"),
+  #     footer = NULL,
+  #     easyClose = T
+  #   ))
+  # })
+  
+  # Home page ----------------------------------------------------------------------------------------------------- 
+  output$home_page <- renderUI({
+    source("/srv/shiny-server/ui.R")
+    # return(parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs))
+    Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2020.8/bin')
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    Sys.setenv(LANG="C.UTF-8")
+    tagList(
+      # img(src = "https://mochi.life.nctu.edu.tw/mochi_title.png", height = 76, width = 300, 
+      #     style = "position:relative;margin: 10px;left: -20px"),
+      # span(" A 16S rRNA NGS data analytical tool for microbiota",
+      #      style = "position:relative;color: #009900; font-size: 16px; font-weight: 600; font-family: Comic Sans MS;bottom:-20px;"),
+      # span(strong("M"),"icrobiota amplic", strong("O"), "n ", strong("CH"),"aracterization ", strong("I"), "mplement",
+      #    style = "position:relative;color:#009900;font-family: Comic Sans MS;bottom:-20px;left: -20px;font-size: 20px;"),
+      h1("Welcome to MOCHI!", 
+           span("(",strong("M", .noWS = "outside"),"icrobiota amplic",
+                strong("O", .noWS = "outside"),"n ",
+                strong("CH", .noWS = "outside"),"aracterization ",
+                strong("I", .noWS = "outside"),"mplement)",
+                style = "font-size:20px;font-weight:200;letter-spacing:0px"),
+           style = "color: #317EAC;"),
+      strong("MOCHI"), span(" is a 16S or 18S microbiota amplicon rRNA analytical tool for microbiota based primarily on "), 
+      a("QIIME2", href = "https://qiime2.org/", target = "_blank"),
+      span(" with a friendly web interface powered by the R package of "),
+      a("Shiny", href = "https://shiny.rstudio.com/", target = "_blank"), span(".", .noWS = "outside"),
+      p("MOCHI may also be downloaded and operated locally."),
+      # actionButton("home_demo", "Demo"),
+      img(src = "https://mochi.life.nctu.edu.tw/mochi_pipeline_new_2.png", alt = "pipeline", width = "80%", height = "80%", style = "margin:10px;max-width:1000px"),
+      hr(),
+      h4("The advantages of MOCHI", style = "font-weight:bolder;color:#317EAC"),
+      tags$ul(
+        tags$style("list-style-type:decimal;"),
+        tags$li("Friendly user interface: point-and-click and fill-in inputs, no programming required."),
+        tags$li("Cross-platform: simple set-up with ",
+                a("Docker", href = "https://www.docker.com/"),
+                "containers on Linux, Windows, or MacOS."
+                ),
+        tags$li("Local computing resource: runs on your premise with privacy. not subject to network reliability and limitation."),
+        tags$li("Compatible with other downstream analytical tools"),
+        tags$li("Publishable plots and charts generated with chosen parameters")
+        
+      )
+      
+)
+    
+    
+    # dir_list <- list()
+    # dir_list[[1]] <- is_empty(parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs))
+    # return(dir_list)
+    # return(my_qiime_ip)
+    # return(getwd())
+    # return(system("whoami", intern = T))
+    # return(system("echo ~", intern = T))
+    # return(system("python /home/imuser/test.py", intern = T))
+    # return(system("locale -a", intern = T))
+    # use_virtualenv("qiime2-2019.10")
+    # return(Sys.getenv("PATH"))
+    # return(system("echo $PATH", intern = T))
+    # return(system("which qiime", intern = T))
+    # return(system(paste(qiime_cmd, "--version"), intern = T))
+    # return(system("echo $LANG", intern = T))
+    # print(as.character(file.exists("/home/imuser/www/Krona_rawdata.html")))
+    
+  })
+  
+ 
+  
+  # shinyDirChoose(input,
+  #                id = 'dirs',
+  #                roots = c(raw_data ="/home/imuser/raw_data"))       # Browse server side dirs
+  
+  level_group <- reactive({
+    if(input$`18S`){
+      return(c("Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7"))
+    }else{
+      return(c("Kingdom","Phylum","Class","Order","Family","Genus","Species"))
+    }
+  })
+  
+  
+  observeEvent(input$`18S`, {
+    updateSelectInput(session, 
+                      inputId = "select_level_bar",
+                      choices = level_group())
+    updateSelectInput(session, 
+                      inputId = "select_level_hm",
+                      choices = level_group())
+  })
+  
+  # Job id
+  job_id <- reactive(
+    ids::random_id(1,5)
+  )
+  
+  dataModal_1 <- function(failed = FALSE) {
+    modalDialog(
+      textInput("new_job_id_1", "Input your job id",
+                placeholder = "Job ID",
+                value = job_id()
+      ),
+      
+      if (failed)
+        div(tags$b(paste0("This job id was not found: ", input$new_job_id_1)
+                   , style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("ok_1", "OK")
+      )
+    )
+  }
+  dataModal_2 <- function(failed = FALSE) {
+    modalDialog(
+      textInput("new_job_id_2", "Input your job id",
+                placeholder = "Job ID",
+                value = job_id()
+      ),
+      
+      if (failed)
+        div(tags$b(paste0("This job id was not found: ", input$new_job_id_2)
+                   , style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("ok_2", "OK")
+      )
+    )
+  }
+  dataModal_3 <- function(failed = FALSE) {
+    modalDialog(
+      textInput("new_job_id_3", "Input your job id",
+                placeholder = "Job ID",
+                value = job_id()
+      ),
+      
+      if (failed)
+        div(tags$b(paste0("This job id was not found: ", input$new_job_id_3)
+                   , style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("ok_3", "OK")
+      )
+    )
+  }
+  
+  
+  # show job id (demuxed)----
+  observe({
+    
+    # show job id
+    output$show_job_id <- renderUI({
+      tagList(
+        p(paste0("Job ID: ", job_id()),
+          style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+        actionLink(inputId = "change_job_id", 
+                   label = "Not your job id ?"
+                    ),
+        tags$style("#change_job_id{
+                   color:white;display:inline-block;font-size: 16px;position:relative;left:5px;
+        }"),
+        tags$style("#change_job_id:hover{
+                   color:red;
+        }")
+        
+      )
+        
+    })
+    
+    # delete empty folder
+    for (i in 1:length(list.files("/home/imuser/web_version/users_files/"))) {
+      icesTAF::rmdir(list.files("/home/imuser/web_version/users_files/", full.names = T)[i], recursive = T)
+    }
+    
+    # create job folder
+    fs::dir_create(path = paste0("/home/imuser/web_version/users_files/", job_id()))
+  })
+  
+  # show job id (denoising)----
+  observe({
+    
+    # show job id
+    output$show_job_id_denoise <- renderUI({
+      tagList(
+        p(paste0("Job ID: ", job_id()),
+          # style = "color: #317EAC;background-color:white;font-size: 22px;position:relative;padding: 4px;width:250px;border-radius: 5px;top:10px;bottom:-10px;")
+          style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+        # textInput(inputId = "input_job_id_denoise", 
+        #           label = span("Job ID",
+        #                        style = "font-size:24px;color: white;"),
+        #           width = "200px",
+        #           value = job_id()
+        #           )
+        actionLink(inputId = "change_job_id_denoise", 
+                   label = "Not your job id ?"
+        ),
+        tags$style("#change_job_id_denoise{
+                   color:white; display:inline-block;font-size: 16px;position:relative;left:5px;
+        }"),
+        tags$style("#change_job_id_denoise:hover{
+                   color:red;
+        }")
+      )
+      
+    })
+  })
+  
+  # show job id (taxa)
+  observe({
+    
+    # show job id taxa
+    output$show_job_id_taxa <- renderUI({
+      tagList(
+        p(paste0("Job ID: ", job_id()),
+          style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;"),
+        actionLink(inputId = "change_job_id_taxa", 
+                   label = "Not your job id ?"
+        ),
+        tags$style("#change_job_id_taxa{
+                   color:white;display:inline-block;font-size: 16px;position:relative;left:5px;
+        }"),
+        tags$style("#change_job_id_taxa:hover{
+                   color:red;
+        }")
+      )
+      
+      
+    })
+  })
+  
+  
+  # show dataModal ----
+  observeEvent(input$change_job_id,{
+    showModal(dataModal_1())
+  })
+  
+  observeEvent(input$change_job_id_denoise,{
+    showModal(dataModal_2())
+  })
+  
+  observeEvent(input$change_job_id_taxa,{
+    showModal(dataModal_3())
+  })
+  
+  # job id before OK
+  observe({
+    updateTextInput(session, inputId = "input_job_id_demux", label = "Nothing", value = job_id())
+    updateTextInput(session, inputId = "input_job_id_denoise", label = "Nothing", value = job_id())
+    updateTextInput(session, inputId = "input_job_id_taxa", label = "Nothing", value = job_id())
+  })
+  
+  # show dataModal after OK ----
+  observeEvent(input$ok_1, {
+    updateTextInput(session, inputId = "input_job_id_demux", label = "Nothing", value = input$new_job_id_1)
+    updateTextInput(session, inputId = "input_job_id_denoise", label = "Nothing", value = input$new_job_id_1)
+    updateTextInput(session, inputId = "input_job_id_taxa", label = "Nothing", value = input$new_job_id_1)
+    
+    # Check that data object exists and is data frame.
+    if (sum(list.files("/home/imuser/web_version/users_files/") %in% input$new_job_id_1)>0) {
+      
+      
+      output$show_job_id <- renderUI({
+        tagList(
+          span(paste0("Job ID: ", input$new_job_id_1),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;"),
+          actionLink(inputId = "change_job_id", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id{
+                   color:white; display: inline-block;font-size: 16px;
+        }"),
+          tags$style("#change_job_id:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_denoise <- renderUI({
+        tagList(
+          span(paste0("Job ID: ", input$new_job_id_1),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;"),
+          actionLink(inputId = "change_job_id_denoise", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_denoise{
+                   color:white; display: inline-block;font-size: 16px;
+        }"),
+          tags$style("#change_job_id_denoise:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_taxa <- renderUI({
+        tagList(
+          span(paste0("Job ID: ", input$new_job_id_1),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;"),
+          actionLink(inputId = "change_job_id_taxa", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_taxa{
+                   color:white; display: inline-block;font-size: 16px;
+        }"),
+          tags$style("#change_job_id_taxa:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_single_end.qzv"))){
+        shinyjs::show("demux_results_view_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_paired_end.qzv"))){
+        shinyjs::show("demux_results_view_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_single.qzv"))){
+        shinyjs::show("dada2_results_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_paired.qzv"))){
+        shinyjs::show("dada2_results_paired")
+      }
+      
+      
+      removeModal()
+    } else {
+      showModal(dataModal_1(failed = TRUE))
+    }
+  })
+  
+  observeEvent(input$ok_2, {
+    updateTextInput(session, inputId = "input_job_id_demux", label = "Nothing", value = input$new_job_id_2)
+    updateTextInput(session, inputId = "input_job_id_denoise", label = "Nothing", value = input$new_job_id_2)
+    updateTextInput(session, inputId = "input_job_id_taxa", label = "Nothing", value = input$new_job_id_2)
+    
+    # Check that data object exists and is data frame.
+    if (sum(list.files("/home/imuser/web_version/users_files/") %in% input$new_job_id_2)>0) {
+      output$show_job_id <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_2),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id{
+                   color:white;
+        }"),
+          tags$style("#change_job_id:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_denoise <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_2),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id_denoise", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_denoise{
+                   color:white;
+        }"),
+          tags$style("#change_job_id_denoise:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_taxa <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_2),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id_taxa", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_taxa{
+                   color:white;
+        }"),
+          tags$style("#change_job_id_taxa:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_single_end.qzv"))){
+        shinyjs::show("demux_results_view_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_paired_end.qzv"))){
+        shinyjs::show("demux_results_view_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_single.qzv"))){
+        shinyjs::show("dada2_results_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_paired.qzv"))){
+        shinyjs::show("dada2_results_paired")
+      }
+      
+      removeModal()
+      
+    } else {
+      showModal(dataModal_2(failed = TRUE))
+    }
+  })
+  
+  observeEvent(input$ok_3, {
+    updateTextInput(session, inputId = "input_job_id_demux", label = "Nothing", value = input$new_job_id_3)
+    updateTextInput(session, inputId = "input_job_id_denoise", label = "Nothing", value = input$new_job_id_3)
+    updateTextInput(session, inputId = "input_job_id_taxa", label = "Nothing", value = input$new_job_id_3)
+    
+    # Check that data object exists and is data frame.
+    if (sum(list.files("/home/imuser/web_version/users_files/") %in% input$new_job_id_3)>0) {
+      output$show_job_id <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_3),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id{
+                   color:white;
+        }"),
+          tags$style("#change_job_id:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_denoise <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_3),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id_denoise", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_denoise{
+                   color:white;
+        }"),
+          tags$style("#change_job_id_denoise:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      output$show_job_id_taxa <- renderUI({
+        tagList(
+          p(paste0("Job ID: ", input$new_job_id_3),
+            style = "color: #317EAC;background-color:white;font-size: 20px;position:relative;padding: 6px;width:200px;border-radius: 5px;display: inline-block;") %>% span(),
+          actionLink(inputId = "change_job_id_taxa", 
+                     label = "Not your job id ?"
+          ),
+          tags$style("#change_job_id_taxa{
+                   color:white;
+        }"),
+          tags$style("#change_job_id_taxa:hover{
+                   color:red;
+        }")
+        )
+      })
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_single_end.qzv"))){
+        shinyjs::show("demux_results_view_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_paired_end.qzv"))){
+        shinyjs::show("demux_results_view_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_single.qzv"))){
+        shinyjs::show("dada2_results_single")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_paired.qzv"))){
+        shinyjs::show("dada2_results_paired")
+      }
+      
+      removeModal()
+    } else {
+      showModal(dataModal_3(failed = TRUE))
+    }
+  })
+  
+
+  
+  
+  
+  observe({
+    
+    if(input$seqs_type == "Single end"){
+      output$dada2_parameter <- renderUI({
+        
+        p_style <- "color: white;font-size: 20px;font-weight:200;"
+        
+        tagList(
+          # tags$style("position: relative"),
+          strong("Sequence trimming ", style = "font-size:24px;color: white;"),
+          # tags$i(
+          #   class = "fa fa-info-circle", 
+          #   style = "color: white", 
+          #   id = "seqs_trim_word"
+          # ),
+          # tippy::tippy_this(elementId = "seqs_trim_word",
+          #                   tooltip = "<p style='text-align: left;margin:2px'>Inspect the quality plot to determine these values</p>",
+          #                   allowHTML = TRUE,
+          #                   placement = "right"),
+          # splitLayout(cellWidths = "300px",
+          
+          textInput(inputId = "trim_left_single", 
+                    label = span("The start position",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 0,
+                    width = "250px"),
+          textInput(inputId = "trunc_len_single", 
+                    label = span("The end position",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 0,
+                    width = "250px"),
+          # )
+          actionButton("trim_info", 
+                       "learn more",
+                       icon = icon("question-circle")) %>% div(),
+          actionButton(inputId = "load_parameter_denoise_single",
+                       label = strong("Demo", style = "margin: 5px;font-size: 18px"),
+                       icon = icon("chalkboard-teacher"),
+                       style = "color:#317EAC;background-color:white;margin-top:10px"),
+          # p("Reads that are shorter than the ending position will be discarded.",
+          #   style = p_style),
+          # p("If ending position is 0, no truncation or length filtering will be performed.",
+          #   style = "color: white;top:-10px;position:relative;font-size:16px"),
+          hr(),
+          strong("Quality score filtering", style = "font-size:24px;color: white"),
+          textInput(inputId = "qvalue_single", 
+                    label = span("Quality score threshold",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 0,
+                    width = "350px"),
+          # p("If the resulting read is then shorter than ending position, it is discarded.",
+          #   style = p_style),
+          actionButton("qc_info",
+                       "learn more",
+                       icon = icon("question-circle")),
+          br(),br(),
+          
+          strong("Chimeric reads filtering", style = "font-size:24px;color: white"),
+          textInput(inputId = "chimera_single", 
+                    label = span("The minimum fold-change value",
+                                 style = p_style), 
+                    value = 1,
+                    width = "350px"),
+          actionButton(inputId = "word_chimera_single", 
+                       label = "learn more",
+                       icon = icon("question-circle")
+          ),
+          
+          
+          
+          
+          # textOutput(outputId = "message_thread_single_position"),
+          br(),br(),
+          
+          strong("Error model training", style = "font-size:24px;color: white"),
+          textInput(inputId = "n_reads_single", 
+                    label = span("Number of reads used for training the error model",
+                                 style = p_style), 
+                    value = format(1000000, scientific = F),
+                    width = "350px"),
+          actionButton(inputId = "Q_learn_reads_single", 
+                       label = "learn more", 
+                       icon = icon("question-circle")
+          ),
+          
+          br(),br(),
+          
+          strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
+          fileInput(inputId = "sample_data_single",
+                    label = span("Upload the metadata (1st column name must be", 
+                                 strong("SampleID"),
+                                 span(")"),
+                                 style = p_style),
+                    multiple = F,
+                    accept = ".tsv",
+                    width = "600px"),
+          actionButton("metadata_info",
+                       "learn more",
+                       icon = icon("question-circle"),
+                       style = "position:relative;"
+          ),
+          
+          actionButton("reset_metadata_single",
+
+                       label = "reset", icon = icon("trash")),
+
+                      
+
+          # downloadButton(outputId = "metadata_demo_download_paired", 
+          #                label = "Demo metadata",
+          #                style = "position:relative;left:5px;color:#317EAC"
+          # ),
+          # tippy::tippy_this(elementId = "metadata_demo_download_single", 
+          #                   tooltip = "Click to download the demo metadata", 
+          #                   placement = "top",
+          #                   arrow = TRUE),
+          
+          # div(
+          #   span("This input is"),
+          #   strong(" optional"),
+          #   span(".If metadata is provided, the results would have metadata information."),
+          #   style = "margin-top:-15px;color: white;font-size:16px"
+          # ),
+          
+          hr(),
+          strong("Computing setting", style = "font-size:24px;color: white"),
+          textInput(inputId = "threads_single", 
+                    label = span("Number of threads MOCHI can use",
+                                 style = p_style), 
+                    value = suggested_cores,
+                    width = "350px")
+          
+          
+          
+        )
+      })
+    }else{
+      output$dada2_parameter <- renderUI({
+        p_style <- "color: white;font-size: 20px;font-weight:200;"
+        tagList(
+          strong("Forward sequences trimming ", style = "font-size:24px;color: white"), 
+          # tags$i(
+          #   class = "fa fa-info-circle", 
+          #   style = "color: white",
+          #   id = "f_trim_word"
+          # ),
+          # tippy::tippy_this(elementId = "f_trim_word",
+          #                   tooltip = "<p style='text-align: left;margin:2px'>Inspect the quality plot to determine these values</p>",
+          #                   allowHTML = TRUE,
+          #                   placement = "right"),
+          
+          # splitLayout(cellWidths = "300px",
+                      
+                      textInput(inputId = "trim_left_f_paired", 
+                                label = span("The starting position to trim",
+                                             style = p_style),
+                                placeholder = "Input number",
+                                value = 0,
+                                width = "250px"
+                      ),
+                      textInput(inputId = "trunc_len_f_paired", 
+                                label = span("The ending position to trim",
+                                             style = p_style),
+                                placeholder = "Input number",
+                                value = 0,
+                                width = "250px"
+                      ),
+          # ),
+          
+          strong("Reverse sequences trimming ", style = "font-size:24px;color: white"),
+          
+          # splitLayout(cellWidths = "300px",
+                      
+                      textInput(inputId = "trim_left_r_paired", 
+                                label = span("The starting position to trim",
+                                             style = p_style),
+                                placeholder = "Input number",
+                                value = 0,
+                                width = "250px"),
+                      textInput(inputId = "trunc_len_r_paired", 
+                                label = span("The ending position to trim",
+                                             style = p_style),
+                                placeholder = "Input number",
+                                value = 0,
+                                width = "250px"),
+          # ),
+          actionButton("trim_info", 
+                       "learn more",
+                       icon = icon("question-circle")),
+          
+          hr(),
+          strong("Quality score filtering", style = "font-size:24px;color: white"),
+          textInput(inputId = "qvalue_paired", 
+                    label = span("Quality score threshold",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 0,
+                    width = "350px"),
+          actionButton("qc_info",
+                       "learn more",
+                       icon = icon("question-circle")),
+          # p("If the resulting read is then shorter than ending position, it is discarded.",
+          #   style = p_style),
+          
+          br(),br(),
+          
+          strong("Chimeric reads filtering", style = "font-size:24px;color: white"),
+          textInput(inputId = "chimera_paired", 
+                    label = span("The minimum fold-change value",
+                                 style = p_style), 
+                    value = 1,
+                    width = "350px"),
+          actionButton(inputId = "word_chimera_paired", 
+                       label = "learn more",
+                       icon = icon("question-circle")
+          ),
+          
+          br(),br(),
+          
+          strong("Error model training", 
+                 style = "font-size:24px;color: white"),
+          textInput(inputId = "n_reads_paired", 
+                    label = span("Number of reads used for training the error model",
+                                 style = p_style), 
+                    value = format(1000000, scientific = F),
+                    width = "350px"),
+          actionButton(inputId = "Q_learn_reads_paired", 
+                       label = "learn more", 
+                       icon = icon("question-circle")
+          ),
+         br(),br(),
+          
+          strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
+          fileInput(inputId = "sample_data_paired",
+                    label = span("Upload the metadata (1st column name must be", 
+                                 strong("SampleID"),
+                                 span(")"),
+                                 style = p_style),
+                    multiple = F,
+                    accept = ".tsv",
+                    width = "600px"),
+         
+         actionButton("metadata_info",
+                      "learn more",
+                      icon = icon("question-circle"),
+                      style = "position:relative;"
+         ),
+         
+         actionButton("reset_metadata_paired",
+
+                      label = "reset", icon = icon("trash")),
+
+
+         
+         # downloadButton(outputId = "metadata_demo_download_paired", 
+         #              label = " Demo metadata",
+         #              style = "position:relative;left:5px;color:#317EAC"
+         # ),
+         # tippy::tippy_this(elementId = "metadata_demo_download_paired", 
+         #                   tooltip = "Click to download the demo metadata", 
+         #                   placement = "top",
+         #                   arrow = TRUE),
+         
+          
+          
+          hr(),
+          strong("Computing setting", style = "font-size:24px;color: white"),
+          textInput(inputId = "threads_paired", 
+                    label = span("Number of threads MOCHI can use",
+                                 style = p_style), 
+                    value = suggested_cores,
+                    width = "350px")
+          # actionButton(inputId = "my_cores_paired", 
+          #              label = "Show the threads of this server.") %>% div(),
+          # actionButton(inputId = "Q_cores_paired", 
+          #              label = "What is thread ?", 
+          #              icon = icon("question-circle")) %>% div(),
+          # br(),br(),
+          
+          
+        )
+      })
+    }
+  })
+  
+ observeEvent(input$trim_info, {
+   showModal(modalDialog(title = strong("Message"),
+                         tagList(
+                           p("1. Reads shorter than the end position after trimming will be discarded."),
+                           p("2. If end position is 0, no truncation or length filtering will be performed.")
+                         ),
+                          
+                         footer = NULL, easyClose = T, size = "l"))
+ })
+ 
+ observeEvent(input$qc_info, {
+   showModal(modalDialog(title = strong("Message"),
+                         tagList(
+                           p("1. All the bases are required to be higher than this quality score. Reads will be truncated at the position having base quality lower than this quality score."),
+                           p("2. The resulting reads will be discarded if it is shorter than end position.")
+                         ),
+                         
+                         footer = NULL, easyClose = T, size = "l"))
+ })
+ 
+ observeEvent(input$metadata_info, {
+   showModal(modalDialog(title = strong("Message"),
+                         tagList(
+                           
+                             # span("This input is"),
+                             # strong(" optional"),
+                             span("If the metadata is provided, you may group the samples in", strong("Alpha rarefaction"), "output.")
+                           
+                         ),
+                         
+                         footer = NULL, easyClose = T, size = "l"))
+ })
+ 
+ observeEvent(input$filter_ref_info, {
+   showModal(modalDialog(title = strong("Message"),
+                         tagList(
+                           strong("Minimum length"),
+                           p("1. Sequenceses shorter than the minimun length will be discarded."),
+                           p("2. The default value is minimun length of denoised-sequences."),
+                           p("3. Set to zero to disable min length filtering."),
+                           strong("Maximum length"),
+                           p("1. Sequenceses longer than the maximum length will be discarded."),
+                           p("2. The default value is maximum length of denoised-sequences."),
+                           p("3. Set to zero to disable max length filtering.")
+                           
+                         ),
+                         
+                         footer = NULL, easyClose = T, size = "l"))
+ })
+
+  
+ 
+  input_job_id <- reactive({
+    # req(input$job_id)
+    if(input$submit_id){
+      input_job_id <-isolate(input$job_id)
+    }else{
+      input_job_id <-input$job_id
+    }
+    
+  })
+  
+  
+  
+  # reactive object---------------------------------------------------------------------------------------------
+  ## common objects
+  
+  my_IP <- reactive(my_qiime_local_ip) # get the ip of local
+  
+  my_qiime_port <- reactive(":8011") # give the port for this tool
+  
+  TaxaTable <- reactive({
+    
+    req(input$taxonomic_table)
+    req(input$sample_data)
+    req(input$table_dada2_upload)
+    infile1 <- input$taxonomic_table
+    
+    if (is.null(infile1))
+      return(NULL)
+    
+    validate(
+      need(infile1 != "", message = F),
+      need(read_qza(infile1$datapath)$type == "FeatureTable[Frequency]", message = "")
+    )
+    
+    read_qza(input$taxonomic_table$datapath)$data
+    
+  }) # read the input file (.qza)
+  
+  TaxaTable_merge <- reactive({
+    
+    as_output_taxtable <- function(df_data){
+      
+      df_data_rownames<-row.names(df_data)
+      
+      df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+      
+      row.names(df_data) <- NULL
+      
+      # remove the non-sense string
+      df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+      df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+      
+      
+      library(tidyr)
+      df_data <- df_data %>%
+        separate(
+          col = Species,
+          into = level_group(),
+          sep = ";"
+        )
+      
+      # replace "__" to "Unassigned"
+      df_data<-replace(df_data, df_data=="", "Unassigned")
+      df_data<-replace(df_data, df_data=="__", "Unassigned")
+      
+      return(as.data.frame(df_data))
+    } # clean the taxatable 
+    
+    taxatable <- as_output_taxtable(TaxaTable())
+    
+    if(input$`18S`){
+      taxatable$Level <- paste(taxatable$`Level 1`,
+                               taxatable$`Level 2`,
+                               taxatable$`Level 3`,
+                               taxatable$`Level 4`,
+                               taxatable$`Level 5`,
+                               taxatable$`Level 6`,
+                               taxatable$`Level 7`,
+                               sep = ";")
+    }else{
+      taxatable$Level <- paste(taxatable$Kingdom,
+                               taxatable$Phylum,
+                               taxatable$Class,
+                               taxatable$Order,
+                               taxatable$Family,
+                               taxatable$Genus,
+                               taxatable$Species,
+                               sep = ";")
+    }
+    
+    
+    taxatable_merge <- taxatable[, -(1:7)]
+    taxatable_merge[,-ncol(taxatable_merge)] <- data.frame(sapply(taxatable_merge[,-ncol(taxatable_merge)], function(x){
+      as.character(x) %>% as.numeric()
+    }))
+    
+    taxatable_merge_result <- taxatable_merge %>% group_by(Level) %>% summarise_all(funs(sum)) %>% as.data.frame()
+    rownames(taxatable_merge_result) <- taxatable_merge_result$Level
+    taxatable_merge_result <- taxatable_merge_result[, -1]
+    
+    return(taxatable_merge_result)
+  }) # Some OTUs may be unassigned or multi-matched, in this object, both are considered as unassigned
+  
+  
+  asv_table <- reactive({
+    req(input$table_dada2_upload)
+    asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+    return(asv_table)
+  })
+  
+  
+  Metadata <- reactive({
+    
+    infile2 <- input$sample_data
+    
+    if (is.null(infile2))
+      return(NULL)
+    
+    validate(
+      need(infile2 != "", message = F)
+    )
+    
+    if(is.data.frame(try(read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      
+      metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t")
+      
+      req(input$table_dada2_upload)
+      asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+      
+      colnames(metadata)[1] <- "SampleID"
+      
+      metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+      
+      col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+      
+      if( 1 %in% col_vector){
+        
+        position_non1 <- which(col_vector!=1)
+        
+        metadata <- metadata[,position_non1]
+        
+      }
+      
+      colnames(metadata)[1] <- "SampleID"
+      
+      for (i in 1:ncol(metadata)) {
+        
+        metadata[,i] <- as.character(metadata[,i])
+        metadata[,i] <- replace_na(metadata[,i], "NA")
+        
+      }
+      
+      
+      
+      
+      return(metadata)
+    }
+    
+    
+  }) # read the input sample data file
+  
+  
+  Metadata_FA <- reactive({
+    
+    req(input$sample_data_FA, input$taxonomic_table_FA)
+    
+    infile2 <- input$sample_data_FA
+    
+    validate(
+      need(infile2 != "", message = F)
+    )
+    
+    if(is.data.frame(try(read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      
+      metadata <- read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t")
+      colnames(metadata)[1] <- "SampleID"
+      taxatable_FA <- read_qza(input$taxonomic_table_FA$datapath)[["data"]]
+      metadata <- filter(metadata, SampleID %in% colnames(taxatable_FA))
+      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+      
+      col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+      
+      if( 1 %in% col_vector){
+        
+        position_non1 <- which(col_vector!=1)
+        
+        metadata <- metadata[,position_non1]
+        
+      }
+      
+      colnames(metadata)[1] <- "SampleID"
+      
+      for (i in 1:ncol(metadata)) {
+        
+        metadata[,i] <- as.character(metadata[,i])
+        metadata[,i] <- replace_na(metadata[,i], "NA")
+        
+      }
+      
+      OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+        if(sum(table(metadata[, x])<=1)==0){
+          return(x)
+        }
+      }) %>% unlist()
+      
+      metadata <- metadata[, c("SampleID", OKstats_col)]
+      
+      return(metadata)
+    }
+    
+    
+    
+  }) # read the input sample data file
+  
+  Metadata_stats <- reactive({
+    
+    infile2 <- input$sample_data
+    
+    if (is.null(infile2))
+      return(NULL)
+    
+    validate(
+      need(infile2 != "", message = F)
+    )
+    
+    if(is.data.frame(try(read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      
+      metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t")
+      
+      req(input$table_dada2_upload)
+      asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+      
+      colnames(metadata)[1] <- "SampleID"
+      metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+      
+      col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+      
+      if( 1 %in% col_vector){
+        
+        position_non1 <- which(col_vector!=1)
+        
+        metadata <- metadata[,position_non1]
+        
+      }
+      
+      colnames(metadata)[1] <- "SampleID"
+      
+      for (i in 1:ncol(metadata)) {
+        
+        metadata[,i] <- as.character(metadata[,i])
+        metadata[,i] <- replace_na(metadata[,i], "NA")
+        
+      }
+      
+      OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+        if(sum(table(metadata[, x])<=1)==0){
+          return(x)
+        }
+      }) %>% unlist()
+      
+      metadata <- metadata[, c("SampleID", OKstats_col)]
+      
+      return(metadata)
+    }
+  })
+  
+  output$word_metadata_NA_1 <- renderText({
+    
+    if("NA" %in% Metadata_stats()[,input$metadata_barplot]){
+      NA_position <- which(Metadata()[,input$metadata_barplot]=="NA")
+      NA_sampleid <- Metadata()[,1][NA_position]
+      print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+    }
+  })
+  
+  output$word_metadata_NA_2 <- renderText({
+    
+    if("NA" %in% Metadata()[,input$metadata_hm]){
+      NA_position <- which(Metadata()[,input$metadata_hm]=="NA")
+      NA_sampleid <- Metadata()[,1][NA_position]
+      print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+    }
+  })
+  
+  output$word_metadata_NA_3 <- renderText({
+    
+    if("NA" %in% Metadata()[,input$metadata_alpha]){
+      NA_position <- which(Metadata()[,input$metadata_alpha]=="NA")
+      NA_sampleid <- Metadata()[,1][NA_position]
+      print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+    }
+  })
+  
+  # output$word_metadata_NA_4 <- renderText({
+  #   
+  #   if("NA" %in% Metadata()[,input$metadata_beta]){
+  #     NA_position <- which(Metadata()[,input$metadata_beta]=="NA")
+  #     NA_sampleid <- Metadata()[,1][NA_position]
+  #     print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+  #   }
+  # })
+  
+  
+  # Button change by the metadata -------------------------------------------------------------------------------------
+  
+  observe({
+    
+    newchoices <- colnames(Metadata())
+    newchoices_stats <- colnames(Metadata_stats())
+    # newchoices_FA <- colnames(Metadata_FA())
+    updateRadioButtons(session, "metadata1", choices = newchoices, inline = T)
+    updateRadioButtons(session, "metadata_alpha", choices = newchoices_stats[-1], inline = T)
+    updateRadioButtons(session, "metadata_beta", choices = newchoices_stats[-1], inline = T)
+    updateRadioButtons(session, "metadata_hm", choices = newchoices_stats, inline = T)
+    updateRadioButtons(session, "metadata_barplot", choices = newchoices_stats, inline = T)
+    updateRadioButtons(session, "metadata_phylo_alpha", choices = newchoices_stats[-1], inline = T)
+    updateRadioButtons(session, "metadata_phylo_beta", choices = newchoices_stats[-1], inline = T)
+    # updateSelectInput(session, "metadata8", choices = newchoices[-(1:2)])
+    updateRadioButtons(session, "metadata_ANCOM", choices = newchoices_stats[-1], inline = T)
+    # updateRadioButtons(session, "metadata_FA", choices = newchoices_FA[-1], inline = T)
+    
+  })
+  
+  observe({
+    newchoices_FA <- colnames(Metadata_FA())
+    updateRadioButtons(session, "metadata_FA", choices = newchoices_FA[-1], inline = T)
+  })
+  
+  # check seqs types
+  # observeEvent(req(input$dirs), {
+  observeEvent(req(input$seqs_data_upload), {
+
+    raw_data_path_list <- list()
+    # raw_data_path_list[[1]] <- parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs)
+    # raw_data_path_list[[1]] <- input$seqs_data_upload$datapath
+    system("rm /home/imuser/seqs_upload/*")
+    file.copy(input$seqs_data_upload$datapath, paste0("/home/imuser/seqs_upload/", input$seqs_data_upload$name))
+    
+    raw_data_path_list[[1]] <- "/home/imuser/seqs_upload"
+
+    a <- list.files(path = raw_data_path_list[[1]])
+
+    if(sum(str_detect(a, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))==length(a)){
+
+      if(sum(stringr::str_detect(a, "_R2[(\\.)(_)]")) > 0 ){
+        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end"))
+      }else{
+        updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end"))
+      }
+    }else{
+      if(sum(stringr::str_detect(a, "_(R){0,1}2[(\\.)(_)]")) > 0 ){
+        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end"))
+      }else{
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end"))
+      }
+      }
+  })
+  
+  observeEvent(input$input_job_id_denoise,{
+    a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise), full.names = T)
+    if(sum(str_detect(a, "single")) > 0){
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end"))
+    }else{
+      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end"))
+    }
+  })
+  
+  observeEvent(input$input_job_id_taxa,{
+    a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa), full.names = T)
+    if(sum(str_detect(a, "single")) > 0){
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end"))
+    }else{
+      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end"))
+    }
+  })
+  
+  # Check the sample data input
+  observe({
+    
+    req(input$sample_data)
+    
+    library(shinyBS)
+    
+    if(is.data.frame(try(read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t" ), silent = T))){
+      
+      sample_data <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t" )
+      # sample_data <- readr::read_tsv(input$sample_data$datapath, col_names = T, comment = "#", na = "NA")
+      '%!in%' <- function(x,y)!('%in%'(x,y))
+      
+      # if(colnames(sample_data[1]) %!in% c("sample.id", "sample-id", "SampleID")) {
+      if(colnames(sample_data[1]) !=  "SampleID") {
+        createAlert(session, 
+                    anchorId = "sample_data_alert", 
+                    alertId = "sampleAlert", 
+                    title = "Oops!",
+                    # content = "Please check your sample data. Your first column names should be 'sample.id' or 'sample-id' or 'SampleID'.", 
+                    content = "Please check your sample data. Your first column names should be 'SampleID'.", 
+                    append = T,
+                    style = "danger")
+      } else {
+        closeAlert(session, "sampleAlert")
+        
+      }
+      
+    }else{
+      createAlert(session, 
+                  anchorId = "sample_data_alert", 
+                  alertId = "sampleAlert", 
+                  title = "Oops!",
+                  content = "Please check your sample data format.", 
+                  append = T, 
+                  style = "danger")
+    }
+    
+    
+  })
+  
+  # give the problem message
+  observe({
+    
+    req(input$sample_data)
+    library(shinyBS)
+    
+    if(is.data.frame(try(read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      
+      metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t" )
+      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+      
+      col_vector <- apply(metadata[,2:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+      
+      position_1 <- which(col_vector==1)
+      
+      
+      noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
+        if(sum(table(metadata[, x])<=1)!=0){
+          return(x)
+        }
+      }) %>% unlist()
+      
+      noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
+      
+      if(noOK_col==""){
+        noOK_col <- c()
+      }
+      
+      word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
+      
+      
+      if(length(position_1)!=0 | length(noOK_col)!=0) {
+        createAlert(session, 
+                    anchorId = "sample_data_alert", 
+                    alertId = "sampleAlert", 
+                    title = "Warning!",
+                    content = word_content, 
+                    append = FALSE,
+                    style = "warning")
+        
+      } else {
+        closeAlert(session, "sampleAlert")
+        
+      }
+      
+    }
+    
+    
+    
+  })
+  
+  
+  # Check the taxonomic table input
+  observe({
+    
+    req(input$taxonomic_table)
+    
+    
+    library(shinyBS)
+    
+    # if(!is.matrix(read_qza(input$taxonomic_table$datapath)$data)) {
+    if(read_qza(input$taxonomic_table$datapath)$type != "FeatureTable[Frequency]") {
+      createAlert(session, 
+                  anchorId = "taxatable_alert", 
+                  alertId = "taxaAlert", 
+                  title = "Oops!",
+                  content = "Please check your input taxonomic table file.", 
+                  append = T,
+                  style = "danger")
+    } else {
+      closeAlert(session, "taxaAlert")
+      
+    }
+  })
+  
+  # Check the ASVs table input 
+  observe({
+    
+    req(input$table_dada2_upload)
+    
+    library(shinyBS)
+    
+    # if(!is.matrix(read_qza(input$taxonomic_table$datapath)$data)) {
+    if(read_qza(input$table_dada2_upload$datapath)$type != "FeatureTable[Frequency]") {
+      createAlert(session, 
+                  anchorId = "taxatable_alert", 
+                  alertId = "taxaAlert", 
+                  title = "Oops!",
+                  content = "Please check your input ASVs table file.", 
+                  append = T,
+                  style = "danger")
+    } else {
+      closeAlert(session, "taxaAlert")
+      
+    }
+  })
+  
+  
+  # Check the seq input
+  observe({
+    
+    req(input$rep_seq_dada2_upload)
+    
+    library(shinyBS)
+    
+    # if(class(read_qza(input$rep_seq__dada2_upload$datapath)$data)!="DNAStringSet") {
+    if(read_qza(input$rep_seq_dada2_upload$datapath)$type != "FeatureData[Sequence]") {
+      createAlert(session, 
+                  anchorId = "seq_alert", 
+                  alertId = "seqAlert", 
+                  title = "Oops!",
+                  content = "Please check your input sequences file.", 
+                  append = T,
+                  style = "danger")
+    } else {
+      closeAlert(session, "seqAlert")
+      
+    }
+  })
+  
+  # observe({
+  #   newchoices_FA <- colnames(Metadata_FA())
+  #   updateRadioButtons(session, "metadata_FA", choices = newchoices_FA[-1], inline = T)
+  # })
+  
+  observe({
+    
+    as_output_taxtable <- function(df_data){
+      
+      df_data_rownames<-row.names(df_data)
+      
+      df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+      
+      row.names(df_data) <- NULL
+      
+      # remove the non-sense string
+      df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+      df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+      
+      
+      library(tidyr)
+      df_data <- df_data %>%
+        separate(
+          col = Species,
+          into = level_group(),
+          sep = ";"
+        )
+      
+      # replace "__" to "Unassigned"
+      df_data<-replace(df_data, df_data=="", "Unassigned")
+      df_data<-replace(df_data, df_data=="__", "Unassigned")
+      
+      return(as.data.frame(df_data))
+    } # clean the taxatable 
+    
+    taxatable <- as_output_taxtable(TaxaTable())
+    
+    level_position <- which(level_group()==input$select_level_bar)
+    val <- length(unique(taxatable[, level_position]))
+    # Control the value, min, max, and step.
+    # Step size is 2 when input value is even; 1 when value is odd.
+    updateSliderInput(session, "integer", value = val,
+                      min = 1, max = val, step = 1)
+  })
+  
+  observe({
+    # We'll use the input$controller variable multiple times, so save it as x
+    # for convenience.
+    min_sampling_depth <- colSums(TaxaTable()) %>% min()
+    
+    # This will change the value of input$inText, based on x
+    updateTextInput(session, "sampling_depth", value = min_sampling_depth)
+    
+  })
+  
+  
+  observeEvent(req(input$sample_data, input$taxonomic_table, input$table_dada2_upload), {
+    
+    if(read_qza(input$taxonomic_table$datapath)$type == "FeatureTable[Frequency]") {
+      
+      shinyjs::toggle("taxatable_ui")
+      
+      shinyjs::toggle("taxabarplot_ui")
+      
+      shinyjs::toggle("taxaheatmap_ui") 
+      
+      shinyjs::toggle("krona_ui")
+      
+      shinyjs::toggle("alpha_ui")
+      
+      shinyjs::toggle("beta_ui")
+      
+      shinyjs::show("phylo_ui")
+      
+      shinyjs::show("ancom_ui")
+      
+    }else{
+      shinyjs::hide("taxatable_ui")
+      
+      shinyjs::hide("taxabarplot_ui")
+      
+      shinyjs::hide("taxaheatmap_ui") 
+      
+      shinyjs::hide("krona_ui")
+      
+      shinyjs::hide("alpha_ui")
+      
+      shinyjs::hide("beta_ui")
+      
+      shinyjs::hide("phylo_ui")
+      
+      shinyjs::hide("ancom_ui")
+    }
+    
+  })
+  
+  # observeEvent(input$ANCOM_start, {
+  #   shinyjs::show("ancom_output_ui")
+  #   shinyjs::show("ancom_table_download")
+  # })
+  
+  # observeEvent(req(input$phylogenetic_tree, input$table_dada2_upload, input$rep_seq_dada2_upload), {
+  #   
+  #   # if(file.exists("/home/imuser/qiime_output/core-metrics-results/faith_pd_vector.qza")){
+  #     # if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #     #                        job_id(),
+  #     #                       "_DA_phylo",
+  #     #                       "/core-metrics-results/faith_pd_vector.qza"))){
+  #     shinyjs::show("phylo_output_ui")
+  #   # }
+  #   
+  #   
+  # })
+  
+  # observeEvent(input$checkbox_primer == F, {
+  #   shinyjs::toggle("primer_trim")
+  # })
+  
+  # functional analysis input file
+  
+  ## check sample data input
+  observe({
+    
+    req(input$sample_data_FA)
+    
+    library(shinyBS)
+    
+    if(is.data.frame(try(read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" ), silent = T))){
+      
+      sample_data <- read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" )
+      # sample_data <- readr::read_tsv(input$sample_data$datapath, col_names = T, comment = "#", na = "NA")
+      '%!in%' <- function(x,y)!('%in%'(x,y))
+      
+      # if(colnames(sample_data[1]) %!in% c("sample.id", "sample-id", "SampleID")) {
+        if(colnames(sample_data[1]) !=  "SampleID") {
+        createAlert(session, 
+                    anchorId = "sample_data_alert_FA", 
+                    alertId = "sampleAlert_FA", 
+                    title = "Oops!",
+                    # content = "Please check your sample data. Your first column names should be 'sample.id' or 'sample-id'.",
+                    content = "Please check your sample data. Your first column names should be 'SampleID'.", 
+                    append = T,
+                    style = "danger")
+      } else {
+        closeAlert(session, "sampleAlert_FA")
+        
+      }
+      
+    }else{
+      createAlert(session, 
+                  anchorId = "sample_data_alert_FA", 
+                  alertId = "sampleAlert_FA", 
+                  title = "Oops!",
+                  content = "Please check your sample data format.", 
+                  append = T, 
+                  style = "danger")
+    }
+    
+    
+  })
+  
+  ## give the problem message
+  observe({
+    
+    req(input$sample_data_FA)
+    library(shinyBS)
+    
+    if(is.data.frame(try(read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" ), silent = T))){
+      
+      metadata <- read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" )
+      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+      
+      col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+      
+      position_1 <- which(col_vector==1)
+      
+      
+      noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
+        if(sum(table(metadata[, x])<=1)!=0){
+          return(x)
+        }
+      }) %>% unlist()
+      
+      noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
+      
+      if(noOK_col==""){
+        noOK_col <- c()
+      }
+      
+      word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
+      
+      if(length(position_1)!=0 | length(noOK_col)!=0) {
+        createAlert(session, 
+                    anchorId = "sample_data_alert_FA", 
+                    alertId = "sampleAlert_FA", 
+                    title = "Warning!",
+                    content = word_content, 
+                    append = FALSE,
+                    style = "warning")
+        
+      } else {
+        closeAlert(session, "sampleAlert_FA")
+        
+      }
+      
+    }
+    
+    
+    
+  })
+  
+  ## check taxatable input
+  observe({
+    
+    req(input$taxonomic_table_FA)
+    
+    
+    library(shinyBS)
+    
+    # if(!is.matrix(read_qza(input$taxonomic_table_FA$datapath)$data)) {
+    if(read_qza(input$taxonomic_table_FA$datapath)$type != "FeatureTable[Frequency]") {
+          createAlert(session, 
+                  anchorId = "taxatable_alert_FA", 
+                  alertId = "taxaAlert_FA", 
+                  title = "Oops!",
+                  content = "Please check your input taxonomic table file.", 
+                  append = T,
+                  style = "danger")
+    } else {
+      closeAlert(session, "taxaAlert_FA")
+      
+    }
+  })
+  
+  
+  observeEvent(req(input$sample_data_FA, input$taxonomic_table_FA, input$function_analysis), {
+    if(file.exists(
+      paste0("/home/imuser/web_version/users_files/",
+             job_id(), "_FA",
+             "/func-table7.qza")
+    )){
+      shinyjs::show("func_table_ui")
+      shinyjs::show("func_barplot_ui")
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your input files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+  })
+  
+  
+  # taxa ref-seqs min max
+  
+  # observe({
+  #   
+  # if(input$seqs_type == "Paired end"){
+  #   if(file.exists("/home/imuser/qiime_output/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv")){
+  #     min_length <- read.table("/home/imuser/qiime_output/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", stringsAsFactors = F)[3,2]
+  #     max_length <- read.table("/home/imuser/qiime_output/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", stringsAsFactors = F)[4,2]
+  #     updateTextInput(session, inputId = "min_length", value = min_length)
+  #     updateTextInput(session, inputId = "max_length", value = max_length)
+  #   }else{
+  #     updateTextInput(session, inputId = "min_length", value = 0)
+  #     updateTextInput(session, inputId = "max_length", value = 0)
+  #   }
+  # }else if(input$seqs_type == "Single end"){
+  #   if(file.exists("/home/imuser/qiime_output/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv")){
+  #     min_length <- read.table("/home/imuser/qiime_output/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", stringsAsFactors = F)[3,2]
+  #     max_length <- read.table("/home/imuser/qiime_output/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", stringsAsFactors = F)[4,2]
+  #     updateTextInput(session, inputId = "min_length", value = min_length)
+  #     updateTextInput(session, inputId = "max_length", value = max_length)
+  #   }else{
+  #     updateTextInput(session, inputId = "min_length", value = 0)
+  #     updateTextInput(session, inputId = "max_length", value = 0)
+  #   }
+  # }
+  #   
+  # })
+  
+  
+  observe({
+    req(input$input_job_id_taxa)
+    if(input$seqs_type == "Single end"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
+    }else{
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
+    }
+        
+  })
+  
+
+  
+  
+  # submit job id
+  
+  observeEvent(input$submit_id,{
+    if(input_job_id()==""){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please input job id.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      shinyjs::hide("users_results_download")
+      
+    }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input_job_id())>0){
+      
+      
+      output$users_results_download <- renderUI({
+        
+        lastest_file_table <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^table-dada2 | grep qza$"), intern = T)[1]
+        lastest_file_seqs <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^rep-seqs-dada2 | grep qza$"), intern = T)[1]
+        
+        tagList(
+          
+          h1("1. Sequence summary", 
+             style = "margin-top: 0px;"),
+          useShinyjs(),
+          
+          
+          span(
+            id = "user_demux_single",
+            h4("Single end"),
+            # downloadButton(outputId = "demux_single_download", label = "Download") %>% shinyjs::disabled(),
+            
+            if(file.exists(paste0("/home/imuser/web_version/users_files/", 
+                                  input_job_id(),
+                                  "/demux_single_unzip/new_dirname/data/index.html")))
+              {
+             
+                actionButton(inputId = "user_show_demux_single",
+                             label = "View!",
+                             icon = icon("eye"),
+                             # style = "margin: 10px; display: inline-block;",
+                             onclick = paste0("window.open('http://",
+                                              # my_qiime_ip, my_qiime_port,
+                                              "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                              "/demux_single_unzip/new_dirname/data/index.html#",
+                                              "', '_blank')")
+                            )
+               
+              
+            }else{
+              actionButton(inputId = "user_show_demux_single",
+                           label = "View!",
+                           style = "color:grey;"
+                           )
+              
+              
+                                    },
+            
+            if(file.exists(
+              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_single.csv")
+            )){
+              downloadButton("log_demux_single", "log file")
+            }else{
+              actionButton(inputId = "log_demux_single_not",
+                           label = "log file",
+                           style = "color:grey;"
+              )
+            },
+           
+            
+          ),
+          
+          span(
+            id = "user_demux_paired",
+            h4("Paired end"),
+            # downloadButton(outputId = "demux_paired_download", label = "Download") %>% shinyjs::disabled(),
+            
+            if(file.exists(paste0("/home/imuser/web_version/users_files/", 
+                                  input_job_id(),
+                                  "/demux_paired_unzip/new_dirname/data/index.html")))
+              {
+                 actionButton(inputId = "user_show_demux_paired",
+                               label = "View!",
+                               icon = icon("eye"),
+                               # style = "margin: 10px; display: inline-block;",
+                               onclick = paste0("window.open('http://",
+                                                # my_qiime_ip, my_qiime_port,
+                                                "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                                "/demux_paired_unzip/new_dirname/data/index.html#",
+                                                "', '_blank')")
+                              )
+
+              }else{
+
+                actionButton(inputId = "user_show_demux_paired",
+                             label = "View!",
+                             style = "color:grey;")
+                
+                 },
+            
+            if(file.exists(
+              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_paired.csv")
+            )){
+              downloadButton("log_demux_paired", "log file")
+            }else{
+              actionButton(inputId = "log_demux_paired_not",
+                           label = "log file",
+                           style = "color:grey;"
+              )
+            },
+            
+            
+           hr()
+            
+          ),
+          
+         
+          h1("2. Sequence denoising"),
+          h4("Single end"),
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_single_position_table/new_dirname/data/index.html"))){
+            actionButton(inputId = "user_show_dada2_single_table",
+                         label = "Show summary table",
+                         onclick = paste0("window.open('http://",
+                                          # my_qiime_ip, my_qiime_port,
+                                          "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                          "/denoise_single_position_table/new_dirname/data/index.html",
+                                          "')"),
+                         icon = icon("eye"))
+          }else{
+            actionButton(inputId = "user_show_dada2_single_table",
+                         label = "Show summary table",
+                         style = "color: grey")
+          },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_single_seqs/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_single_seqs",
+                       label = "Show seqs info",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_single_seqs/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye"))
+            }else{
+              actionButton(inputId = "user_show_dada2_single_seqs",
+                           label = "Show seqs info",
+                           style ="color: grey")
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_single_stats/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_single_stats",
+                       label = "Show filter info",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_single_stats/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye"))
+            }else{
+              actionButton(inputId = "user_show_dada2_single_stats",
+                           label = "Show filter info",
+                           style = "color: grey")
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_single_rarefaction/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_single_rarefaction",
+                       label = "Show alpha rarefaction",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_single_rarefaction/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye")
+          )
+            }else{
+              actionButton(inputId = "user_show_dada2_single_rarefaction",
+                           label = "Show alpha rarefaction",
+                           style = "color: grey"
+              )
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/parameter_denoise_single.csv"))){
+            downloadButton("log_file_denoise_single", "log file")
+          }else{
+            actionButton(inputId = "log_file_denoise_single_no",
+                         label = "log file",
+                         style = "color: grey"
+            )
+          },
+          # downloadButton(outputId = "summary_table_single", label = "Download summary table"),
+          # downloadButton(outputId = "seqs_info_single", label = "Download seqs info"),
+          # downloadButton(outputId = "filter_info_single", label = "Download filter info"),
+          # downloadButton(outputId = "alpha_rarefaction_single", label = "Download alpha rarefaction"),
+          br(),br(),
+          h4("Paired end"),
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_paired_position_table/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_paired_table",
+                       label = "Show summary table",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_paired_position_table/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye"))
+            }else{
+              actionButton(inputId = "user_show_dada2_paired_table",
+                           label = "Show summary table",
+                           style = "color: grey")
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_paired_seqs/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_paired_seqs",
+                       label = "Show seqs info",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_paired_seqs/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye"))
+            }else{
+              actionButton(inputId = "user_show_dada2_paired_seqs",
+                           label = "Show seqs info",
+                           style = "color: grey")
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_paired_stats/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_paired_stats",
+                       label = "Show filter info",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_paired_stats/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye"))
+            }else{
+              actionButton(inputId = "user_show_dada2_paired_stats",
+                           label = "Show filter info",
+                           style = "color: grey")
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/denoise_paired_rarefaction/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_show_dada2_paired_rarefaction",
+                       label = "Show alpha rarefaction",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/denoise_paired_rarefaction/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye")
+          )
+            }else{
+              actionButton(inputId = "user_show_dada2_paired_rarefaction",
+                           label = "Show alpha rarefaction",
+                           style = "color: grey"
+              )
+            },
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/parameter_denoise_paired.csv"))){
+            downloadButton("log_file_denoise_paired", "log file")
+          }else{
+            actionButton(inputId = "log_file_denoise_paired_no",
+                         label = "log file",
+                         style = "color: grey"
+            )
+          },
+          # downloadButton(outputId = "summary_table_paired", label = "Download summary table"),
+          # downloadButton(outputId = "seqs_info_paired", label = "Download seqs info"),
+          # downloadButton(outputId = "filter_info_paired", label = "Download filter info"),
+          # downloadButton(outputId = "alpha_rarefaction_paired", label = "Download alpha rarefaction"),
+          hr(),
+          h1("3. Taxonomy classification"),
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input_job_id(),
+                                "/taxonomy_unzip/new_dirname/data/index.html"))){
+          actionButton(inputId = "user_view_taxa",
+                       label = "View!",
+                       onclick = paste0("window.open('http://",
+                                        # my_qiime_ip, my_qiime_port,
+                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+                                        "/taxonomy_unzip/new_dirname/data/index.html",
+                                        "')"),
+                       icon = icon("eye")
+          )
+            }else{
+              actionButton(inputId = "user_view_taxa",
+                           label = "View!",
+                           style = "color: grey"
+              )
+            },
+          
+          # downloadButton(outputId = "taxa_download_user", label = "Download the taxonomy result."),
+          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxatable7.qza"))){
+            downloadButton(outputId = "taxatable_download_user", label = "Download the taxonomic table")
+          }else{
+            # HTML('<button type="submit" style="color: grey; background-color: white">Download the taxonomic table</button>')
+            actionButton(inputId = "user_taxatable_download_bttn",
+                         label = "Download the taxonomic table",
+                         style = "color: grey"
+            )
+          },
+          
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/", lastest_file_table))){
+          downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table")
+            }else{
+              # HTML('<button type="submit style="color: grey; background-color: white">Download the ASVs table</button>')
+              actionButton(inputId = "user_table_dada2_download_bttn",
+                           label = "Download the ASVs table",
+                           style = "color: grey"
+              )
+            },
+          
+          
+          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file_seqs))){
+            downloadButton(outputId = "rep_seq_dada2_download_user", label = "Download the seqs data")
+          }else{
+            # HTML('<button type="submit style="color: grey; background-color: white">Download the seqs data</button>')
+            actionButton(inputId = "user_rep_seq_dada2_download_bttn",
+                         label = "Download the seqs data",
+                         style = "color: grey"
+            )
+          },
+          
+          if(file.exists(paste0(
+            "/home/imuser/web_version/users_files/", input_job_id(),"/parameter_taxonomy_classification.csv"
+          ))){
+            downloadButton(outputId = "log_file_taxonomy_classification", label = "log file")
+          }else{
+            actionButton(inputId = "log_file_taxonomy_classification_no",
+                         label = "log file",
+                         style = "color: grey"
+            )
+          }
+          
+        )
+        
+        # observe({
+        #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
+        #                         "/demux_single_unzip/new_dirname/data/index.html"))){
+        #     shinyjs::enable('user_show_demux_single')
+        #   }
+        # })
+        # observe({
+        #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
+        #                          "/demux_paired_unzip/new_dirname/data/index.html"))){
+        #     shinyjs::enable('test')
+        #   }
+        # })
+        
+      })
+      
+      shinyjs::show("users_results_download")
+      
+
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "The job id is not found.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      shinyjs::hide("users_results_download")
+    }
+  })
+  
+  # log file download ----
+  output$log_demux_single <- downloadHandler(
+    filename = "demux_single_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_single.csv"), file)
+    }
+  )
+  
+  
+  
+  output$log_demux_paired <- downloadHandler(
+    filename = "demux_paired_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_paired.csv"), file)
+    }
+  )
+  
+  output$log_file_denoise_single <- downloadHandler(
+    filename = "denoise_single_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input_job_id(),
+                       "/parameter_denoise_single.csv"), file)
+    }
+  )
+  
+
+  
+  output$log_file_denoise_paired <- downloadHandler(
+    filename = "denoise_paired_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input_job_id(),
+                       "/parameter_denoise_paired.csv"), file)
+    }
+  )
+  
+  output$log_file_taxonomy_classification <- downloadHandler(
+    filename = "taxonomy_classification_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input_job_id(),
+                       "/parameter_taxonomy_classification.csv"), file)
+    }
+  )
+  
+  # Demo files ----
+  
+  observe({
+    req(input$seqs_type)
+    if(input$seqs_type == "Single end"){
+      output$seqs_demo_download <- downloadHandler(
+        filename = "single_seqs_demo.zip",
+        content = function(file){
+          file.copy(from = "/home/imuser/seqs_demo/single_seqs_demo.zip", 
+                    to = file)
+        }
+      )
+    }else{
+      output$seqs_demo_download <- downloadHandler(
+        filename = "paired_seqs_demo.zip",
+        content = function(file){
+          file.copy(from = "/home/imuser/seqs_demo/paired_seqs_demo.zip", 
+                    to = file)
+        }
+      )
+    }
+  })
+  
+    
+  
+  
+  
+  
+  output$metadata_demo_download_single <- downloadHandler(
+    filename = "demo_metadata_single.tsv",
+    content = function(file){
+      file.copy(from = "/home/imuser/metadata_demo/demo_metadata_single.tsv",
+                to = file)
+    }
+  )
+  
+  output$metadata_demo_download_paired <- downloadHandler(
+    filename = "demo_metadata_paired.tsv",
+    content = function(file){
+      file.copy(from = "/home/imuser/metadata_demo/demo_metadata_paired.tsv",
+                to = file)
+    }
+  )
+  
+  
+  observeEvent(input$Q_sampling_depth, {
+
+    showModal(modalDialog(title = strong("Message"),
+                            tagList(
+                              # p("If the total count for any sample(s) are smaller than this value, those samples will be dropped from the diversity analysis."),
+                              # p("The default value is the total count of a sample with the smallest count."),
+                              p("Sampling depth is how many reads will be used in the phylogenetic distance analysis"),
+                              p("Any sample(s) have read count less than this number will be dropped from this diversity analysis. The default value is the lowest read count among all samples"),
+                              p("You may revisit the results in Sequence preprocessing/Sequence summary to determine this value.")
+                              # span("View the result in"), strong('Sequence Preprocessing/Sequence summary'), span("to determine this value.")
+                            )
+                              , 
+                          footer = NULL, easyClose = T, size = "l"))
+  })
+  
+  observeEvent(input$load_parameter_demux, {
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>1. Demo parameters have been loaded. Click the button <b>Demo seqs</b> to download the demo sequences.</p>",
+                               "<p>2. Upload the demo sequences and click the button <b>Start!</b> to begin sequence summary."), 
+                          footer = tagList(
+                            downloadButton(outputId = "seqs_demo_download",
+                                           label = span("Demo seqs", style ="font-weight: 800"),
+                                           style = "color:#317EAC;background-color:white;"
+                            )
+                          ), 
+                          easyClose = T, 
+                          size = "l"))
+    
+    updatePickerInput(session, inputId = "seqs_type", selected = "Single end")
+    updateCheckboxInput(session, inputId = "checkbox_primer", value = T)
+    updateSelectInput(session, inputId = "primer_f", selected = "515F")
+    updateSelectInput(session, inputId = "primer_r", selected = "806R")
+    updateTextInput(session, inputId = "n_jobs_demux", value = my_cores-2)
+
+  })
+  
+  observeEvent(input$load_parameter_denoise_single, {
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>1. Demo parameters have been loaded. Click the button <b>Start!</b> to begin sequence denoising.</p>",
+                               "<p>2. You must finish sequence summary first.</p>"),
+                          footer = tagList(
+                            downloadButton(outputId = "metadata_demo_download_single", 
+                                                          label = "Demo metadata (optional)",
+                                                          style = "position:relative;left:5px;color:#317EAC"
+                                           )
+                          ),
+                          easyClose = T, 
+                          size = "l"))
+    
+    
+    updateTextInput(session, inputId = "trim_left_single", value = 0)
+    updateTextInput(session, inputId = "trunc_len_single", value = 120)
+    updateTextInput(session, inputId = "qvalue_single", value = 2)
+    updateTextInput(session, inputId = "threads_single", value = my_cores-2)
+    # updateSelectInput(session, inputId = "select_database", selected = "Greengenes_16S_85")
+    # updateTextInput(session, inputId = "min_length", value = 100)
+    # updateTextInput(session, inputId = "max_length", value = 400)
+    # updateTextInput(session, inputId = "n_jobs", value = my_cores-2)
+  })
+  
+  observeEvent(input$load_parameter_taxa, {
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>1. Demo parameters have been loaded. Click the button <b>Start!</b> to begin this process.</p>",
+                               "<p>2. You must finish sequence denoising first.</p>"),
+                          footer = NULL,
+                          easyClose = T, 
+                          size = "l"))
+    
+    updateSelectInput(session, inputId = "select_database", selected = "Greengenes_16S_85")
+    updateSelectInput(session, inputId = "primer_f", selected = "515F")
+    updateSelectInput(session, inputId = "primer_r", selected = "806R")
+    updateTextInput(session, inputId = "min_length", value = 100)
+    updateTextInput(session, inputId = "max_length", value = 400)
+    updateTextInput(session, inputId = "n_jobs", value = my_cores-2)
+  })
+  
+  observeEvent(input$TA_demo, {
+    showModal(
+      modalDialog(
+        title = "Message",
+        HTML("<p>1. Click the download buttons to download the example files.</p>",
+             "<p>2. Upload the example files to inspect the demo results."),
+        footer = tagList(
+          # p('Example files', style = "font-weight:700"),
+          downloadButton(outputId = "downloadMetaData", 
+                         label = span("Metadata_example.tsv"),
+                         style = "margin: 5px;color: #317EAC"),
+          downloadButton(outputId = "downloadData", 
+                         label = span("Taxonomic_table_example.qza"),
+                         style = "margin: 5px;color: #317EAC"),
+          downloadButton(outputId = "example_feature_table",
+                         label = span("ASVs_table_example.qza"),
+                         style = "margin: 5px;color: #317EAC")
+        ),
+        easyClose = T, size = "l"
+      )
+    )
+  })
+  
+  observeEvent(input$FA_demo, {
+    showModal(
+      modalDialog(
+        title = "Message",
+        HTML("<p>1. Click the download buttons to download the example files.</p>",
+             "<p>2. Upload the example files and click the button <b>Start!</b> to begin function analysis."),
+        footer = tagList(
+          # p('Example files', style = "font-weight:700"),
+          downloadButton(outputId = "downloadMetaData_FA", 
+                         label = span("Metadata_example.tsv"),
+                         style = "margin: 5px;color: #317EAC"),
+          downloadButton(outputId = "downloadData_FA", 
+                         label = span("Taxonomic_table_example.qza"),
+                         style = "margin: 5px;color: #317EAC")
+          
+        ),
+        easyClose = T, size = "l"
+      )
+    )
+  })
+  
+  
+  observeEvent(input$phylo_demo, {
+    
+    updateTextInput(session, "sampling_depth", value = colSums(TaxaTable()) %>% min())
+    updateTextInput(session, "threads_phylogenetic", value = my_cores-2)
+    
+    showModal(modalDialog(
+      title = "Message",
+      HTML("<p>1. Demo parameters have been loaded. Click the download button to download the examlpe file.</p>",
+           "<p>2. Upload the example file and click the button <b>Start!</b> to begin phylogenetic diversity analysis."),
+      footer = tagList(
+        downloadButton(outputId = "example_rep_seqs",
+                       label = span("Seqs_forPhylo_example.qza"),
+                       style = "margin: 5px;color: #317EAC"),
+      ),
+      easyClose = T,
+      size = "l"
+    ))
+  })
+  
+  observeEvent(input$load_parameter_ANCOM,{
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>Demo parameters have been loaded. Click the button <b>Start!</b> to begin ANCOM.</p>"),
+                          footer = NULL, 
+                          easyClose = T, 
+                          size = "l"))
+    updateRadioButtons(session, "metadata_ANCOM" , selected = "body.site")
+  })
+
+  
+  # Sequences preprocessing -----
+  
+  # Demultiplexed (single)-------------------------------------------------------------------------------------------------------
+  
+  sample_file_name <- reactive({
+    
+    inFile <- input$sample_data
+    
+    if (is.null(inFile))
+      return(NULL)
+    
+    return(inFile$name)
+  })
+  
+  
+  observe({
+    req(input$seqs_data_upload)
+    if(sum(str_count(input$seqs_data_upload$name, ".fastq.gz"))!=length(input$seqs_data_upload$name)){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File format must be .fastq.gz!",
+                              footer = NULL, easyClose = T, size = "l"))
+    }
+  })
+  
+  observe({
+    req(input$seqs_data_upload)
+    if(sum(input$seqs_data_upload$size > 20000000)>0){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "The size of every uploaded file must be smaller than 20MB. Go to install MOCHI to avoid this problem.",
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+  })
+  
+  observeEvent(input$demultiplexed_single_ends, {
+    
+    if(is.null(input$seqs_data_upload)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the sequence files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(str_count(input$seqs_data_upload$name, ".fastq.gz"))!=length(input$seqs_data_upload$name)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "File format must be .fastq.gz!",
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(input$seqs_data_upload$size > 20000000)>0){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "The size of every uploaded file must be smaller than 20MB. Go to install MOCHI to avoid this problem.",
+                            footer = NULL, easyClose = T, size = "l"))
+    
+    }else{
+    
+    req(input$seqs_data_upload)
+    start_time <- Sys.time()
+    
+    Sys.setenv(LANG="C.UTF-8")
+    
+    # showModal(modalDialog(title = "Running demultiplexed for single end ...", "Waiting for a moment", footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    
+    
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    # raw_data_path_list <- list()
+    # raw_data_path_list[[1]] <- parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs)
+    # raw_data_path_list[[1]] <- input$seqs_data_upload$datapath
+    
+    # file.remove("/home/imuser/seqs_upload/*")
+    # system("rm /home/imuser/seqs_upload/*")
+    # file.copy(input$seqs_data_upload$datapath, paste0("/home/imuser/seqs_upload/", input$seqs_data_upload$name))
+    
+    # rename seqs file name
+    # setwd("/home/imsuer/seqs_upload")
+    seqs_name <- list.files("/home/imuser/seqs_upload")
+    
+    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))<length(seqs_name)){
+      
+    
+      library(stringr)
+      seqs_name_split <- str_split(seqs_name, "_")
+      lane_number <- "L001"
+      set_number <- "001"
+      
+      seqs_name_new <- lapply(1:length(seqs_name_split), function(x){
+        
+        paste0(
+          seqs_name_split[[x]][1],
+          "_",
+          seqs_name_split[[x]][1],
+          "_",
+          lane_number,
+          "_R",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][1] %>% str_extract("[0-9]"),
+          "_",
+          set_number,
+          ".",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][2],
+          ".",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][3]
+          
+        )
+        
+      })
+      
+      for (i in 1:length(seqs_name_new)) {
+        
+        # file.rename(seqs_name[i], seqs_name_new[[i]])
+        system(paste0('sudo mv ', seqs_name[i], ' ',seqs_name_new[[i]]))
+      }
+    
+    }else{
+      seqs_name_new <- seqs_name
+    }
+    
+    
+    # demuxed transform
+    Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2020.8/bin')
+    # file.remove("/home/imuser/qiime_output/demux_single_trimmed.qza", "/home/imuser/qiime_output/demux_single_end.qzv")
+    # file.remove("", "/home/imuser/qiime_output/demux_single_end.qzv")
+    
+    
+    if(input$checkbox_primer==T){
+      system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+                   " --input-path", " /home/imuser/seqs_upload",
+                   " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
+                   ' --output-path /home/imuser/web_version/users_files/',
+                   input$input_job_id_demux,
+                   '/demux_single_trimmed.qza')
+             )
+    }else{
+    # file.remove("/home/imuser/qiime_output/demux_single_end.qza")
+    system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+                 " --input-path", " /home/imuser/seqs_upload",
+                 " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
+                 ' --output-path /home/imuser/web_version/users_files/',
+                 input$input_job_id_demux,
+                 '/demux_single_end.qza'))
+    
+    primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                        "27F"="AGAGTTTGATCMTGGCTCAG",
+                        "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                        "341F"="CTCCTACGGGAGGCAGCAG",
+                        "357F"="CTCCTACGGGAGGCAGCAG",
+                        "515F"="GTGCCAGCMGCCGCGGTAA",
+                        "533F"="GTGCCAGCAGCCGCGGTAA",
+                        "16S.1100.F16"="CAACGAGCGCAACCCT",
+                        "1237F"="GGGCTACACACGYGCWAC",
+                        "519R"="GWATTACCGCGGCKGCTG",
+                        "806R"="GGACTACHVGGGTWTCTAAT",
+                        "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                        "907R"="CCGTCAATTCMTTTRAGTTT",
+                        "1100R"="AGGGTTGCGCTCGTTG",
+                        "1391R"="GACGGGCGGTGTGTRCA",
+                        "1492R (l)"="GGTTACCTTGTTACGACTT",
+                        "1492R (s)"="ACCTTGTTACGACTT" 
+    )
+    
+    system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                 " /home/imuser/home/imuser/web_version/users_files/",
+                 job_id(),
+                 "/demux_single_end.qza", 
+                 " --p-front ", primer_list[[input$primer_f]],
+                 " --p-cores ", input$n_jobs_demux,
+                 " --o-trimmed-sequences",
+                 " /home/imuser/web_version/users_files/",
+                 input$input_job_id_demux,
+                 "/demux_single_trimmed.qza"
+                 ))
+    
+    }
+    
+    system(paste0(qiime_cmd, 
+                 ' demux summarize --i-data',
+                 ' /home/imuser/web_version/users_files/',
+                 input$input_job_id_demux,
+                 '/demux_single_trimmed.qza',
+                 ' --o-visualization',
+                 ' /home/imuser/web_version/users_files/',
+                 input$input_job_id_demux,
+                 '/demux_single_end.qzv'))
+    # viewer_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime_2_ll_quick_viewer'
+    # system('kill -9 $(lsof -t -i:8080 -sTCP:LISTEN)')
+    # system(paste(viewer_cmd, '--filename /home/imuser/qiime_output/demux_single_end.qzv &'))
+    
+    # unlink("/home/imuser/qiime_output/demux_single_unzip/new_dirname", recursive = T)
+    # unlink("/var/www/html/demux_single_unzip/new_dirname", recursive = T)
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/demux_single_unzip"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux, "/demux_single_unzip",
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux,
+                  "/demux_single_end.qzv"))
+    
+    unzip_dirnames <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_unzip"), full.names = T)
+    system(paste0("mv ", unzip_dirnames, " /home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_unzip/new_dirname"))
+    # system("sudo rm -rf /srv/shiny-server/www/demux_single_unzip/")
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/", input$input_job_id_demux, " /srv/shiny-server/www/users_files/", input$input_job_id_demux))
+    # system("cp /home/imuser/qiime_output/demux_single_end.qzv /home/imuser/qiime_output/demux_single_end.zip")
+    
+    
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux,
+                  "/demux_single_end.qzv /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux, "/demux_single.zip"))
+    # system(paste0("cp /home/imuser/qiime_output/demux_single.zip ", "/home/imuser/web_version/users_files/", job_id(),"/demux_single_", job_id(),".zip"))
+
+
+    
+    remove_modal_spinner()
+    
+    end_time <- Sys.time()
+    
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    parameter_table <- data.frame(
+      "JobID" = input$input_job_id_demux,
+      "Step" = "Sequence summary",
+      "time" = Sys.time(),
+      "duration" = spent_time,
+      "sequence_type" = input$seqs_type,
+      "sample_size" = length(list.files("/home/imuser/seqs_upload")),
+      "primer_trimmed" = input$checkbox_primer,
+      "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+      "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+      # "forward_primer_seqs" = primer_f_manu,
+      # "reverse_primer_seqs" = primer_r_manu,
+      "computing_setting" = input$n_jobs_demux
+    )
+    write.csv(parameter_table,
+              paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_single.csv"), 
+              quote = F, 
+              row.names = F)
+    
+    if(file.exists(paste0('/home/imuser/web_version/users_files/', input$input_job_id_demux, '/demux_single_end.qzv'))){
+      
+      shinyjs::show("demux_results_view_single")
+      
+      showModal(modalDialog(title = strong("Successful!"), 
+                            HTML(
+                              paste0(
+                                "This analysis took ", spent_time, ". ",
+                                "You can click the button ", strong('View') ," to inspect the result.")
+                            ), 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    }
+    
+    
+  })
+  
+  output$show_demux_single_bttn <- renderUI({
+    # req(input$input_job_id_denoise)
+    tagList(
+      actionButton(inputId = "show_demux_single",
+                         label = "View!",
+                         icon = icon("eye"),
+                         style = "margin: 10px; display: inline-block;",
+                         onclick = paste0("window.open('http://",
+                                          # my_qiime_ip, my_qiime_port,
+                                          "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_demux,
+                                          "/demux_single_unzip/new_dirname/data/index.html#",
+                                          "', '_blank')")
+                   ),
+      if(file.exists(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_single.csv")
+      )){
+        downloadButton("f_log_demux_single", "log file")
+      }else{
+        actionButton(inputId = "f_log_demux_single_not",
+                     label = "log file",
+                     style = "color:grey;"
+        )
+      }
+    
+    )
+    
+  })
+  
+  
+  output$f_log_demux_single <- downloadHandler(
+    filename = "demux_single_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_single.csv"), file)
+    }
+  )
+
+  
+  
+  # observeEvent(input$submit_id,{
+  #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_single.zip")))
+  #   shinyjs::show("user_demux_single")
+  # })
+  
+  output$demux_single_download <- downloadHandler(
+    filename = paste0("demux_single_", input_job_id(), ".zip"),
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_single.zip"), file)
+    }
+  )
+  
+  # Demultiplexed (paired)-------------------------------------------------------------------------------------------------------
+  
+  observeEvent(input$demultiplexed_paired_ends, {
+    
+    if(is.null(input$seqs_data_upload)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the sequence files", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(str_count(input$seqs_data_upload$name, ".fastq.gz"))!=length(input$seqs_data_upload$name)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "File format must be .fastq.gz!",
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(input$seqs_data_upload$size > 10000000)>0){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "Every file size must be smaller than 10MB.",
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      
+    req(input$seqs_data_upload)
+    start_time <- Sys.time()
+    
+    Sys.setenv(LANG="C.UTF-8")
+    
+    # showModal(modalDialog(title = "Running demultiplexed for paired end ...", "Waiting for a moment",footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    # raw_data_path <- parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs)
+    # raw_data_path <- input$seqs_data_upload$datapath
+    # file.remove("/home/imuser/seqs_upload/*")
+    # system("rm /home/imuser/seqs_upload/*")
+    # file.copy(input$seqs_data_upload$datapath, paste0("/home/imuser/seqs_upload/", input$seqs_data_upload$name))
+    
+    # rename seqs file name
+    # setwd("/home/imuser/seqs_upload")
+    seqs_name <- list.files("/home/imuser/seqs_upload")
+    
+    
+    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))<length(seqs_name)){
+    
+      library(stringr)
+      seqs_name_split <- str_split(seqs_name, "_")
+      lane_number <- "L001"
+      set_number <- "001"
+      
+      seqs_name_new <- lapply(1:length(seqs_name_split), function(x){
+        
+        paste0(
+          seqs_name_split[[x]][1],
+          "_",
+          seqs_name_split[[x]][1],
+          "_",
+          lane_number,
+          "_R",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][1] %>% str_extract("[0-9]"),
+          "_",
+          set_number,
+          ".",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][2],
+          ".",
+          str_split(seqs_name_split[[x]][2], "\\.")[[1]][3]
+          
+        )
+        
+      })
+      
+      for (i in 1:length(seqs_name_new)) {
+        
+        file.rename(seqs_name[i], seqs_name_new[[i]])
+        
+      }
+      
+    }else{
+      seqs_name_new <- seqs_name
+    }
+    
+    # demux
+    Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2020.8/bin')
+    # file.remove("/home/imuser/qiime_output/demux_paired_trimmed.qza", "/home/imuser/qiime_output/demux_paired_end.qzv")
+  
+    if(input$checkbox_primer==T){
+      system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
+                    " --input-path", " /home/imuser/seqs_upload",
+                    " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
+                    ' --output-path /home/imuser/web_version/users_files/',
+                    input$input_job_id_demux,
+                    '/demux_paired_trimmed.qza')
+      )
+    }else{
+      # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
+      system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+                    " --input-path", " /home/imuser/seqs_upload",
+                    " --input-format 'CasavaOneEightpairedLanePerSampleDirFmt'" ,
+                    ' --output-path /home/imuser/web_version/users_files/',
+                    input$input_job_id_demux,
+                    '/demux_paired_end.qza'))
+      
+      primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                          "27F"="AGAGTTTGATCMTGGCTCAG",
+                          "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                          "341F"="CTCCTACGGGAGGCAGCAG",
+                          "357F"="CTCCTACGGGAGGCAGCAG",
+                          "515F"="GTGCCAGCMGCCGCGGTAA",
+                          "533F"="GTGCCAGCAGCCGCGGTAA",
+                          "16S.1100.F16"="CAACGAGCGCAACCCT",
+                          "1237F"="GGGCTACACACGYGCWAC",
+                          "519R"="GWATTACCGCGGCKGCTG",
+                          "806R"="GGACTACHVGGGTWTCTAAT",
+                          "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                          "907R"="CCGTCAATTCMTTTRAGTTT",
+                          "1100R"="AGGGTTGCGCTCGTTG",
+                          "1391R"="GACGGGCGGTGTGTRCA",
+                          "1492R (l)"="GGTTACCTTGTTACGACTT",
+                          "1492R (s)"="ACCTTGTTACGACTT" 
+      )
+      
+      system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
+                    " /home/imuser/home/imuser/web_version/users_files/",
+                    input$input_job_id_demux,
+                    "/demux_paired_end.qza", 
+                    " --p-front ", primer_list[[input$primer_f]],
+                    " --p-cores ", input$n_jobs_demux,
+                    " --o-trimmed-sequences",
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_demux,
+                    "/demux_paired_trimmed.qza"
+      ))
+      
+    }
+    
+    system(paste0(qiime_cmd, 
+                  ' demux summarize --i-data',
+                  ' /home/imuser/web_version/users_files/',
+                  input$input_job_id_demux,
+                  '/demux_paired_trimmed.qza',
+                  ' --o-visualization',
+                  ' /home/imuser/web_version/users_files/',
+                  input$input_job_id_demux,
+                  '/demux_paired_end.qzv'))
+    # viewer_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime_2_ll_quick_viewer'
+    # system('kill -9 $(lsof -t -i:8080 -sTCP:LISTEN)')
+    # system(paste(viewer_cmd, '--filename /home/imuser/qiime_output/demux_paired_end.qzv &'))
+    
+    # unlink("/home/imuser/qiime_output/demux_paired_unzip/new_dirname", recursive = T)
+    # unlink("/var/www/html/demux_paired_unzip/new_dirname", recursive = T)
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_demux, "/demux_paired_unzip"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux, "/demux_paired_unzip",
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_demux,
+                  "/demux_paired_end.qzv"))
+    
+    unzip_dirnames <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_unzip"), full.names = T)
+    system(paste0("mv ", unzip_dirnames, " /home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_unzip/new_dirname"))
+    # system("sudo rm -rf /srv/shiny-server/www/demux_paired_unzip/")
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/", input$input_job_id_demux, " /srv/shiny-server/www/users_files"))
+    # system("cp /home/imuser/qiime_output/demux_paired_end.qzv /home/imuser/qiime_output/demux_paired_end.zip")
+    
+    
+    system(paste0("cp /home/imuser/web_version/users_files/", input$input_job_id_demux,
+                  "/demux_paired_end.qzv /home/imuser/web_version/users_files/", input$input_job_id_demux,
+                  "/demux_paired.zip"))
+    # system(paste0("cp /home/imuser/qiime_output/demux_paired.zip ", "/home/imuser/web_version/users_files/", job_id(),"/demux_paired_", job_id(),".zip"))
+    
+    
+    
+    remove_modal_spinner()
+    
+    end_time <- Sys.time()
+    
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    parameter_table <- data.frame(
+      "JobID" = input$input_job_id_demux,
+      "Step" = "Sequence summary",
+      "time" = Sys.time(),
+      "duration" = spent_time,
+      "sequence_type" = input$seqs_type,
+      "sample_size" = length(list.files("/home/imuser/seqs_upload")),
+      "primer_trimmed" = input$checkbox_primer,
+      "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+      "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+      # "forward_primer_seqs" = primer_f_manu,
+      # "reverse_primer_seqs" = primer_r_manu,
+      "computing_setting" = input$n_jobs_demux
+    )
+    write.csv(parameter_table,
+              paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_paired.csv"), 
+              quote = F, 
+              row.names = F)
+    
+    if(file.exists(paste0('/home/imuser/web_version/users_files/', input$input_job_id_demux, '/demux_paired_end.qzv'))){
+      
+      shinyjs::show("demux_results_view_paired")
+      
+      showModal(modalDialog(title = strong("Successful!"), 
+                            HTML(
+                              paste0(
+                                "This analysis took ", spent_time, ". ",
+                                "You can click the button ", strong('View') ," to inspect the result.")
+                            ), 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    }
+    
+    
+  })
+  
+  
+  output$show_demux_paired_bttn <- renderUI({
+    tagList(
+      actionButton(inputId = "show_demux_paired",
+                   label = "View!",
+                   icon = icon("eye"),
+                   style = "margin: 10px; display: inline-block;",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_demux,
+                                    "/demux_paired_unzip/new_dirname/data/index.html#",
+                                    "', '_blank')")
+      ),
+      if(file.exists(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_paired.csv")
+      )){
+        downloadButton("f_log_demux_paired", "log file")
+      }else{
+        actionButton(inputId = "f_log_demux_paired_not",
+                     label = "log file",
+                     style = "color:grey;"
+        )
+      }
+    )
+    
+  })
+  
+  output$f_log_demux_paired <- downloadHandler(
+    filename = "demux_paired_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_paired.csv"), file)
+    }
+  )
+
+  
+  observeEvent(input$submit_id,{
+    if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_paired.zip"))){
+      shinyjs::show("user_demux_paired")
+    }
+  })
+  
+
+    output$demux_paired_download <- downloadHandler(
+      filename = paste0("demux_paired_", input_job_id(), ".zip"),
+      content = function(file){
+        
+        fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_paired.zip"), new_path = file)
+        
+      }
+    )
+    
+
+    
+  
+  # Denoising_single -----------------------------------------------------------------------------------------------------------------------  
+  observeEvent(input$denoising_single, {
+    
+      if(!file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_denoise,
+                            "/demux_single_trimmed.qza"))){
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please finish sequence summary.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+      # }else if(!is.null(input$sample_data_single)){
+      #   if(colnames(read.table(input$sample_data_single$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
+      #     showModal(modalDialog(title = strong("Error!", style = "color: red"),
+      #                           "The first column name of metadata must be 'SampleID'.",
+      #                           footer = NULL, easyClose = T, size = "l"))
+      #   }
+      
+
+      }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_denoise)>0){
+        
+        start_time <- Sys.time()
+        # showModal(modalDialog(title = "Running denoising for single end ...", "Waiting for a moment", footer = NULL))
+        show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+        
+        qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+        
+        # file.remove("/home/imuser/qiime_output/rep-seqs-dada2_single.qza", 
+        #             "/home/imuser/qiime_output/table-dada2_single.qza",
+        #             "/home/imuser/qiime_output/stats-dada2_single.qza",
+        #             "/home/imuser/qiime_output/rep-seqs-dada2_single.qzv",
+        #             "/home/imuser/qiime_output/table-dada2_single.qzv",
+        #             "/home/imuser/qiime_output/stats-dada2_single.qzv")
+        
+        if(is.null(input$sample_data_single$datapath)){
+          add_metadata_table <- ""
+          add_metadata_rarefaction <- ""
+        }else{
+          add_metadata_table <- paste("--m-sample-metadata-file", input$sample_data_single$datapath)
+          add_metadata_rarefaction <- paste("--m-metadata-file", input$sample_data_single$datapath)
+        }
+        
+        system(paste0(qiime_cmd, " dada2 denoise-single --i-demultiplexed-seqs",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/demux_single_trimmed.qza", 
+                     ' --p-trim-left ', input$trim_left_single, 
+                     ' --p-trunc-len ', input$trunc_len_single,
+                     " --p-trunc-q ", input$qvalue_single,
+                     " --p-n-threads ", input$threads_single,
+                     " --p-min-fold-parent-over-abundance ", input$chimera_single,
+                     " --p-n-reads-learn ", input$n_reads_single,
+                     " --o-representative-sequences /home/imuser/web_version/users_files/",
+                     input$input_job_id_denoise,
+                     "/rep-seqs-dada2_single.qza",
+                     " --o-table /home/imuser/web_version/users_files/",
+                     input$input_job_id_denoise,
+                     "/table-dada2_single.qza", 
+                     " --o-denoising-stats /home/imuser/web_version/users_files/",
+                     input$input_job_id_denoise,
+                     "/stats-dada2_single.qza"))
+        
+        # transform to qzv
+        system(paste0(qiime_cmd, ' metadata tabulate --m-input-file',
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_denoise,
+                      '/stats-dada2_single.qza',
+                      ' --o-visualization /home/imuser/web_version/users_files/',
+                      input$input_job_id_denoise,
+                      '/stats-dada2_single.qzv'))
+        
+        system(paste0(qiime_cmd, ' feature-table summarize --i-table /home/imuser/web_version/users_files/',
+                      input$input_job_id_denoise,
+                      '/table-dada2_single.qza ',
+                      add_metadata_table,
+                     ' --o-visualization /home/imuser/web_version/users_files/',
+                     input$input_job_id_denoise,
+                     '/table-dada2_single.qzv'
+                     )
+              )
+        system(paste0(qiime_cmd, ' feature-table tabulate-seqs --i-data /home/imuser/web_version/users_files/',
+                      input$input_job_id_denoise,
+                     '/rep-seqs-dada2_single.qza',
+                     ' --o-visualization /home/imuser/web_version/users_files/',
+                     input$input_job_id_denoise,
+                     '/rep-seqs-dada2_single.qzv'))
+        
+        
+        system(paste0("sudo mkdir /srv/shiny-server/www/users_files/", input$input_job_id_denoise))
+        
+       # unzip stats
+        system(paste0("rm -r ", "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_stats"))
+        system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_stats /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/stats-dada2_single.qzv"))
+        
+        unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                  input$input_job_id_denoise,
+                                                  "/denoise_single_stats"), 
+                                           full.names = T)
+        system(paste0("mv ", unzip_dirnames_stats,
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_stats/new_dirname"))
+        
+        system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_stats/",
+                      " /srv/shiny-server/www/users_files/",
+                      input$input_job_id_denoise))
+        
+        system(paste0("cp /home/imuser/web_version/users_files/",
+               input$input_job_id_denoise,
+               "/stats-dada2_single.qzv /home/imuser/web_version/users_files/",
+               input$input_job_id_denoise,
+               "/stats-dada2_single.zip"))
+        # system(paste0("cp /home/imuser/qiime_output/stats-dada2_single.zip", " /home/imuser/web_version/users_files/", job_id(),"/stats-dada2_single_", job_id(),".zip"))
+        
+        # unzip dada2 table
+        system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_single_position_table"))
+        system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_position_table /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/table-dada2_single.qzv"))
+        
+        unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                  input$input_job_id_denoise,
+                                                  "/denoise_single_position_table"), 
+                                           full.names = T)
+        system(paste0("mv ", unzip_dirnames_stats,
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_position_table/new_dirname"))
+        
+        system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_position_table/",
+                      " /srv/shiny-server/www/users_files/",
+                      input$input_job_id_denoise))
+        
+        system(paste0("cp /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/table-dada2_single.qzv /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/table-dada2_single.zip"))
+        
+        # unzip dada2 rep-seqs
+        system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_single_seqs"))
+        system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_seqs /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rep-seqs-dada2_single.qzv"))
+        
+        unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                  input$input_job_id_denoise,
+                                                  "/denoise_single_seqs"), 
+                                           full.names = T)
+        system(paste0("mv ", unzip_dirnames_stats,
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_seqs/new_dirname"))
+        
+        system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_seqs/",
+                      " /srv/shiny-server/www/users_files/",
+                      input$input_job_id_denoise))
+        
+        system(paste0("cp /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rep-seqs-dada2_single.qzv /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rep-seqs-dada2_single.zip"))
+        
+        # alpha-rarefaction
+        max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_denoise,
+                                     "/table-dada2_single.qza")
+                              )[["data"]] %>% colSums() %>% median() %>% ceiling()
+        if(max_depth == 0){
+          max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                       input$input_job_id_denoise,
+                                       "/table-dada2_single.qza")
+          )[["data"]] %>% colSums() %>% max()
+          
+          if(max_depth == 0){
+            max_depth <- 100
+          }
+        }
+        
+        system(paste0(qiime_cmd, 
+                      " phylogeny align-to-tree-mafft-fasttree --i-sequences /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rep-seqs-dada2_single.qza", 
+                      " --p-n-threads ", input$threads_single,
+                      " --o-alignment /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/aligned-rep-seqs-dada2_single.qza",
+                      " --o-masked-alignment /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/masked-aligned-rep-seqs-dada2_single.qza",
+                      " --o-tree /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/unrooted-tree_single.qza",
+                      " --o-rooted-tree /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rooted-tree_single.qza"))
+        
+        system(paste0(qiime_cmd, 
+                      " diversity alpha-rarefaction --i-table /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/table-dada2_single.qza",
+                     " --p-max-depth ", max_depth,
+                     " --i-phylogeny /home/imuser/web_version/users_files/",
+                     input$input_job_id_denoise,
+                     "/rooted-tree_single.qza ",
+                     add_metadata_rarefaction,
+                     " --o-visualization /home/imuser/web_version/users_files/",
+                     input$input_job_id_denoise,
+                     "/rarefaction-dada2_single.qzv"))
+        
+        # unzip alpha rarefaction
+        system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_single_rarefaction"))
+        system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_rarefaction",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rarefaction-dada2_single.qzv"))
+        
+        unzip_dirnames_seqs <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                 input$input_job_id_denoise,
+                                                 "/denoise_single_rarefaction"), full.names = T)
+        system(paste0("mv ", unzip_dirnames_seqs, 
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_rarefaction/new_dirname"))
+        
+        system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/denoise_single_rarefaction/",
+                      " /srv/shiny-server/www/users_files/",
+                      input$input_job_id_denoise))
+        
+        system(paste0("cp /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rarefaction-dada2_single.qzv",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_denoise,
+                      "/rarefaction-dada2_single.zip"))
+        
+        shinyjs::show("dada2_results_single")
+        
+        # removeModal()
+        remove_modal_spinner()
+        end_time <- Sys.time()
+        spent_time <- format(round(end_time-start_time, digits = 2))
+        
+        parameter_table <- data.frame(
+          "JobID" = input$input_job_id_denoise,
+          "Step" = "Denoising",
+          "time" = Sys.time(),
+          "duration" = spent_time,
+          "sequence_type" = input$seqs_type,
+          "start_position_trim" = input$trim_left_single,
+          "end_position_trim" = input$trunc_len_single,
+          "quality_score_truncate" = input$qvalue_single,
+          "chimeric_reads_min_fold_change" = input$chimera_single,
+          "reads_error_model" = input$n_reads_single,
+          "metadata_upload" = is.null(input$sample_data_single),
+          "computing_setting" = input$threads_single
+        )
+        write.csv(parameter_table,
+                  paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/parameter_denoise_single.csv"), 
+                  quote = F, 
+                  row.names = F)
+        
+        stats_dada2_single.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/stats-dada2_single.qzv")
+        table_dada2_single.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/table-dada2_single.qzv")
+        rep_seqs_dada2_single.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/rep-seqs-dada2_single.qzv")
+        rarefaction_dada2_single.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/rarefaction-dada2_single.qzv")
+        if(sum(file.exists(c(stats_dada2_single.qzv_path, 
+                             table_dada2_single.qzv_path, 
+                             rep_seqs_dada2_single.qzv_path,
+                             rarefaction_dada2_single.qzv_path)
+                           )
+               )==4){
+          
+          showModal(modalDialog(title = strong("Denoising succecessfully!"), 
+                                HTML(
+                                  paste0(
+                                    "This analysis took ", spent_time, ". ",
+                                    "You can inspect the results!")
+                                ), 
+                                footer = NULL, easyClose = T, size = "l"))
+        }else{
+          showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                                "Please check your files.", 
+                                footer = NULL, easyClose = T, size = "l"))
+        }
+        
+      }else{
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "The job id is not found.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    
+    
+    
+  })
+  
+  observeEvent(input$reset_metadata_single, {
+    shinyjs::reset("sample_data_single")
+  })
+    
+  observe({
+    if(is.data.frame(try(read.table(input$sample_data_single$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      if(colnames(read.table(input$sample_data_single$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "The first column name of metadata must be 'SampleID'.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    }
+  })
+    
+  output$dada2_single_results_bttn <- renderUI({
+    tagList(
+      actionButton(inputId = "show_dada2_single_table",
+                   label = "Show summary table",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_single_position_table/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_single_seqs",
+                   label = "Show seqs info",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_single_seqs/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_single_stats",
+                   label = "Show filter info",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_single_stats/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_single_rarefaction",
+                   label = "Show alpha rarefaction",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_single_rarefaction/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")
+      ),
+      if(file.exists(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_denoise_single.csv")
+      )){
+        downloadButton("f_log_denoise_single", "log file")
+      }else{
+        actionButton(inputId = "f_log_denoise_single_not",
+                     label = "log file",
+                     style = "color:grey;"
+        )
+      }
+      
+    )
+  })
+  
+  output$f_log_denoise_single <- downloadHandler(
+    filename = "denoise_single_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/parameter_denoise_single.csv"), file)
+    }
+  )
+  
+  
+  
+  
+  observeEvent(input$my_cores_demux, {
+    
+    # output$message_mycore_single_position <- renderUI({
+    my_cores <- parallel::detectCores()
+    str1 <- paste0("The number of your threads is ", my_cores, "."," If 0 is provided, all available cores will be used. (default: all threads - 2)")
+    # str2 <- " If 0 is provided, all available cores will be used. (default: all threads - 2)"
+    sr3 <- "The multithreaded processing is used to speed up the analysis."
+    #   HTML(paste(str1, str2, sep = "</br>"))
+    # })
+    
+    showModal(modalDialog(title = strong("Message"),
+                          HTML(paste(str1, sr3, sep = "</br>")), 
+                          footer = NULL, easyClose = T, size = "l"))
+    
+  })
+  
+  
+  
+  # observeEvent(input$Q_cores_demux, {
+  #   # output$message_thread_single_position <- renderText(
+  #   #   "The number of threads to use for multithreaded processing.")
+  #   showModal(modalDialog(title = strong("Message"),
+  #                         "The number of threads to use for multithreaded processing.", 
+  #                         footer = NULL, easyClose = T, size = "l"))
+  # })
+  
+  observeEvent(input$word_chimera_single, {
+    # output$message_thread_single_position <- renderText(
+    #   "The number of threads to use for multithreaded processing.")
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>The minimum abundance of potential parents of a
+                         sequence being tested as chimeric, expressed as a
+                         fold-change versus the abundance of the sequence
+                         being tested. Values should be greater than or equal
+                         to 1 (i.e. parents should be more abundant than the
+                         sequence being tested)</p>
+                         <p>For example, let’s imagine you have 3 sequences in your data: x, y, and z (which appears to be a chimera of x + y). 
+                         If min-fold-parent-over-abundance (minF) = 1, z must be equally or less abundant than x and y. If minF = 2, x and y must be at least twice as abundant as z for z to be removed. 
+                               If minF = 8, x and y must be at least 8 times as abundant as z for z to be removed!.</p>
+                               <b>The higher this value is, the more potentially chimeric reads will be used in analysis. For most cases, 1 is the default value.</b>"), 
+                          footer = NULL, easyClose = T, size = "l"))
+  })
+  
+  observeEvent(input$Q_learn_reads_single, {
+    # output$message_learn_single_position <- renderText(
+    #   " The number of reads to use when training the error model. Smaller numbers will result in a shorter run time but a less reliable error model. [default: 1000000]")
+    showModal(modalDialog(title = strong("Message"),
+                          "Smaller numbers will shorten the run time but result in a less reliable error model. [default: 1000000]", 
+                          footer = NULL, easyClose = T, size = "l"))
+  })
+  
+  
+  output$summary_table_single <- downloadHandler(
+    filename = paste0("denosing_summary_single_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/table-dada2_single.zip"), new_path = file)
+    }
+  )
+  
+  output$seqs_info_single <- downloadHandler(
+    filename = paste0("denosing_seqs_info_single_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/rep-seqs-dada2_single.zip"), new_path = file)
+    }
+  )
+  
+  output$filter_info_single <- downloadHandler(
+    filename = paste0("denosing_filter_info_single_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/stats-dada2_single.zip"), new_path = file)
+    }
+  )
+  
+  output$alpha_rarefaction_single <- downloadHandler(
+    filename = paste0("denosing_alpha_rarefaction_single_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/rarefaction-dada2_single.zip"), new_path = file)
+    }
+  )
+  
+  
+  # Denoising_paired -----------------------------------------------------------------------------------------------------------------------  
+  observeEvent(input$denoising_paired, {
+    
+    if(!file.exists(paste0("/home/imuser/web_version/users_files/",
+                           input$input_job_id_denoise,
+                           "/demux_paired_trimmed.qza"))){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please finish sequence summary first.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    # }else if(is.data.frame(try(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+    #   if(colnames(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
+    #     showModal(modalDialog(title = strong("Error!", style = "color: red"),
+    #                           "The first column name of metadata must be 'SampleID'.",
+    #                           footer = NULL, easyClose = T, size = "l"))
+    #   }
+      
+    }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_denoise)>0){
+    
+    start_time <- Sys.time()
+    # showModal(modalDialog(title = "Running denoising for paired end ...", "Waiting for a moment",footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    
+    # file.remove("/home/imuser/qiime_output/rep-seqs-dada2_paired.qza", 
+    #             "/home/imuser/qiime_output/table-dada2_paired.qza",
+    #             "/home/imuser/qiime_output/stats-dada2_paired.qza",
+    #             "/home/imuser/qiime_output/rep-seqs-dada2_paired.qzv",
+    #             "/home/imuser/qiime_output/table-dada2_paired.qzv",
+    #             "/home/imuser/qiime_output/stats-dada2_paired.qzv")
+    
+    if(is.null(input$sample_data_paired$datapath)){
+      add_metadata_table <- ""
+      add_metadata_rarefaction <- ""
+    }else{
+      add_metadata_table <- paste("--m-sample-metadata-file", input$sample_data_paired$datapath)
+      add_metadata_rarefaction <- paste("--m-metadata-file", input$sample_data_paired$datapath)
+    }
+    
+    system(paste0(qiime_cmd, 
+                  " dada2 denoise-paired --i-demultiplexed-seqs /home/imuser/qiime_output/demux_paired_trimmed.qza", 
+                 " --p-trim-left-f ", input$trim_left_f_paired,
+                 " --p-trim-left-r ", input$trim_left_r_paired,
+                 " --p-trunc-len-f ", input$trunc_len_f_paired,
+                 " --p-trunc-len-r ", input$trunc_len_r_paired,
+                 " --p-trunc-q ", input$qvalue_paired,
+                 " --p-n-threads ", input$threads_paired,
+                 " --p-min-fold-parent-over-abundance ", input$chimera_paired,
+                 " --p-n-reads-learn ", input$n_reads_paired,
+                 " --o-representative-sequences /home/imuser/web_version/users_files/",
+                 input$input_job_id_denoise,
+                 "/rep-seqs-dada2_paired.qza" ,
+                 " --o-table /home/imuser/web_version/users_files/",
+                 input$input_job_id_denoise,
+                 "/table-dada2_paired.qza", 
+                 " --o-denoising-stats /home/imuser/web_version/users_files/",
+                 input$input_job_id_denoise,
+                 "/stats-dada2_paired.qza"))
+    
+    # transform to qzv
+    system(paste0(qiime_cmd, ' metadata tabulate --m-input-file',
+                  ' /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/stats-dada2_paired.qza',
+                  ' --o-visualization /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/stats-dada2_paired.qzv'))
+    
+    system(paste0(qiime_cmd, ' feature-table summarize --i-table /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/table-dada2_paired.qza ',
+                  add_metadata_table,
+                  ' --o-visualization /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/table-dada2_paired.qzv'
+    )
+    )
+    system(paste0(qiime_cmd, ' feature-table tabulate-seqs --i-data /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/rep-seqs-dada2_paired.qza',
+                  ' --o-visualization /home/imuser/web_version/users_files/',
+                  input$input_job_id_denoise,
+                  '/rep-seqs-dada2_paired.qzv'))
+    
+    
+    system(paste0("sudo mkdir /srv/shiny-server/www/users_files/", input$input_job_id_denoise))
+    
+    # unzip stats
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_paired_stats"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_stats /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/stats-dada2_paired.qzv"))
+    
+    unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/denoise_paired_stats"), 
+                                       full.names = T)
+    system(paste0("mv ", unzip_dirnames_stats,
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_stats/new_dirname"))
+    
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_stats/",
+                  " /srv/shiny-server/www/users_files/",
+                  input$input_job_id_denoise))
+    
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/stats-dada2_paired.qzv /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/stats-dada2_paired.zip"))
+    # system(paste0("cp /home/imuser/qiime_output/stats-dada2_paired.zip", " /home/imuser/web_version/users_files/", job_id(),"/stats-dada2_paired_", job_id(),".zip"))
+    
+    # unzip dada2 table
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_paired_position_table"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_position_table /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/table-dada2_paired.qzv"))
+    
+    unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/denoise_paired_position_table"), 
+                                       full.names = T)
+    system(paste0("mv ", unzip_dirnames_stats,
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_position_table/new_dirname"))
+    
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_position_table/",
+                  " /srv/shiny-server/www/users_files/",
+                  input$input_job_id_denoise))
+    
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/table-dada2_paired.qzv /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/table-dada2_paired.zip"))
+    
+    # unzip dada2 rep-seqs
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_paired_seqs"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_seqs /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rep-seqs-dada2_paired.qzv"))
+    
+    unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                              input$input_job_id_denoise,
+                                              "/denoise_paired_seqs"), 
+                                       full.names = T)
+    system(paste0("mv ", unzip_dirnames_stats,
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_seqs/new_dirname"))
+    
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_seqs/",
+                  " /srv/shiny-server/www/users_files/",
+                  input$input_job_id_denoise))
+    
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rep-seqs-dada2_paired.qzv /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rep-seqs-dada2_paired.zip"))
+    
+    # alpha-rarefaction
+    max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                 input$input_job_id_denoise,
+                                 "/table-dada2_paired.qza")
+    )[["data"]] %>% colSums() %>% median() %>% ceiling()
+    if(max_depth == 0){
+      max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                   input$input_job_id_denoise,
+                                   "/table-dada2_paired.qza")
+      )[["data"]] %>% colSums() %>% max()
+      
+      if(max_depth == 0){
+        max_depth <- 100
+      }
+    }
+    
+    system(paste0(qiime_cmd, 
+                  " phylogeny align-to-tree-mafft-fasttree --i-sequences /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rep-seqs-dada2_paired.qza", 
+                  " --p-n-threads ", input$threads_paired,
+                  " --o-alignment /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/aligned-rep-seqs-dada2_paired.qza",
+                  " --o-masked-alignment /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/masked-aligned-rep-seqs-dada2_paired.qza",
+                  " --o-tree /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/unrooted-tree_paired.qza",
+                  " --o-rooted-tree /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rooted-tree_paired.qza"))
+    
+    system(paste0(qiime_cmd, 
+                  " diversity alpha-rarefaction --i-table /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/table-dada2_paired.qza",
+                  " --p-max-depth ", max_depth,
+                  " --i-phylogeny /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rooted-tree_paired.qza ",
+                  add_metadata_rarefaction,
+                  " --o-visualization /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rarefaction-dada2_paired.qzv"))
+    
+    # unzip alpha rarefaction
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_paired_rarefaction"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_rarefaction",
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rarefaction-dada2_paired.qzv"))
+    
+    unzip_dirnames_seqs <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                             input$input_job_id_denoise,
+                                             "/denoise_paired_rarefaction"), full.names = T)
+    system(paste0("mv ", unzip_dirnames_seqs, 
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_rarefaction/new_dirname"))
+    
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/denoise_paired_rarefaction/",
+                  " /srv/shiny-server/www/users_files/",
+                  input$input_job_id_denoise))
+    
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rarefaction-dada2_paired.qzv",
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_denoise,
+                  "/rarefaction-dada2_paired.zip"))
+    
+    shinyjs::show("dada2_results_paired")
+    
+    # removeModal()
+    remove_modal_spinner()
+    end_time <- Sys.time()
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    parameter_table <- data.frame(
+      "JobID" = input$input_job_id_denoise,
+      "Step" = "Denoising",
+      "time" = Sys.time(),
+      "duration" = spent_time,
+      "sequence_type" = input$seqs_type,
+      "f_start_position_trim" = input$trim_left_f_paired,
+      "f_end_position_trim" = input$trunc_len_f_paired,
+      "r_start_position_trim" = input$trim_left_r_paired,
+      "r_end_position_trim" = input$trunc_len_r_paired,
+      "quality_score_truncate" = input$qvalue_paired,
+      "chimeric_reads_min_fold_change" = input$chimera_paired,
+      "reads_error_model" = input$n_reads_paired,
+      "metadata_upload" = is.null(input$sample_data_paired),
+      "computing_setting" = input$threads_paired
+    )
+    write.csv(parameter_table,
+              paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/parameter_denoise_paired.csv"), 
+              quote = F, 
+              row.names = F)
+    
+    stats_dada2_paired.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_denoise,
+                                          "/stats-dada2_paired.qzv")
+    table_dada2_paired.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_denoise,
+                                          "/table-dada2_paired.qzv")
+    rep_seqs_dada2_paired.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                             input$input_job_id_denoise,
+                                             "/rep-seqs-dada2_paired.qzv")
+    rarefaction_dada2_paired.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                                input$input_job_id_denoise,
+                                                "/rarefaction-dada2_paired.qzv")
+    if(sum(file.exists(c(stats_dada2_paired.qzv_path, 
+                         table_dada2_paired.qzv_path, 
+                         rep_seqs_dada2_paired.qzv_path,
+                         rarefaction_dada2_paired.qzv_path)
+    )
+    )==4){
+      
+      showModal(modalDialog(title = strong("Denoising succecessfully!"), 
+                            HTML(
+                              paste0(
+                                "This analysis took ", spent_time, ". ",
+                                "You can inspect the results!")
+                            ), 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "Please check your files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    }else{
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "The job id is not found.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+  })
+  
+  observeEvent(input$reset_metadata_paired, {
+    shinyjs::reset("sample_data_paired")
+  })
+  
+  observe({
+    if(is.data.frame(try(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
+      if(colnames(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "The first column name of metadata must be 'SampleID'.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    }
+  })
+  
+  output$dada2_paired_results_bttn <- renderUI({
+    tagList(
+      actionButton(inputId = "show_dada2_paired_table",
+                   label = "Show summary table",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_paired_position_table/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_paired_seqs",
+                   label = "Show seqs info",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_paired_seqs/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_paired_stats",
+                   label = "Show filter info",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_paired_stats/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")),
+      actionButton(inputId = "show_dada2_paired_rarefaction",
+                   label = "Show alpha rarefaction",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
+                                    "/denoise_paired_rarefaction/new_dirname/data/index.html",
+                                    "')"),
+                   icon = icon("eye")
+      ),
+      if(file.exists(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_denoise_paired.csv")
+      )){
+        downloadButton("f_log_denoise_paired", "log file")
+      }else{
+        actionButton(inputId = "f_log_denoise_paired_not",
+                     label = "log file",
+                     style = "color:grey;"
+        )
+      }
+    )
+  })
+  
+  output$f_log_denoise_paired <- downloadHandler(
+    filename = "denoise_paired_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/parameter_denoise_paired.csv"), file)
+    }
+  )
+
+  
+  observeEvent(input$word_chimera_paired, {
+    # output$message_thread_single_position <- renderText(
+    #   "The number of threads to use for multithreaded processing.")
+    showModal(modalDialog(title = strong("Message"),
+                          HTML("<p>The minimum abundance of potential parents of a
+                         sequence being tested as chimeric, expressed as a
+                         fold-change versus the abundance of the sequence
+                         being tested. Values should be greater than or equal
+                         to 1 (i.e. parents should be more abundant than the
+                         sequence being tested)</p>
+                         <p>For example, let’s imagine you have 3 sequences in your data: x, y, and z (which appears to be a chimera of x + y). 
+                         If min-fold-parent-over-abundance (minF) = 1, z must be equally or less abundant than x and y. If minF = 2, x and y must be at least twice as abundant as z for z to be removed. 
+                               If minF = 8, x and y must be at least 8 times as abundant as z for z to be removed!.</p>
+                               <b>That is to say, the higher this value is, the more retained chimera reads are. For most cases, 1 is the default value.</b>"), 
+                          footer = NULL, easyClose = T, size = "l"))
+  })
+  
+  observeEvent(input$Q_learn_reads_paired, {
+    # output$message_learn_paired_position <- renderText(
+    #   " The number of reads to use when training the error model. Smaller numbers will result in a shorter run time but a less reliable error model. [default: 1000000]")
+    showModal(modalDialog(title = strong("Message"),
+                          "Smaller numbers will shorten the run time but result in a less reliable error model. [default: 1000000]", 
+                          footer = NULL, easyClose = T, size = "l"))
+  })
+  
+  
+  output$summary_table_paired <- downloadHandler(
+    filename = paste0("denosing_summary_paired_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/table-dada2_paired.zip"), new_path = file)
+    }
+  )
+  
+  output$seqs_info_paired <- downloadHandler(
+    filename = paste0("denosing_seqs_info_paired_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/rep-seqs-dada2_paired.zip"), new_path = file)
+    }
+  )
+  
+  output$filter_info_paired <- downloadHandler(
+    filename = paste0("denosing_filter_info_paired_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/stats-dada2_paired.zip"), new_path = file)
+    }
+  )
+  
+  output$alpha_rarefaction_paired <- downloadHandler(
+    filename = paste0("denosing_alpha_rarefaction_paired_", input_job_id(), ".zip"),
+    content = function(file){
+      fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/home/imuser/qiime_output/rarefaction-dada2_paired.zip"), new_path = file)
+    }
+  )
+  
+  
+  # Clustering -----------------------------------------------------------------------------------------------
+  observeEvent(input$clustering, {
+    
+    output$word_clustering <- renderText({
+      
+      showModal(modalDialog(title = "Running sequence denoising for single end ...", "Waiting for a moment",footer = NULL))
+      
+      
+      qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+      
+      if(input$seqs_type == "Single end"){
+        
+        system(paste(qiime_cmd, "vsearch dereplicate-sequences --i-sequences",'/home/imuser/qiime_output/demux_single_end.qza', 
+                     "--o-dereplicate-table /home/imuser/qiime_output/table_dereplicate.qza",
+                     "--o-dereplicate-sequences /home/imuser/qiime_output/rep_seqs_dereplicate.qza"))
+      }else{
+        
+        system(paste(qiime_cmd, "vsearch dereplicate-sequences --i-sequences",'/home/imuser/qiime_output/demux_paired_trimmed.qza', 
+                     "--p-threads", input$threads_clustering,
+                     "--o-dereplicate-table /home/imuser/qiime_output/table_dereplicate.qza",
+                     "--o-dereplicate-sequences /home/imuser/qiime_output/rep_seqs_dereplicate.qza"))
+      }
+      
+      
+      # system(paste(qiime_cmd, 'feature-table summarize --i-table /home/imuser/qiime_output/table_dereplicate.qza --o-visualization /home/imuser/qiime_output/table_dereplicate.qzv --m-sample-metadata-file', input$sample_data_paired$datapath))
+      # system(paste(qiime_cmd, 'feature-table tabulate-seqs --i-data /home/imuser/qiime_output/rep_seqs_dereplicate.qza --o-visualization /home/imuser/qiime_output/rep_seqs_dereplicate.qzv'))
+      
+      system(paste(qiime_cmd, "vsearch cluster-features-de-novo --i-table /home/imuser/qiime_output/table_dereplicate.qza",
+                   "--i-sequences /home/imuser/qiime_output/rep-seqs_dereplicate.qza",
+                   "--i-perc-identity", input$clustering_percent,
+                   "--o-clustered-table /home/imuser/qiime_output/table_dn_percent.qza",
+                   "--o-clustered-sequences /home/imuser/qiime_output/rep_seqs_dn_percent.qza"))
+      
+      
+      system(paste(qiime_cmd, 'feature-table summarize --i-table /home/imuser/qiime_output/table_dn_percent.qza --o-visualization /home/imuser/qiime_output/table_dn_percent.qzv --m-sample-metadata-file', input$sample_data_paired_position$datapath))
+      system(paste(qiime_cmd, 'feature-table tabulate-seqs --i-data /home/imuser/qiime_output/rep_seqs_dn_percent.qza --o-visualization /home/imuser/qiime_output/rep_seqs_dn_percent.qzv'))
+      
+      if(sum(file.exists(c('/home/imuser/qiime_output/table_dn_percent.qzv', '/home/imuser/qiime_output/rep_seqs_dn_percent.qzv'))) == 3){
+        output$word_clustering <- renderText({
+          print('Clustering successfully')
+        })
+      }else{
+        output$word_clustering <- renderText({
+          print('Error!')
+        })
+      }
+      
+      removeModal()
+      
+      
+    })
+  })
+  
+  
+  
+  
+  ## OTU picking ------------------------------------------------------------------------------------------------
+  
+  # observeEvent(input$OTU_picking, {
+  #     
+  #     showModal(modalDialog(title = "Running OTU picking ...", "Waiting for a moment", footer = NULL))
+  #         
+  #         qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+  #         system(paste(qiime_cmd, 'vsearch cluster-features-de-novo --i-table /home/imuser/qiime_output/table-dada2.qza --i-sequences /home/imuser/qiime_output/rep-seqs-dada2.qza --p-perc-identity', 
+  #                      input$OTU_identity,
+  #                      '--o-clustered-table /home/imuser/qiime_output/table-dada2-dn.qza --o-clustered-sequences /home/imuser/qiime_output/rep-seqs-dada2-dn.qza'))
+  #         
+  #         system(paste(qiime_cmd, 'feature-table summarize --i-table /home/imuser/qiime_output/table-dada2-dn.qza --o-visualization /home/imuser/qiime_output/table-dada2-dn.qzv'))
+  #         system(paste(qiime_cmd, 'feature-table tabulate-seqs --i-data /home/imuser/qiime_output/rep-seqs-dada2-dn.qza --o-visualization /home/imuser/qiime_output/rep-seqs-dada2-dn.qzv'))
+  #         
+  #         if(file.exists(c('/home/imuser/qiime_output/table-dada2-dn.qzv', '/home/imuser/qiime_output/rep-seqs-dada2-dn.qzv'))){
+  #             output$word_OTUs <- renderText({
+  #                 print('Picking successfully')
+  #                 })
+  #         }else{
+  #             output$word_OTUs <- renderText({
+  #                 print('Error!')
+  #             })
+  #         }
+  #         
+  #         
+  #     removeModal()
+  # })
+  # 
+  
+  
+  
+  # Taxonomy classification ------------------------------------------------------------------------------------------
+  
+  # output$in_r <- renderUI({
+  
+  # detect the database
+  observe({
+    
+    PR2_18S_seqs <- list.files("/home/imuser/taxa_database/PR2/18S/seqs/")
+    PR2_18S_taxa <- list.files("/home/imuser/taxa_database/PR2/18S/taxonomy/")
+    if(any(str_detect(PR2_18S_seqs, ".fasta")) & any(str_detect(PR2_18S_taxa, ".tax"))){
+      PR2_choice <- c("PR2_18S")
+    }else{
+      PR2_choice <- c("PR2_18S (Not detected)")
+    }
+    
+    silva_16S_seqs <- list.files(paste0("/home/imuser/taxa_database/silva/rep_set/rep_set_16S_only/", c("90","94","97","99")))
+    silva_16S_taxa <- list.files(paste0("/home/imuser/taxa_database/silva/taxonomy/16S_only/", c("90","94","97","99")))
+    silva_16S_seqs_exist <- str_count(silva_16S_seqs, ".fna$") %>% sum()
+    silva_16S_taxa_exist <- str_count(silva_16S_taxa, "^taxonomy_7_levels.txt") %>% sum()
+    if(sum(c(silva_16S_seqs_exist, silva_16S_taxa_exist))==8){
+      silva_choice <- paste0("Silva_16S_", c("90","94","97","99"))
+    }else{
+      silva_choice <- "Silva (Not detected)"
+    }
+    
+    greengenes_16S_seqs_folder <- "/home/imuser/taxa_database/greengenes/rep_set/"
+    greengenes_16S_seqs <- list.files(greengenes_16S_seqs_folder)
+    greengenes_16S_seqs_exist <- str_count(greengenes_16S_seqs, ".fasta$") %>% sum()
+    greengenes_16S_taxa_folder <- "/home/imuser/taxa_database/greengenes/taxonomy/"
+    greengenes_16S_taxa <- list.files(greengenes_16S_taxa_folder)
+    greengenes_16S_taxa_exist <- str_count(greengenes_16S_taxa, "_otu_taxonomy.txt$") %>% sum()
+    if(sum(c(greengenes_16S_seqs_exist, greengenes_16S_taxa_exist))==28){
+      greengenes_choice <- paste0("Greengenes_16S_", c(seq(61,99, by = 3,), 99))
+    }else{
+      greengenes_choice <- "Greengenes (Not detected)"
+    }
+    
+    updateSelectInput(session, 
+                      inputId = "select_database",
+                      label = "Choose the database",
+                      choices = c(silva_choice, greengenes_choice, PR2_choice)
+                      
+                      )
+  })
+  
+  # auto download database
+  observe({
+    if(input$select_database  %in% c("Greengenes (Not detected)", "Silva (Not detected)", "PR2_18S (Not detected)")){
+      shinyjs::show("auto_load_db")
+    }else{
+      shinyjs::hide("auto_load_db")
+    }
+    
+
+  })
+  
+
+      observeEvent(input$ok_db_gg,{
+        
+        show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+        
+        system("sudo rm -r /home/imuser/taxa_database/greengenes/*")
+        system("sudo wget -O /home/imuser/taxa_database/greengenes/gg_13_5_otus.tar.gz https://gg-sg-web.s3-us-west-2.amazonaws.com/downloads/greengenes_database/gg_13_5/gg_13_5_otus.tar.gz")
+        system("sudo tar -C /home/imuser/taxa_database/greengenes/ -zxvf /home/imuser/taxa_database/greengenes/gg_13_5_otus.tar.gz")
+        system("sudo rm /home/imuser/taxa_database/greengenes/gg_13_5_otus.tar.gz")
+        system("sudo cp -r /home/imuser/taxa_database/greengenes/gg_13_5_otus/rep_set /home/imuser/taxa_database/greengenes/")
+        system("sudo cp -r /home/imuser/taxa_database/greengenes/gg_13_5_otus/taxonomy /home/imuser/taxa_database/greengenes/")
+        system("sudo rm -r /home/imuser/taxa_database/greengenes/gg_13_5_otus")
+        system("sudo chmod -R 777 /home/imuser/taxa_database/greengenes/")
+        
+        remove_modal_spinner()
+        showModal(modalDialog(title = "Successfully!", "Greengenes (gg_13_5_otus.tar.gz) has been downloaded. Please restart MOCHI.", footer = NULL, easyClose = T))
+        
+      })
+      
+    
+      observeEvent(input$ok_db_silva,{
+
+        show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+        
+        system("sudo rm -r /home/imuser/taxa_database/silva/*")
+        system("sudo wget -O /home/imuser/taxa_database/silva/Silva_132_release.zip https://www.arb-silva.de/fileadmin/silva_databases/qiime/Silva_132_release.zip")
+        system("sudo unzip -d /home/imuser/taxa_database/silva/ /home/imuser/taxa_database/silva/Silva_132_release.zip")
+        system("sudo rm /home/imuser/taxa_database/silva/Silva_132_release.zip")
+        system("sudo cp -r /home/imuser/taxa_database/silva/SILVA_132_QIIME_release/rep_set /home/imuser/taxa_database/silva/")
+        system("sudo cp -r /home/imuser/taxa_database/silva/SILVA_132_QIIME_release/taxonomy /home/imuser/taxa_database/silva/")
+        system("sudo rm -r /home/imuser/taxa_database/silva/SILVA_132_QIIME_release")
+        system("sudo rm -r /home/imuser/taxa_database/silva/__MACOSX")
+        system("sudo chmod -R 777 /home/imuser/taxa_database/silva/")
+        
+        remove_modal_spinner()
+        showModal(modalDialog(title = "Successfully!", "Silva (Silva_132_release.zip) has been downloaded. Please restart MOCHI.", footer = NULL, easyClose = T))
+        
+      })
+  
+      observeEvent(input$ok_db_PR2,{
+        show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+        
+        system("sudo rm -r /home/imuser/taxa_database/PR2/*")
+        system("sudo mkdir /home/imuser/taxa_database/PR2/18S")
+        system("sudo mkdir /home/imuser/taxa_database/PR2/18S/seqs")
+        system("sudo mkdir /home/imuser/taxa_database/PR2/18S/taxonomy")
+        system("sudo wget -O /home/imuser/taxa_database/PR2/18S/seqs/pr2_version_4.12.0_18S_mothur.fasta.gz https://github.com/pr2database/pr2database/releases/download/v4.12.0/pr2_version_4.12.0_16S_mothur.fasta.gz")
+        system("sudo wget -O /home/imuser/taxa_database/PR2/18S/taxonomy/pr2_version_4.12.0_18S_mothur.tax.gz https://github.com/pr2database/pr2database/releases/download/v4.12.0/pr2_version_4.12.0_16S_mothur.tax.gz")
+        system("sudo gunzip /home/imuser/taxa_database/PR2/18S/seqs/pr2_version_4.12.0_18S_mothur.fasta.gz")
+        system("sudo gunzip /home/imuser/taxa_database/PR2/18S/taxonomy/pr2_version_4.12.0_18S_mothur.tax.gz")
+        system("sudo chmod -R 777 /home/imuser/taxa_database/PR2")
+        
+        remove_modal_spinner()
+        showModal(modalDialog(title = "Successfully!", "PR2 (pr2_version_4.12.0_18S) has been downloaded. Please restart MOCHI.", footer = NULL, easyClose = T))
+      })
+    
+  
+  
+  observeEvent(input$auto_load_db, {
+    if(input$select_database == "Greengenes (Not detected)"){
+      showModal(
+        modalDialog(
+        title = "Download message",
+        "Greengenes (gg_13_5_otus.tar.gz, 300 MB) will be downloaded. Click OK to start.",
+        footer = tagList(
+          modalButton(label = "Cancel"),
+          actionButton("ok_db_gg", "Ok")
+        ),
+        
+        easyClose = T))
+    }else if(input$select_database == "Silva (Not detected)"){
+      showModal(
+        modalDialog(
+        title = "Download message",
+        "Silva (Silva_132_release.zip, 3 GB) will be downloaded. Click OK to start.",
+        footer = tagList(
+          modalButton(label = "Cancel"),
+          actionButton("ok_db_silva", "Ok")
+        ),
+        
+        easyClose = T))
+    }else if(input$select_database == "PR2_18S (Not detected)"){
+      showModal(
+        modalDialog(
+        title = "Download message",
+        "PR2 (pr2_version_4.12.0_18S, 786 KB) will be downloaded. Click OK to start.",
+        footer = tagList(
+          modalButton(label = "Cancel"),
+          actionButton("ok_db_PR2", "Ok")
+        ),
+        
+        easyClose = T)
+        )
+    
+    }
+
+  })
+  
+  # check primer
+  observe({
+    req(input$primer_f, input$primer_r)
+    
+    output$check_primer <- renderUI(
+      tagList(
+        p("Your forward primer is ",  strong(input$primer_f),  " now.",
+          style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;"),
+        p("Your reverse primer is ",  strong(input$primer_r),  " now.",
+          style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;")
+        # paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;'>Your forward primer is ", strong(input$primer_f), " now.</p>") %>% HTML(),
+        # paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;>Your reverse primer is ", strong(input$primer_r), " now.</p>") %>% HTML()
+      )
+       
+       )
+    
+    # output$check_r_primer <- renderUI(
+    #   paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;>Your reverse primer is ", strong(input$primer_r), " now.</p>") %>% HTML()
+    # )
+    
+  })
+  
+  
+  output$out_f <- renderUI({
+    
+    if (input$primer_f == "other"){
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- textInput(inputId = "primer_f_manu", 
+                                    label = span("Give the forward primer sequences", style = "font-size: 18px; font-weight: 300; color: white; margin-top: 5px;")
+                                    )
+        return(text_list)
+      })
+    }else{
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- p("")
+        return(text_list)
+      })
+    }
+    
+    
+  })
+  
+  output$out_r <- renderUI({
+    
+    # req(input$primer_r)
+    
+    if (input$primer_r == "other"){
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- textInput(inputId = "primer_r_manu", 
+                                    label = span("Give the reverse primer sequences", style = "font-size: 18px; font-weight: 300; color: white; margin-top: 5px;")
+                                    )
+        return(text_list)
+      })
+    }else{
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- p("")
+        return(text_list)
+      })
+    }
+    
+    
+  })
+  
+  # show primer table
+  observeEvent(input$show_primer, {
+    # output$mk_taxa <- renderUI({
+    shinyjs::toggle("primer_table_hide")
+    
+    output$primer_seqs_table <- renderDataTable({
+      
+      
+      primer_table <- data.frame(`Primer name`=c("8F", "27F", "CC [F]", "341F","357F", "515F", "533F", "16S.1100.F16", "1237F", 
+                                          "519R", "CD [R]", "806R","907R", "1100R", "1391R", "1492R (l)", "1492R (s)"), 
+                                 `Primer sequence`=c("AGAGTTTGATCCTGGCTCAG", "AGAGTTTGATCMTGGCTCAG", "CCAGACTCCTACGGGAGGCAGC", "CTCCTACGGGAGGCAGCAG", "CCTACGGGNGGCWGCAG",
+                                             "GTGCCAGCMGCCGCGGTAA", "GTGCCAGCAGCCGCGGTAA", "CAACGAGCGCAACCCT", "GGGCTACACACGYGCWAC",
+                                             "GWATTACCGCGGCKGCTG", "CTTGTGCGGGCCCCCGTCAATTC", "GGACTACHVGGGTWTCTAAT","CCGTCAATTCMTTTRAGTTT", "AGGGTTGCGCTCGTTG",
+                                             "GACGGGCGGTGTGTRCA", "GGTTACCTTGTTACGACTT", "ACCTTGTTACGACTT"),
+                                 # Target_Group=c(rep("Universal", 11), "Bacterial", rep("Universal", 3)),
+                                 Reference=c("Turner et al. 1999", "Lane et al. 1991", "Rudi et al. 1997", "Herlemann et al. 2011","Turner et al. 1999", "Turner et al. 1999",
+                                             "Weisburg et al. 1991", "Turner et al. 1999", "Turner et al. 1999", "Turner et al. 1999", "Rudi et al. 1997", "Liu Z et al. 2007",
+                                             "Lane et al. 1991", "Turner et al. 1999", "Turner et al. 1999", "Turner et al. 1999", "Lane et al. 1991"))
+      colnames(primer_table)[2] <- "Primer sequence (5'-3')"
+      # colnames(primer_table)[3] <- "Target group"
+      
+      return(primer_table)
+      
+    })
+    
+
+    
+  })
+  
+  
+  # start training
+  observeEvent(input$start_training, {
+    
+    rep_seq_path <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                      input$input_job_id_taxa))
+    if(sum(str_detect(rep_seq_path, "^rep-seqs-dada2_"))==0){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please finish sequence denoising first.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else if(input$select_database %in% c("Silva (Not detected)", "Greengenes (Not detected)", "PR2_18S (Not detected)")){  
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please download taxonomy database first!", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_taxa)>0){
+    
+    start_time <- Sys.time()
+    
+    # showModal(modalDialog(title = "Running taxonomic analysis ...", "Waiting for a moment", footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    
+    
+    
+    database_list <- list(Silva_16S_99=c(list.files(path = "/home/imuser/taxa_database/silva/rep_set/rep_set_16S_only/99", full.names = T), "/home/imuser/taxa_database/silva/taxonomy/16S_only/99/taxonomy_7_levels.txt"),
+                          Silva_16S_97=c(list.files(path = "/home/imuser/taxa_database/silva/rep_set/rep_set_16S_only/97", full.names = T), "/home/imuser/taxa_database/silva/taxonomy/16S_only/97/taxonomy_7_levels.txt"),
+                          Silva_16S_94=c(list.files(path = "/home/imuser/taxa_database/silva/rep_set/rep_set_16S_only/94", full.names = T), "/home/imuser/taxa_database/silva/taxonomy/16S_only/94/taxonomy_7_levels.txt"),
+                          Silva_16S_90=c(list.files(path = "/home/imuser/taxa_database/silva/rep_set/rep_set_16S_only/90", full.names = T), "/home/imuser/taxa_database/silva/taxonomy/16S_only/90/taxonomy_7_levels.txt"),
+                          Greengenes_16S_99=c("/home/imuser/taxa_database/greengenes/rep_set/99_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/99_otu_taxonomy.txt"),
+                          Greengenes_16S_97=c("/home/imuser/taxa_database/greengenes/rep_set/97_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/97_otu_taxonomy.txt"),
+                          Greengenes_16S_94=c("/home/imuser/taxa_database/greengenes/rep_set/94_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/94_otu_taxonomy.txt"),
+                          Greengenes_16S_91=c("/home/imuser/taxa_database/greengenes/rep_set/91_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/91_otu_taxonomy.txt"),
+                          Greengenes_16S_88=c("/home/imuser/taxa_database/greengenes/rep_set/88_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/88_otu_taxonomy.txt"),
+                          Greengenes_16S_85=c("/home/imuser/taxa_database/greengenes/rep_set/85_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/85_otu_taxonomy.txt"),
+                          Greengenes_16S_82=c("/home/imuser/taxa_database/greengenes/rep_set/82_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/82_otu_taxonomy.txt"),
+                          Greengenes_16S_79=c("/home/imuser/taxa_database/greengenes/rep_set/79_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/79_otu_taxonomy.txt"),
+                          Greengenes_16S_76=c("/home/imuser/taxa_database/greengenes/rep_set/76_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/76_otu_taxonomy.txt"),
+                          Greengenes_16S_73=c("/home/imuser/taxa_database/greengenes/rep_set/73_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/73_otu_taxonomy.txt"),
+                          Greengenes_16S_70=c("/home/imuser/taxa_database/greengenes/rep_set/70_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/70_otu_taxonomy.txt"),
+                          Greengenes_16S_67=c("/home/imuser/taxa_database/greengenes/rep_set/67_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/67_otu_taxonomy.txt"),
+                          Greengenes_16S_64=c("/home/imuser/taxa_database/greengenes/rep_set/64_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/64_otu_taxonomy.txt"),
+                          Greengenes_16S_61=c("/home/imuser/taxa_database/greengenes/rep_set/61_otus.fasta", "/home/imuser/taxa_database/greengenes/taxonomy/61_otu_taxonomy.txt"),
+                          PR2_18s=c(list.files(path = "/home/imuser/taxa_database/PR2/18S/seqs/", full.names = T), "/home/imuser/taxa_database/PR2/18S/taxonomy/pr2_version_4.12.0_18S_mothur.tax")
+    )
+    
+    #  transform database to .qza
+    # rm("/home/imuser/qiime_output/identity_otus.qza", "/home/imuser/qiime_output/ref-taxonomy-7.qza")
+    system(paste0(qiime_cmd, 
+                  " tools import --type 'FeatureData[Sequence]' --input-path ", database_list[[input$select_database]][1], 
+                 " --output-path /home/imuser/web_version/users_files/",
+                 input$input_job_id_taxa,
+                 "/identity_otus.qza"))
+    system(paste0(qiime_cmd, 
+                  " tools import --type 'FeatureData[Taxonomy]' --input-format HeaderlessTSVTaxonomyFormat --input-path ", database_list[[input$select_database]][2], 
+                 " --output-path /home/imuser/web_version/users_files/",
+                 input$input_job_id_taxa,
+                 "/ref-taxonomy-7.qza"))
+    
+    primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                        "27F"="AGAGTTTGATCMTGGCTCAG",
+                        "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                        "341F"="CTCCTACGGGAGGCAGCAG",
+                        "357F"="CTCCTACGGGAGGCAGCAG",
+                        "515F"="GTGCCAGCMGCCGCGGTAA",
+                        "533F"="GTGCCAGCAGCCGCGGTAA",
+                        "16S.1100.F16"="CAACGAGCGCAACCCT",
+                        "1237F"="GGGCTACACACGYGCWAC",
+                        "519R"="GWATTACCGCGGCKGCTG",
+                        "806R"="GGACTACHVGGGTWTCTAAT",
+                        "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                        "907R"="CCGTCAATTCMTTTRAGTTT",
+                        "1100R"="AGGGTTGCGCTCGTTG",
+                        "1391R"="GACGGGCGGTGTGTRCA",
+                        "1492R (l)"="GGTTACCTTGTTACGACTT",
+                        "1492R (s)"="ACCTTGTTACGACTT" 
+    )
+    
+    
+    # rm("/home/imuser/qiime_output/ref-seqs.qza")
+    if(input$primer_f != "other" & input$primer_r != "other"){
+      system(paste0(qiime_cmd, 
+                    " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/identity_otus.qza",
+                    " --p-f-primer ", primer_list[[input$primer_f]], 
+                    " --p-r-primer ", primer_list[[input$primer_r]], 
+                    # "--p-trunc-len", input$trunc_length, 
+                    " --p-min-length ", input$min_length, 
+                    " --p-max-length ", input$max_length, 
+                    " --p-n-jobs ", input$n_jobs, 
+                    " --o-reads /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/ref-seqs.qza"))
+    }
+    
+    if(input$primer_f == "other" & input$primer_r != "other"){
+      system(paste0(qiime_cmd, 
+                   " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/identity_otus.qza",
+                   " --p-f-primer ", input$primer_f_manu, 
+                   " --p-r-primer ", primer_list[[input$primer_r]], 
+                   # "--p-trunc-len", input$trunc_length, 
+                   " --p-min-length ", input$min_length, 
+                   " --p-max-length ", input$max_length, 
+                   " --p-n-jobs ", input$n_jobs, 
+                   " --o-reads /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/ref-seqs.qza"))
+    }
+    
+    if(input$primer_f != "other" & input$primer_r == "other"){
+      system(paste0(qiime_cmd, 
+                    " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/identity_otus.qza",
+                    " --p-f-primer ", primer_list[[input$primer_f]], 
+                    " --p-r-primer ", input$primer_r_manu, 
+                   # "--p-trunc-len", input$trunc_length, 
+                    " --p-min-length ", input$min_length, 
+                    " --p-max-length ", input$max_length, 
+                    " --p-n-jobs ", input$n_jobs, 
+                    " --o-reads /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/ref-seqs.qza"))
+    }
+    
+    if(input$primer_f == "other" & input$primer_r == "other"){
+      system(paste0(qiime_cmd, 
+                    " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/identity_otus.qza",
+                    " --p-f-primer ", input$primer_f_manu, 
+                    " --p-r-primer ", input$primer_r_manu, 
+                   # "--p-trunc-len", input$trunc_length, 
+                    " --p-min-length ", input$min_length, 
+                    " --p-max-length ", input$max_length, 
+                    " --p-n-jobs ", input$n_jobs, 
+                    " --o-reads /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/ref-seqs.qza"))
+    }
+    
+    # rm("/home/imuser/qiime_output/classifier.qza")
+    system(paste0(qiime_cmd, 
+                  " feature-classifier fit-classifier-naive-bayes --i-reference-reads /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa, "/ref-seqs.qza",
+                  " --i-reference-taxonomy /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/ref-taxonomy-7.qza",
+                  " --o-classifier /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/classifier.qza"))
+    
+    # rm("/home/imuser/qiime_output/taxonomy.qza")
+    if(input$seqs_type == "Single end"){
+      system(paste0(qiime_cmd, 
+                   " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/classifier.qza",
+                   " --i-reads /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/rep-seqs-dada2_single.qza", 
+                   " --p-n-jobs ", input$n_jobs,
+                   " --o-classification /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/taxonomy.qza"))
+    }else{
+      system(paste0(qiime_cmd, 
+                    " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/classifier.qza",
+                    " --i-reads /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/rep-seqs-dada2_paired.qza", 
+                    " --p-n-jobs ", input$n_jobs,
+                    " --o-classification /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy.qza"))
+    }
+    
+    # system(paste(qiime_cmd, "feature-classifier classify-sklearn --i-classifier /home/imuser/qiime_output/classifier.qza --i-reads /home/imuser/qiime_output/rep-seqs-dada2.qza", 
+    #              "--p-n-jobs", input$n_jobs,
+    #              "--o-classification /home/imuser/qiime_output/taxonomy.qza"))
+    
+    # rm("/home/imuser/qiime_output/taxonomy.qzv")
+    system(paste0(qiime_cmd, 
+                 " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
+                 input$input_job_id_taxa,
+                 "/taxonomy.qza",
+                 " --o-visualization /home/imuser/web_version/users_files/",
+                 input$input_job_id_taxa,
+                 "/taxonomy.qzv"))
+    
+    
+    # rm("/home/imuser/qiime_output/taxatable7.qza")
+    if(input$seqs_type == "Single end"){
+      system(paste0(qiime_cmd, 
+                    " taxa collapse --i-table /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/table-dada2_single.qza",
+                   " --i-taxonomy /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/taxonomy.qza",
+                   " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/taxatable7.qza"))
+    }else{
+      system(paste0(qiime_cmd, 
+                    " taxa collapse --i-table /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/table-dada2_paired.qza",
+                   " --i-taxonomy /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/taxonomy.qza",
+                   " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
+                   input$input_job_id_taxa,
+                   "/taxatable7.qza"))
+    }
+    
+    
+    # system("rm -r /home/imuser/qiime_output/taxonomy_unzip/new_dirname")
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_unzip"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/taxonomy_unzip /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,"/taxonomy.qzv"))
+    
+    unzip_dirnames_taxa <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                             input$input_job_id_taxa,
+                                             "/taxonomy_unzip"), 
+                                      full.names = T)
+    system(paste0("mv ", 
+                  unzip_dirnames_taxa, 
+                  " /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/taxonomy_unzip/new_dirname"))
+    
+    # system("sudo rm -rf /srv/shiny-server/www/taxonomy_unzip/")
+    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/taxonomy_unzip/",
+                  " /srv/shiny-server/www/users_files/",
+                  input$input_job_id_taxa))
+
+    system(paste0("cp /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/taxonomy.qzv /home/imuser/web_version/users_files/",
+                  input$input_job_id_taxa,
+                  "/taxonomy.zip"))
+    # system(paste0("cp /home/imuser/qiime_output/taxonomy.zip", " /home/imuser/web_version/users_files/", job_id(),"/taxonomy_", job_id(),".zip"))
+    
+    # system(paste0("cp /home/imuser/qiime_output/taxatable7.qza", " /home/imuser/web_version/users_files/", job_id(),"/taxatable7_", job_id(),".qza"))
+    # system(paste0("cp /home/imuser/qiime_output/table-dada2_single.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_single_", job_id(),".zip"))
+    # system(paste0("cp /home/imuser/qiime_output/table-dada2_paired.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_paired_", job_id(),".zip"))
+    
+    # removeModal()
+    remove_modal_spinner()
+    
+    end_time <- Sys.time()
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    parameter_table <- data.frame(
+      "JobID" = input$input_job_id_taxa,
+      "Step" = "Taxonomy classification",
+      "time" = Sys.time(),
+      "duration" = spent_time,
+      "sequence_type" = input$seqs_type,
+      "database" = input$select_database,
+      "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+      "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+      "min_length" = input$min_length,
+      "max_length" = input$max_length,
+      "computing_setting" = input$n_jobs
+    )
+    write.csv(parameter_table,
+              paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification.csv"), 
+              quote = F, 
+              row.names = F)
+    
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy.qzv"))){
+        
+        shinyjs::show("taxa_results_view")
+        shinyjs::show("taxa_results_download")
+        
+        showModal(modalDialog(title = strong("Taxonomic analysis has been finished!"), 
+                              HTML(
+                                paste0(
+                                  "This analysis took ", spent_time, ". ",
+                                  "You can inspect the results!")
+                              ), 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        # output$word_training <- renderText({
+        #   print('Error')
+        # })
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "Please check your files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    
+    }else{
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "The job id is not found.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+  })
+  
+  
+  output$taxa_view_bttn <- renderUI({
+    tagList(
+      actionButton(inputId = "view_taxa",
+                   label = "View!",
+                   onclick = paste0("window.open('http://",
+                                    # my_qiime_ip, my_qiime_port,
+                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_taxa,
+                                    "/taxonomy_unzip/new_dirname/data/index.html",
+                                    "')"),
+                   style = "margin-left: 10px",
+                   icon = icon("eye")
+      ),
+      if(file.exists(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/parameter_taxonomy_classification.csv"
+      ))){
+        downloadButton(outputId = "f_log_file_taxonomy_classification", label = "log file")
+      }else{
+        actionButton(inputId = "f_log_file_taxonomy_classification_no",
+                     label = "log file",
+                     style = "color: grey"
+        )
+      }
+      
+    )
+    
+  })
+  
+  output$f_log_file_taxonomy_classification <- downloadHandler(
+    filename = "taxonomy_classification_log.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_taxa,
+                       "/parameter_taxonomy_classification.csv"), file)
+    }
+  )
+  
+  output$taxatable_download <- downloadHandler(
+    
+    filename = "taxonomic_table.qza",
+    
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", 
+                       input$input_job_id_taxa,
+                       "/taxatable7.qza"
+                       ), file)
+    }
+    
+  )
+  
+  output$table_dada2_download <- downloadHandler(
+    filename = "ASVs_table.qza",
+    
+    content = function(file){
+      # if(input$seqs_type == "Single end"){
+      #   file.copy("/home/imuser/qiime_output/table-dada2_single.qza", file)
+      # }else{
+      #   file.copy("/home/imuser/qiime_output/table-dada2_paired.qza", file)
+      # }
+      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^table-dada2_ | grep qza$"), intern = T)[1]
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/", lastest_file), file)
+      
+    }
+  )
+  
+  output$rep_seq_dada2_download <- downloadHandler(
+    filename = "rep_seqs_forPhylo.qza",
+    
+    content = function(file){
+      # if(input$seqs_type == "Single end"){
+      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_single.qza", file)
+      # }else{
+      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_paired.qza", file)
+      # }
+      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^rep-seqs-dada2_ | grep qza$"), intern = T)[1]
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/", lastest_file), file)
+      
+    }
+  )
+  
+  observe({
+    if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                          input$input_job_id_taxa,
+                          "/taxonomy.qzv"))){
+      
+      shinyjs::show("taxa_results_view")
+      shinyjs::show("taxa_results_download")
+    }
+  })
+  
+  
+  
+  
+  # Taxonomic analysis -----------------------------------------------------------------------------------------
+  
+  
+  # common reactive objects ----
+  TaxaTable_output <- reactive({
+    
+    # revise the species names 
+    as_output_taxtable <- function(df_data){
+      
+      df_data_rownames<-row.names(df_data)
+      
+      df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+      
+      row.names(df_data) <- NULL
+      
+      # remove the non-sense string
+      df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+      df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+      
+      
+      library(tidyr)
+      df_data <- df_data %>%
+        separate(
+          col = Species,
+          into = level_group(),
+          sep = ";"
+        )
+      
+      # replace "__" to "Unassigned"
+      df_data<-replace(df_data, df_data=="", "Unassigned")
+      df_data<-replace(df_data, df_data=="__", "Unassigned")
+      
+      return(as.data.frame(df_data))
+    }
+    
+    
+    as_taxtable_perFeature<-function(taxatable_data, metadata_data){
+      
+      
+      metadata_feature_name <- colnames(metadata_data)
+      
+      
+      
+      metadata_feature_summary <- lapply(1:length(metadata_data), function(i){
+        metadata_data[,i] %>% unique() %>% as.character()
+      })
+      names(metadata_feature_summary) <- metadata_feature_name
+      
+      
+      k<-function(x, taxatable_data_k, metadata_data_k){
+        
+        sample_<-lapply(1:length(metadata_feature_summary[[x]]), function(i){
+          
+          metadata_data_k[,1][which(metadata_data_k[,x]==metadata_feature_summary[[x]][i])] %>% as.character()
+          
+        })
+        
+        names(sample_) <- metadata_feature_summary[[x]]
+        
+        
+        taxatable_data_ <- lapply(1:length(metadata_feature_summary[[x]]), function(i){
+          
+          rowSums(as.data.frame(taxatable_data_k[,sample_[[i]]]))
+          
+        })
+        
+        taxatable_data_<-as.data.frame(taxatable_data_)
+        colnames(taxatable_data_)<-names(sample_)
+        
+        return(taxatable_data_)
+      }
+      
+      
+      all_taxatable_perFeature <- sapply(1:length(metadata_feature_name), function(i){
+        
+        k(i, taxatable_data, metadata_data)
+        
+      })
+      
+      names(all_taxatable_perFeature) <- metadata_feature_name
+      return(all_taxatable_perFeature)
+      
+    }
+    
+    
+    TaxaTable_data_list <- as_taxtable_perFeature(TaxaTable(), Metadata())
+    
+    TaxaTable_data_list_output <- as_output_taxtable(TaxaTable_data_list[[input$metadata1]])
+    
+    if(input$`18S`){
+      colnames(TaxaTable_data_list_output)[1:7] <- c(
+        paste0('Level 1', " (K=", length(unique(TaxaTable_data_list_output[, 1])), ")"),
+        paste0('Level 2', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:2])), ")"),
+        paste0('Level 3', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:3])), ")"),
+        paste0('Level 4', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:4])), ")"),
+        paste0('Level 5', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:5])), ")"),
+        paste0('Level 6', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:6])), ")"),
+        paste0('Level 7', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:7])), ")")
+      )
+    }else{
+    colnames(TaxaTable_data_list_output)[1:7] <- c(
+      paste0('Kingdom', " (K=", length(unique(TaxaTable_data_list_output[, 1])), ")"),
+      paste0('Phylum', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:2])), ")"),
+      paste0('Class', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:3])), ")"),
+      paste0('Order', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:4])), ")"),
+      paste0('Family', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:5])), ")"),
+      paste0('Genus', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:6])), ")"),
+      paste0('Species', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:7])), ")")
+    )
+    }
+    
+    
+    a <- as_output_taxtable(TaxaTable())
+    ft_names <- input$metadata1 
+    b <- list()
+    b <- lapply(as.character(unique(Metadata()[, ft_names])), function(i){
+      
+      b_metadata_select <- Metadata()[Metadata()[, ft_names] %in% i,] %>% select("SampleID") 
+      b_metadata_select <- b_metadata_select[, "SampleID"] %>% as.character()
+      b_select <- a %>% select(b_metadata_select)
+      
+    })
+    
+    k <- a[, 1:7]
+    for (i in 1:length(unique(Metadata()[, ft_names]))) {
+      
+      k <- cbind(k, b[[i]])
+      
+    }
+    
+    
+    c <- list()
+    c <- lapply(unique(Metadata()[, ft_names]), function(i){
+      
+      c_metadata_select <- Metadata()[Metadata()[, ft_names] %in% i,] %>% select("SampleID") 
+      c_metadata_select_length <- c_metadata_select[, "SampleID"] %>% as.character() %>% length()
+      
+    })
+    
+    names(c) <- unique(Metadata()[, ft_names])
+    
+    
+    if(input$`18S`){
+      sketch = htmltools::withTags(table(style="text-align:center;",
+                                         class = 'display',
+                                         col(style="width:50%"),
+                                         thead(
+                                           tr(
+                                             th(rowspan = 2, paste0('Level 1', " (K=", length(unique(k[, 1])), ")")),
+                                             th(rowspan = 2, paste0('Level 2', " (K=", nrow(unique(k[, 1:2])), ")")),
+                                             th(rowspan = 2, paste0('Level 3', " (K=", nrow(unique(k[, 1:3])), ")")),
+                                             th(rowspan = 2, paste0('Level 4', " (K=", nrow(unique(k[, 1:4])), ")")),
+                                             th(rowspan = 2, paste0('Level 5', " (K=", nrow(unique(k[, 1:5])), ")")),
+                                             th(rowspan = 2, paste0('Level 6', " (K=", nrow(unique(k[, 1:6])), ")")),
+                                             th(rowspan = 2, paste0('Level 7', " (K=", nrow(unique(k[, 1:7])), ")")),
+                                             # th(colspan = 8, 'gut'),
+                                             # th(colspan = 8, 'left palm'),
+                                             # th(colspan = 9, 'right palm'),
+                                             # th(colspan = 9, 'tongue')
+                                             lapply(1:length(unique(Metadata()[, ft_names])), function(i){
+                                               
+                                               th(colspan = c[[i]], paste0(unique(Metadata()[, ft_names])[i]), " ( N=", c[[i]], ")")
+                                             })
+                                           ),
+                                           tr(
+                                             lapply(colnames(k)[-(1:7)], th)
+                                           )
+                                         )
+      ))
+    }else{
+      sketch = htmltools::withTags(table(style="text-align:center;",
+                                         class = 'display',
+                                         col(style="width:50%"),
+                                         thead(
+                                           tr(
+                                             th(rowspan = 2, paste0('Kingdom', " (K=", length(unique(k[, 1])), ")")),
+                                             th(rowspan = 2, paste0('Phylum', " (K=", nrow(unique(k[, 1:2])), ")")),
+                                             th(rowspan = 2, paste0('Class', " (K=", nrow(unique(k[, 1:3])), ")")),
+                                             th(rowspan = 2, paste0('Order', " (K=", nrow(unique(k[, 1:4])), ")")),
+                                             th(rowspan = 2, paste0('Family', " (K=", nrow(unique(k[, 1:5])), ")")),
+                                             th(rowspan = 2, paste0('Genus', " (K=", nrow(unique(k[, 1:6])), ")")),
+                                             th(rowspan = 2, paste0('Species', " (K=", nrow(unique(k[, 1:7])), ")")),
+                                             # th(colspan = 8, 'gut'),
+                                             # th(colspan = 8, 'left palm'),
+                                             # th(colspan = 9, 'right palm'),
+                                             # th(colspan = 9, 'tongue')
+                                             lapply(1:length(unique(Metadata()[, ft_names])), function(i){
+                                               
+                                               th(colspan = c[[i]], paste0(unique(Metadata()[, ft_names])[i]), " ( N=", c[[i]], ")")
+                                             })
+                                           ),
+                                           tr(
+                                             lapply(colnames(k)[-(1:7)], th)
+                                           )
+                                         )
+      ))
+    }
+    
+    
+    
+    
+    
+    
+    if(input$metadata1=="SampleID"){
+      
+      return(DT::datatable(TaxaTable_data_list_output, rownames = F))
+    }else{
+      # use rownames = FALSE here because we did not generate a cell for row names in the header
+      return(DT::datatable(k, container = sketch, rownames = F))
+    }
+    
+  }) # show the taxatable in Data analysis
+  
+  alpha_diversity_table <- reactive({
+    
+    as_alpha_diversity_table <- function(taxatable_data){
+      
+      alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+        nrow(subset(as.data.frame(taxatable_data), 
+                    as.data.frame(taxatable_data)[,i]>0))
+      })
+      
+      library(fossil)
+      alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
+        chao1(taxatable_data[,i])
+      })
+      
+      alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
+        ACE(taxatable_data[,i])
+      })
+      
+      library(vegan)
+      alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
+        diversity(taxatable_data[,i], index = "shannon")
+      })
+      
+      alpha_diversity_Simpsom<-sapply(1:ncol(taxatable_data), function(i){
+        diversity(taxatable_data[,i], index = "simpson")
+      })
+      
+      alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
+        diversity(taxatable_data[,i], index = "invsimpson")
+      })
+      
+      
+      ShannonEvenness<-function(data_vector){
+        
+        shannon_diversity<-diversity(data_vector, index = "shannon")
+        species_number<-length(data_vector)
+        Hmax<-log(species_number)
+        J<-shannon_diversity/Hmax
+        print(J)
+        
+      }
+      
+      alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+        ShannonEvenness(taxatable_data[,i])
+      })
+      
+      
+      SimpsonEvenness<-function(data_vector){
+        
+        D<-diversity(data_vector, index = "simpson")
+        species_number<-length(data_vector)
+        E<-(1/D)/species_number
+        print(E)
+        
+      }
+      
+      alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+        SimpsonEvenness(taxatable_data[,i])
+      })
+      
+      GoodCoverage<-function(data_vector){
+        
+        n<-length(which(data_vector==1))
+        N<-length(which(data_vector!=0))
+        C<-(1-(n/N))
+        print(C)
+        
+      }
+      
+      alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+        GoodCoverage(taxatable_data[,i])
+      })
+      
+      
+      alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
+                                        Richness=alpha_diversity_richness,
+                                        Chao1=alpha_diversity_Choa1,
+                                        ACE=alpha_diversity_ACE,
+                                        Shannon_diverstiy=alpha_diversity_Shannon,
+                                        Simspon_diversity=alpha_diversity_Simpsom,
+                                        InvSimpson_diversity=alpha_diversity_InvSimpson,
+                                        Shannon_evenness=alpha_diversity_ShannonEvenness,
+                                        Simpson_evenness=alpha_diversity_SimpsonEveness,
+                                        Goods_coverage=alpha_diversity_GoodCoverage
+      )
+      
+      
+      alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
+        round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
+      
+      return(alpha_diversity_table)
+    }
+    
+    return(as_alpha_diversity_table(asv_table()))
+    
+  })
+  
+  alpha_anova_boxplot <- reactive({
+    
+    A_diversity <- alpha_diversity_table()
+    
+    colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+    A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+    
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+      
+      A_diversity_metadata_merge <- merge(A_diversity,
+                                          Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
+                                          by= colnames(Metadata_stats())[1])
+    })
+    
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    
+    library(reshape2)
+    i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
+    A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                           id.vars=c("SampleID",
+                                                     names(A_diversity_metadata_list)[i]))
+    
+    colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+    
+    A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+    
+    index <- input$select_diversity
+    A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                     variable==index)
+    anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+    anova_summary <- summary(anova_result)
+    # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+    # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+    
+    stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+      return( 
+        data.frame(
+          y = 0.95 * upper_limit,
+          label = paste('n =', length(y))
+        )
+      )
+    }
+    
+    ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+      # geom_text(data = data.frame(),
+      #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+      #           col = 'black',
+      #           size = 5) +
+      geom_boxplot() +
+      ggtitle("Alpha diversity") +
+      xlab(input$metadata_alpha) +
+      ylab(input$select_diversity)+
+      labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                 geom = "text", 
+                                                                                                                                                 hjust = 0.5,
+                                                                                                                                                 vjust = 0.9)
+  })
+  
+  alpha_anova_tukey <- reactive({
+    
+    A_diversity <- alpha_diversity_table()
+    
+    colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+    A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+    
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+      
+      A_diversity_metadata_merge <- merge(A_diversity,
+                                          Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
+                                          by= colnames(Metadata_stats())[1])
+    })
+    
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    
+    library(reshape2)
+    i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
+    A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                           id.vars=c("SampleID",
+                                                     names(A_diversity_metadata_list)[i]))
+    
+    colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+    
+    A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+    
+    index <- input$select_diversity
+    A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                     variable==index) 
+    
+    anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+    
+    tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+    tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+    tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+    tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+    order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+    tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+    colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+    return(tukey_result_table_separate_order[, c(1,2,3,6)])
+    
+  })
+  
+  alpha_KW_boxplot <- reactive({
+    
+    A_diversity <- alpha_diversity_table()
+    
+    colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+    A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+    
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+      
+      A_diversity_metadata_merge <- merge(A_diversity,
+                                          Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
+                                          by= colnames(Metadata_stats())[1])
+    })
+    
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    
+    library(reshape2)
+    i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
+    A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                           id.vars=c("SampleID",
+                                                     names(A_diversity_metadata_list)[i]))
+    
+    colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+    
+    A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+    
+    index <- input$select_diversity
+    A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                     variable==index)
+    KW_result <- kruskal.test(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+    
+    stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+      return( 
+        data.frame(
+          y = 0.95 * upper_limit,
+          label = paste('n =', length(y))
+        )
+      )
+    }
+    
+    ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+      # geom_text(data = data.frame(),
+      #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+      #           col = 'black',
+      #           size = 5) +
+      geom_boxplot() +
+      ggtitle("Alpha diversity") +
+      xlab(input$metadata_alpha) +
+      ylab(input$select_diversity)+
+      labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                        geom = "text", 
+                                                                                                                                        hjust = 0.5,
+                                                                                                                                        vjust = 0.9)
+  })
+  
+  alpha_KW_Dunn <- reactive({
+    
+    A_diversity <- alpha_diversity_table()
+    
+    colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+    A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+    
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+      
+      A_diversity_metadata_merge <- merge(A_diversity,
+                                          Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
+                                          by= colnames(Metadata_stats())[1])
+    })
+    
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    
+    library(reshape2)
+    i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
+    A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                           id.vars=c("SampleID",
+                                                     names(A_diversity_metadata_list)[i]))
+    
+    colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+    
+    A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+    
+    index <- input$select_diversity
+    A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                     variable==index)
+    
+    Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list_melt_forplot$value, A_diversity_metadata_list_melt_forplot$feature_name)
+    Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                             Z=Dunn_result$Z,
+                             Pvalue= Dunn_result$P)
+    Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+    Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+    order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+    Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+    colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+    return(Dunn_table_separate_order)
+    
+  })
+  
+  
+  BetaTable_bray <- reactive({
+    
+    Bray_df_data<-vegan::vegdist(t(asv_table()), method = "bray") %>% as.matrix() %>% as.data.frame()
+    return(Bray_df_data)
+    
+  })
+  
+  Beta_dsmx_heatmap <- reactive({
+    
+    beta_dsmx <- BetaTable_bray() %>% as.matrix()
+    plot_ly(x=colnames(beta_dsmx),
+            y=rownames(beta_dsmx),
+            z=beta_dsmx,
+            # colors = palette(50),
+            colors = colorRamp(c("green", "red")),
+            type = "heatmap") %>% layout(title="Beta diversity distance matrix heatmap", xaxis=list(tickangle=45))
+  })
+  
+  BetaPlot <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[, input$metadata_beta]!="NA")
+    taxatable_beta <- asv_table()[, nonNA_position]
+    metadata_beta <- Metadata_stats()[nonNA_position,]
+    
+    library(vegan)
+    Bray_df_data<-vegdist(t(taxatable_beta), method = "bray")
+    
+    
+    # PCA
+    taxatable_beta_percent <- t(t(taxatable_beta)/rowSums(t(taxatable_beta)))
+    pca_Bray_df_data <- prcomp(t(taxatable_beta_percent))
+    PCA_rowname <- pca_Bray_df_data$x %>% row.names()
+    sample_original_names <- pca_Bray_df_data$x %>% row.names()
+    
+    update_rownames <- function(feature_name, metadata, i){
+      
+      names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+      names_order <- which(names_TF==T)
+      
+      sample_names <- metadata[,1][names_order] %>% as.character()
+      return(sample_names)
+    }
+    
+    names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+      
+      sapply(1:length(unique(metadata_beta[, i])), function(j){
+        
+        update_rownames(i, metadata_beta,j)
+        
+        
+      })
+      
+    })
+    
+    names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+    
+    for (i in 1:length(names(names_list))) {
+      names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+    }
+    
+    metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+    
+    PCA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta]
+    
+    
+    library(ggplot2)
+    pca_Bray_df_data_plot <- data.frame(sample=PCA_rowname_arrange, 
+                                        PC1=pca_Bray_df_data$x[,1],
+                                        PC2=pca_Bray_df_data$x[,2])
+    pc_prop <- pca_Bray_df_data$sdev^2/sum(pca_Bray_df_data$sdev^2)
+    
+    library(ggrepel)
+    pca_Bray_df_data_plot_gg <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+      geom_point(size=1.5)+
+      ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+      ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      ggtitle("PCA plot")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
+    
+    
+    # PCoA
+    library(ape)
+    pcoa_Bray_df_data<-pcoa(Bray_df_data)
+    
+    # Get the name of every point in PCoA
+    # Change the names by features
+    PCoA_rowname <- pcoa_Bray_df_data$vectors %>% row.names()
+    
+    sample_original_names <- pcoa_Bray_df_data$vectors %>% row.names()
+    
+    update_rownames <- function(feature_name, metadata, i){
+      
+      names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+      names_order <- which(names_TF==T)
+      
+      sample_names <- metadata[,1][names_order] %>% as.character()
+      return(sample_names)
+    }
+    
+    names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+      
+      sapply(1:length(unique(metadata_beta[, i])), function(j){
+        
+        update_rownames(i, metadata_beta,j)
+        
+        
+      })
+      
+    })
+    
+    names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+    
+    for (i in 1:length(names(names_list))) {
+      names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+    }
+    
+    metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+    
+    PCoA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta]
+    
+    
+    
+    library(ggplot2)
+    pcoa_Bray_df_data_plot <- data.frame(sample=PCoA_rowname_arrange, 
+                                         PC1=pcoa_Bray_df_data$vectors[,1],
+                                         PC2=pcoa_Bray_df_data$vectors[,2])
+    
+    library(ggrepel)
+    pcoa_Bray_df_data_plot_gg<-ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+      geom_point(size=1.5)+
+      ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+      ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      ggtitle("PCoA plot")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
+    
+    # NMDS
+    comm_bray <- vegdist(t(taxatable_beta))
+    metaMDS_beta_df_data<-metaMDS(comm_bray, distance = "bray")
+    NMDS_beta_df_data<-data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+    NMDS_rowname <- PCoA_rowname_arrange
+    NMDS_beta_df_data_plot<-data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+    
+    NMDS_beta_df_data_plot_gg<-ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+      geom_point(size=1.5)+
+      ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab("NMDS1")+
+      ylab("NMDS2")+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+      #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
+    
+    
+    if(input$sep == "PCoA" & input$beta_cluster == F) {
+      return(pcoa_Bray_df_data_plot_gg)
+    }
+    else if(input$sep == "PCoA" & input$beta_cluster == T){
+      return(pcoa_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+    }
+    else if(input$sep == "NMDS" & input$beta_cluster == F){
+      return(NMDS_beta_df_data_plot_gg)
+    }
+    else if(input$sep == "NMDS" & input$beta_cluster == T){
+      return(NMDS_beta_df_data_plot_gg + stat_ellipse(type = "t"))
+    }
+    else if(input$sep == "PCA" & input$beta_cluster == F){
+      return(pca_Bray_df_data_plot_gg)
+    }else{
+      return(pca_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+    }
+    
+    
+  })
+  
+  output$NMDS_stress <- renderText({
+    
+    if(input$sep=="NMDS"){
+      return("A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, > 0.2 is good/ok, and stress > 0.3 provides a poor representation.")
+    }
+    
+  })
+  # Taxatable examples for download (From QIIME2)------------------------------------------------------------------
+  
+  output$downloadData <- downloadHandler(
+    
+    filename <-"Taxonomic_table_example.qza",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/taxtable.qza", file)
+    },
+    
+    contentType = "application/qza"
+    
+  )
+  
+  output$downloadData_FA <- downloadHandler(
+    
+    filename <-"Taxonomic_table_example.qza",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/taxtable.qza", file)
+    },
+    
+    contentType = "application/qza"
+    
+  )
+  
+  # Metadata examples for download(From QIIME2)--------------------------------------------------------------------
+  
+  output$downloadMetaData <- downloadHandler(
+    
+    filename <-"Metadata_example.tsv",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/sample-metadata.tsv", file)
+    },
+    
+    contentType = "application/tsv"
+    
+  )
+  
+  output$downloadMetaData_FA <- downloadHandler(
+    
+    filename <-"Metadata_example.tsv",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/sample-metadata.tsv", file)
+    },
+    
+    contentType = "application/tsv"
+    
+  )
+  
+  # Taxonomy analysis upload reset----
+  
+  observeEvent(input$TA_reset,{
+ 
+        shinyjs::reset("sample_data")
+        shinyjs::reset("taxonomic_table")
+        shinyjs::reset("table_dada2_upload")
+        closeAlert(session, "sampleAlert")
+    
+ 
+  })
+  
+  # FA reset
+  
+  observeEvent(input$FA_reset,{
+    
+    shinyjs::reset("sample_data_FA")
+    shinyjs::reset("taxonomic_table_FA")
+    shinyjs::reset("table_dada2_upload_FA")
+    closeAlert(session, "sampleAlert_FA")
+    
+  })
+  
+  
+  
+  # Taxatable_output---------------------------------------------------------------------------------------------------
+  
+  output$contents <- renderDataTable({
+    
+    return(TaxaTable_output())
+    
+  })
+  
+  # output$taxatable_summary <- renderText({
+  #   
+  #   # taxatable_summary <- data.frame(
+  #   #   Kingdom = length(unique(TaxaTable_output()[, "Kingdom"])),
+  #   #   Phylum = length(unique(TaxaTable_output()[, "Phylum"])),
+  #   #   Class = length(unique(TaxaTable_output()[, "Class"])),
+  #   #   Order = length(unique(TaxaTable_output()[, "Order"])),
+  #   #   Family = length(unique(TaxaTable_output()[, "Family"])),
+  #   #   Genus = length(unique(TaxaTable_output()[, "Genus"])),
+  #   #   Species = length(unique(TaxaTable_output()[, "Species"]))
+  #   # )
+  #   # return(taxatable_summary)
+  #   
+  #   a <- kable(Metadata(), caption = "Hello") %>% kable_styling("striped", full_width = F) %>% add_header_above(header = c(" "=3, "A"=3, "B"=4))
+  #   return(a)
+  # })
+  
+  
+  # Taxatable for download------------------------------------------------------------------------------------
+  
+  TaxaTable_forDL <- reactive({
+    
+    as_output_taxtable <- function(df_data){
+      
+      df_data_rownames<-row.names(df_data)
+      
+      df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+      
+      row.names(df_data) <- NULL
+      
+      # remove the non-sense string
+      # df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+      # df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+      
+      
+      library(tidyr)
+      df_data <- df_data %>%
+        separate(
+          col = Species,
+          into = level_group(),
+          sep = ";"
+        )
+      
+      # replace "__" to "Unassigned"
+      # df_data<-replace(df_data, df_data=="", "Unassigned")
+      # df_data<-replace(df_data, df_data=="__", "Unassigned")
+      
+      return(as.data.frame(df_data))
+    }
+    a <- TaxaTable() %>% as_output_taxtable
+    return(a)
+  })
+  
+  output$downloadTaxaTable<-downloadHandler(
+    
+    
+    filename = "TaxaTable_result.csv",
+    content = function(file) {
+      
+      write.csv(TaxaTable_forDL(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  # Heatmap matrix for download---------------------------------------------------------------------------------------
+  
+  output$downloadHMmatrix<-downloadHandler(
+    
+    filename = "Heatmap_matrix.csv",
+    content = function(file) {
+      
+      options(scipen=999)# not shown by scientific sign
+      
+      microbioHeatmap_matrix<-function(taxtable_data, Level=level_group()){
+        
+        library(tidyr)
+        species_taxtable_data<-row.names(taxtable_data) 
+        taxtable_data<-as_tibble(taxtable_data) 
+        taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+        
+        taxtable_data<-gather(taxtable_data,
+                              key = "Sample_ID",
+                              value = "read_count",
+                              colnames(taxtable_data[,-1]))
+        
+        taxtable_data<-separate(data = taxtable_data,
+                                col = "Species",
+                                into = level_group(),
+                                sep = ";")
+        
+        taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+        
+        colnames(taxtable_data_Level)[1]<-"Levels"
+        
+        taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+        
+        taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+        
+        row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+        taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+        
+        taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+        taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+        taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+        
+        # remove non-sense string
+        rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                        "", 
+                                                        rownames(taxtable_data_Level_spread_prop))
+        
+        
+        
+        rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                        "", 
+                                                        rownames(taxtable_data_Level_spread_prop))
+        
+        
+        
+        # replace "__" to "Unassigned"
+        rownames(taxtable_data_Level_spread_prop)<-
+          replace(rownames(taxtable_data_Level_spread_prop), 
+                  rownames(taxtable_data_Level_spread_prop)=="__", 
+                  "Unassigned")
+        
+        
+        return(taxtable_data_Level_spread_prop)
+      }
+      
+      if(input$select_level_hm == "Kingdom") {
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Kingdom"), file, row.names = T)
+      } else if (input$select_level_hm == "Phylum"){
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Phylum"), file, row.names = T)
+      } else if(input$select_level_hm == "Class"){
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Class"), file, row.names = T)
+      } else if(input$select_level_hm == "Order"){
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Order"), file, row.names = T)
+      } else if(input$select_level_hm == "Family"){
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Family"), file, row.names = T)
+      } else if(input$select_level_hm == "Genus"){
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Genus"), file, row.names = T)
+      }
+      else {
+        write.csv(microbioHeatmap_matrix(TaxaTable_merge(),"Species"), file, row.names = T)
+      }
+    }
+  )
+  
+  
+  # Interactive heatmap----------------------------------------------------------------------------------------
+  
+  output$crimeplot <- renderPlotly({
+    
+    options(scipen=999)# not shown by scientific sign
+    
+    microbioHeatmap_ly<-function(taxtable_data, Level=level_group()){
+      
+      library(tidyr)
+      species_taxtable_data<-row.names(taxtable_data) 
+      taxtable_data<-as_tibble(taxtable_data) 
+      taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+      
+      taxtable_data<-gather(taxtable_data,
+                            key = "Sample_ID",
+                            value = "read_count",
+                            colnames(taxtable_data[,-1]))
+      
+      taxtable_data<-separate(data = taxtable_data,
+                              col = "Species",
+                              into = level_group(),
+                              sep = ";")
+      
+      taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+      
+      colnames(taxtable_data_Level)[1]<-"Levels"
+      
+      taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+      
+      taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+      
+      row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+      taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+      
+      taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+      taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+      taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+      
+      #去除物種前面的代碼
+      rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                      "", 
+                                                      rownames(taxtable_data_Level_spread_prop))
+      
+      
+      
+      rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                      "", 
+                                                      rownames(taxtable_data_Level_spread_prop))
+      
+      
+      
+      #將"__"變為"Unassigned"
+      rownames(taxtable_data_Level_spread_prop)<-
+        replace(rownames(taxtable_data_Level_spread_prop), 
+                rownames(taxtable_data_Level_spread_prop)=="__", 
+                "Unassigned")
+      
+      taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+      
+      #使sample_ID隨按鈕變動
+      y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+      
+      sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        library(dplyr)
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      library('plotly')
+      plot_ly(x = Metadata_stats()[,input$metadata_hm],
+              y = rownames(taxtable_data_Level_spread_prop_logtrf),
+              z = taxtable_data_Level_spread_prop_logtrf,
+              type = "heatmap",
+              colors = colorRamp(c("green", "red")),
+      ) %>% layout(xaxis=list(tickangle=45))
+      
+      # heatmaply::heatmaply(
+      #   x = taxtable_data_Level_spread_prop_logtrf
+      #   
+      # ) %>% layout(xaxis=list(tickangle=45))
+      
+    }
+    
+    microbioHeatmap_subly<-function(taxtable_data, Level=level_group()){
+      
+      library(tidyr)
+      species_taxtable_data<-row.names(taxtable_data) 
+      taxtable_data<-as_tibble(taxtable_data) 
+      taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+      
+      taxtable_data<-gather(taxtable_data,
+                            key = "Sample_ID",
+                            value = "read_count",
+                            colnames(taxtable_data[,-1]))
+      
+      taxtable_data<-separate(data = taxtable_data,
+                              col = "Species",
+                              into = level_group(),
+                              sep = ";")
+      
+      taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+      
+      colnames(taxtable_data_Level)[1]<-"Levels"
+      
+      taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+      
+      taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+      
+      row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+      taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+      
+      taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+      taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+      taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+      
+      # remove non-sense string 
+      rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                      "", 
+                                                      rownames(taxtable_data_Level_spread_prop))
+      
+      
+      
+      rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                      "", 
+                                                      rownames(taxtable_data_Level_spread_prop))
+      
+      
+      
+      # replace "__" to "Unassigned"
+      rownames(taxtable_data_Level_spread_prop)<-
+        replace(rownames(taxtable_data_Level_spread_prop), 
+                rownames(taxtable_data_Level_spread_prop)=="__", 
+                "Unassigned")
+      
+      taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+      
+      #  Make sample_ID change by button
+      y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+      
+      sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        library(dplyr)
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      taxtable_data_Level_spread_prop_logtrf_list <- list()
+      taxtable_data_Level_spread_prop_logtrf_list <- sapply(colnames(Metadata_stats()), function(i){
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+        })
+        
+      })
+      
+      for (i in 1:length(names(names_list))) {
+        names(taxtable_data_Level_spread_prop_logtrf_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      Heatmap_plotly <- function(heatmap_list, feature) {
+        library('plotly')
+        heatmap_plot_list <- list()
+        heatmap_plot_list <- lapply(1:length(heatmap_list[[feature]]), function(i){
+          
+          if(i==1){
+            
+            plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                    y= rownames(heatmap_list[[feature]][[i]]),
+                    z = heatmap_list[[feature]][[i]],
+                    zmin = min(unlist(heatmap_list[[feature]])),
+                    zmax = max(unlist(heatmap_list[[feature]])),
+                    type = "heatmap",
+                    colors = colorRamp(c("green", "red")),
+                    colorbar=list(title="scale")
+            ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+            
+          }else{
+            
+            plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                    y= rownames(heatmap_list[[feature]][[i]]),
+                    z = heatmap_list[[feature]][[i]],
+                    type = "heatmap",
+                    colors = colorRamp(c("green", "red")),
+                    showscale = F,
+                    colorbar=list(title=names(heatmap_list[[feature]])[i])
+            ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+          }
+          
+        })
+        
+        return(heatmap_plot_list)
+      }
+      
+      z_heatmap_plotly <- Heatmap_plotly(taxtable_data_Level_spread_prop_logtrf_list, input$metadata_hm)
+      
+      nonNA_position <- which(unique(Metadata_stats()[, input$metadata_hm])!="NA")
+      z_heatmap_plotly <- z_heatmap_plotly[nonNA_position]
+      
+      return(subplot(z_heatmap_plotly, shareY = T, titleX = T))
+      
+    }
+    
+    if (input$metadata_hm=="SampleID"){
+      return(microbioHeatmap_ly(TaxaTable_merge(), input$select_level_hm))
+    }
+    return(microbioHeatmap_subly(TaxaTable_merge(), input$select_level_hm))
+    
+    
+  })
+  
+  
+  # Interactive taxonomic barplot-----------------------------------------------------------------------------------------
+  
+  
+  output$barplot <- renderPlotly({
+    
+    plot_LeveltoSamples<-function(taxtable, Level=level_group(), topN){
+      
+      species_taxtable<-row.names(taxtable) # get rowname
+      barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+      # Percentage
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      # To make data tidy
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      # Seperate Species names by taxon
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      # Replace "__" to "Unassigned"
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      # Get Level
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      # it's convinient to make function by change column
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      #factor
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      #
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+      
+      TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[1:topN]
+        return(species_name_topN)
+      })
+      
+      names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[-c(1:topN)]
+        return(species_name_topN)
+      })
+      names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list_1 <- lapply(1:length(others_list), function(i){
+        c("Unassigned", others_list[[i]])
+      })
+      names(others_list_1) <- names(others_list)
+      
+      others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+      })
+      names(others_taxtable_list) <- names(others_list_1)
+      
+      others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+        data.frame(Levels = "Others", 
+                   Sample_ID = names(others_taxtable_list)[i], 
+                   read_percentage = sum(others_taxtable_list[[i]][,3]))
+      })
+      
+      topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+      })
+      
+      append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+        bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+      })
+      
+      append_taxtable_list_all <- bind_rows(append_taxtable_list)
+      #
+      
+      y_name <-append_taxtable_list_all$Sample_ID 
+      
+      sample_original_names <- append_taxtable_list_all$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      for (k in 1:length(names(names_list[[input$metadata_barplot]]))) {
+        
+        
+        y_name <- mapvalues(y_name, 
+                            from = names_list[[input$metadata_barplot]][[k]], 
+                            to = as.character(
+                              rep(
+                                unique(
+                                  Metadata_stats()[, input$metadata_barplot])[k], 
+                                length(names_list[[input$metadata_barplot]][[k]])
+                              )
+                            )
+        )}
+      
+      if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+        Samples_ID <- append_taxtable_list_all$Sample_ID
+      }else{
+        Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+      }
+      
+      factor_levels <- append_taxtable_list_all$Levels %>% unique()
+      others_position <- which(factor_levels=="Others")
+      factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+      factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+      append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                levels = factor_levels_new
+      )
+      
+      number_nameslist <- Metadata_stats()[, 1] %>% length()
+      
+      append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100
+      
+      # plot
+      library(viridis)
+      p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                 aes(x=Samples_ID,
+                                     y=read_percentage,
+                                     fill=Levels),
+                                 colour="White",
+                                 size=0.1,
+                                 stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                         y="Relative abundance (%)",
+                                                                                                         fill="")
+      
+      library("plotly")
+      ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+    }
+    
+    plot_LeveltoSamples_noUnassigned<-function(taxtable, Level=level_group(), topN){
+      
+      topN_species_list <- lapply(1:ncol(taxtable), function(i){
+        
+        sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+      })
+      
+      topN_species_union <- unique(unlist(topN_species_list))
+      
+      new_taxtable <- taxtable[topN_species_union,]
+      
+      species_taxtable<-row.names(new_taxtable) # get rowname
+      barplot_taxa_table_data<-as_tibble(new_taxtable) # rawnames will be removed after transform to tibble
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+      # Percentage
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      # To make data tidy
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[, 2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      # Seperate Species names by taxon
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      # Replace "__" to "Unassigned"
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      # Get Level
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      # it's convinient to make function by change column
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      # factor
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID, barplot_taxa_table_data_percent_Level, FUN = sum)
+      
+      # remove unassigned
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+      
+      # compute percentage again
+      h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+        
+        filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+        
+      })
+      
+      for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+        
+        h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+        
+      }
+      
+      
+      barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+      
+      
+      y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+      
+      sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      for (k in 1:length(names(names_list[[input$metadata_barplot]]))) {
+        
+        
+        y_name <- mapvalues(y_name, 
+                            from = names_list[[input$metadata_barplot]][[k]], 
+                            to = as.character(
+                              rep(
+                                unique(
+                                  Metadata_stats()[, input$metadata_barplot])[k], 
+                                length(names_list[[input$metadata_barplot]][[k]])
+                              )
+                            )
+        )}
+      
+      if (unique(barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID == y_name)) {
+        Samples_ID <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      }else{
+        Samples_ID <- paste0( y_name, "__", barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID)
+      }
+      
+      # plot
+      library(viridis)
+      p_Level<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_noUnassigned_percentage,
+                                 aes(x=Samples_ID,
+                                     y=read_percentage,
+                                     fill=Levels),
+                                 colour="White",
+                                 size=0.1,
+                                 stat = "identity")+theme_bw()+theme(legend.title=element_blank())
+      # + scale_y_continuous(labels = scales::percent_format())
+      
+      library("plotly")
+      ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+    }
+    
+    plot_LeveltoSamples_sub<-function(taxtable, metadata,features, Level=level_group(), topN){
+      
+      # topN_species_list <- lapply(1:ncol(taxtable), function(i){
+      #   
+      #   sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+      # })
+      # 
+      # topN_species_union <- unique(unlist(topN_species_list))
+      # 
+      # new_taxtable <- taxtable[topN_species_union,]
+      
+      species_taxtable<-row.names(taxtable) 
+      barplot_taxa_table_data<-as_tibble(taxtable) 
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+      
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      #
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+      
+      TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[1:topN]
+        return(species_name_topN)
+      })
+      
+      names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      species_union <- unique(unlist(TopN_list))
+      species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+      species_diff <- setdiff(species_Levels, species_union)
+      
+      # others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+      #   a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+      #   topN <- topN
+      #   species_name <- a$Levels %>% as.character()
+      #   species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+      #   species_name_topN <- species_name_sort[-c(1:topN)]
+      #   return(species_name_topN)
+      # })
+      '%!in%' <- function(x,y)!('%in%'(x,y))
+      others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        b <- filter(a, Levels %!in% species_union)
+        b$Levels <- as.character(b$Levels)
+        return(b)
+      })
+      names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list_1 <- lapply(1:length(others_list), function(i){
+        c("Unassigned", others_list[[i]]$Levels)
+      })
+      names(others_list_1) <- names(others_list)
+      
+      others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+      })
+      names(others_taxtable_list) <- names(others_list_1)
+      
+      others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+        data.frame(Levels = "Others", 
+                   Sample_ID = names(others_taxtable_list)[i], 
+                   read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+      })
+      
+      # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+      #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+      # })
+      topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+      })
+      
+      append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+        bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+      })
+      
+      append_taxtable_list_all <- bind_rows(append_taxtable_list)
+      #
+      
+      
+      y_name <-append_taxtable_list_all$Sample_ID 
+      
+      sample_original_names <- append_taxtable_list_all$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+        
+        sapply(1:length(unique(metadata[, i])), function(j){
+          
+          update_rownames(i, metadata,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      factor_levels <- append_taxtable_list_all$Levels %>% unique()
+      others_position <- which(factor_levels=="Others")
+      factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+      factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+      append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                levels = factor_levels_new
+      )
+      
+      
+      p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+        
+        
+        # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+        sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+        
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+        
+        number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+        
+        barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100
+        
+        library(viridis)
+        
+        p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                        aes(x=Sample_ID,
+                                            y=read_percentage,
+                                            fill=Levels),
+                                        colour="White",
+                                        size=0.1,
+                                        # show.legend = T,
+                                        stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                          y="Relative abundance (%)",
+                                                                                                                                          fill="")
+        
+        
+      }
+      
+      p_Level_plot_list <- list()
+      p_Level_plot_list <- lapply(names(names_list), function(i){
+        lapply(names(names_list[[i]]), function(j){
+          
+          p_Level_plot_sub(append_taxtable_list_all, i, j) 
+          
+        })
+        
+      })
+      
+      names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(p_Level_plot_list))) {
+        names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        for (j in 2:length(names(names_list[[i]]))) {
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+        }
+        
+      }
+      
+      for (i in 2:length(p_Level_plot_list[[features]])) {
+        
+        p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+        
+      }
+      
+      nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+      p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+      
+      subplot(p_Level_plot_list[[features]],
+              shareY = T,
+              titleX = T)
+      
+    }
+    
+    plot_LeveltoSamples_sub_noUnassigned<-function(taxtable, metadata,features, Level=level_group(), topN){
+      
+      topN_species_list <- lapply(1:ncol(taxtable), function(i){
+        
+        sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+      })
+      
+      topN_species_union <- unique(unlist(topN_species_list))
+      
+      new_taxtable <- taxtable[topN_species_union,]
+      
+      species_taxtable<-row.names(new_taxtable) 
+      barplot_taxa_table_data<-as_tibble(new_taxtable) 
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+      
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      # remove unassigned
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+      
+      # compute percentage again
+      h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+        
+        filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+        
+      })
+      
+      for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+        
+        h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+        
+      }
+      
+      
+      barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+      
+      
+      y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+      
+      sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+        
+        sapply(1:length(unique(metadata[, i])), function(j){
+          
+          update_rownames(i, metadata,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      
+      
+      
+      p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, features, features_sub){
+        
+        barplot_taxa_table_data_percent_Level_sub <- subset(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, Sample_ID %in% names_list[[features]][[features_sub]])  
+        
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+        
+        
+        library(viridis)
+        
+        p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                        aes(x=Sample_ID,
+                                            y=read_percentage,
+                                            fill=Levels),
+                                        colour="White",
+                                        size=0.1,
+                                        # show.legend = T,
+                                        stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=features_sub, fill="")
+        
+        
+      }
+      
+      p_Level_plot_list <- list()
+      p_Level_plot_list <- lapply(names(names_list), function(i){
+        lapply(names(names_list[[i]]), function(j){
+          
+          p_Level_plot_sub(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, i, j) 
+          
+        })
+        
+      })
+      
+      names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(p_Level_plot_list))) {
+        names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        for (j in 2:length(names(names_list[[i]]))) {
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+        }
+        
+      }
+      
+      for (i in 2:length(p_Level_plot_list[[features]])) {
+        
+        p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+        
+      }
+      
+      nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+      p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+      
+      subplot(p_Level_plot_list[[features]],
+              shareY = T,
+              titleX = T)
+      
+    }
+    
+    # if (input$metadata_barplot=="SampleID" | input$metadata_barplot=="barcode.sequence"){
+    #   if (input$without_unassigned == F){
+    #     taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+    #     return(plot_LeveltoSamples(taxtable, input$select_level_bar, input$integer))
+    #   }else{
+    #     taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+    #     return(plot_LeveltoSamples_noUnassigned(taxtable, input$select_level_bar, input$integer))
+    #   }
+    #     
+    # }else{
+    #   
+    #   if(input$without_unassigned == F){
+    #     taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+    #     return(plot_LeveltoSamples_sub(taxtable, Metadata_stats(),input$metadata_barplot, input$select_level_bar, input$integer))
+    #   }else{
+    #     taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+    #     return(plot_LeveltoSamples_sub_noUnassigned(taxtable, Metadata_stats(),input$metadata_barplot, input$select_level_bar, input$integer))
+    #   }
+    #     
+    # }
+    
+    if (input$metadata_barplot=="SampleID"){
+      
+      # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+      return(plot_LeveltoSamples(TaxaTable(), input$select_level_bar, input$integer))
+      
+    }else{
+      
+      # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+      return(plot_LeveltoSamples_sub(TaxaTable(), Metadata_stats(),input$metadata_barplot, input$select_level_bar, input$integer))
+      
+    }
+    
+  })
+  
+  
+  # Interactive taxonomic barplot for download-----------------------------------------------------------------------------
+  
+  barplot_download <- reactive({
+    
+    plot_LeveltoSamples_save<-function(taxtable, Level=level_group(), topN){
+      
+      species_taxtable<-row.names(taxtable) # get rowname
+      barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+      # Percentage
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      # To make data tidy
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      # Seperate Species names by taxon
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      # Replace "__" to "Unassigned"
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      # Get Level
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      # it's convinient to make function by change column
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      #factor
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      #
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+      
+      TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[1:topN]
+        return(species_name_topN)
+      })
+      
+      names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[-c(1:topN)]
+        return(species_name_topN)
+      })
+      names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list_1 <- lapply(1:length(others_list), function(i){
+        c("Unassigned", others_list[[i]])
+      })
+      names(others_list_1) <- names(others_list)
+      
+      others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+      })
+      names(others_taxtable_list) <- names(others_list_1)
+      
+      others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+        data.frame(Levels = "Others", 
+                   Sample_ID = names(others_taxtable_list)[i], 
+                   read_percentage = sum(others_taxtable_list[[i]][,3]))
+      })
+      
+      topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+      })
+      
+      append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+        bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+      })
+      
+      append_taxtable_list_all <- bind_rows(append_taxtable_list)
+      #
+      
+      y_name <-append_taxtable_list_all$Sample_ID 
+      
+      sample_original_names <- append_taxtable_list_all$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      for (k in 1:length(names(names_list[[input$metadata_barplot]]))) {
+        
+        
+        y_name <- mapvalues(y_name, 
+                            from = names_list[[input$metadata_barplot]][[k]], 
+                            to = as.character(
+                              rep(
+                                unique(
+                                  Metadata_stats()[, input$metadata_barplot])[k], 
+                                length(names_list[[input$metadata_barplot]][[k]])
+                              )
+                            )
+        )}
+      
+      if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+        Samples_ID <- append_taxtable_list_all$Sample_ID
+      }else{
+        Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+      }
+      
+      factor_levels <- append_taxtable_list_all$Levels %>% unique()
+      others_position <- which(factor_levels=="Others")
+      factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+      factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+      append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                levels = factor_levels_new
+      )
+      
+      number_nameslist <- Metadata_stats()[, 1] %>% length()
+      
+      append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100
+      
+      # plot
+      library(viridis)
+      p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                 aes(x=Samples_ID,
+                                     y=read_percentage,
+                                     fill=Levels),
+                                 colour="White",
+                                 size=0.1,
+                                 stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                         y="Relative abundance (%)",
+                                                                                                         fill="")
+      
+      p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+    }
+    
+    return(plot_LeveltoSamples_save(TaxaTable_merge(), input$select_level_bar, input$integer))
+    
+  })
+  
+  barplot_noUnassigned_download <- reactive({
+    
+    plot_LeveltoSamples_noUnassigned_save<-function(taxtable, Level=level_group()){
+      
+      species_taxtable<-row.names(taxtable) # get rowname
+      barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+      # Percentage
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      # To make data tidy
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[, 2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      # Seperate Species names by taxon
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      # Replace "__" to "Unassigned"
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      # Get Level
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      # it's convinient to make function by change column
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      # factor
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID, barplot_taxa_table_data_percent_Level, FUN = sum)
+      
+      # remove unassigned
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+      
+      # compute percentage again
+      h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+        
+        filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+        
+      })
+      
+      for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+        
+        h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+        
+      }
+      
+      
+      barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+      
+      
+      y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+      
+      sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+        
+        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+          
+          update_rownames(i, Metadata_stats(),j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(Metadata_stats())[1:ncol(Metadata_stats())]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      for (k in 1:length(names(names_list[[input$metadata_barplot]]))) {
+        
+        
+        y_name <- mapvalues(y_name, 
+                            from = names_list[[input$metadata_barplot]][[k]], 
+                            to = as.character(
+                              rep(
+                                unique(
+                                  Metadata_stats()[, input$metadata_barplot])[k], 
+                                length(names_list[[input$metadata_barplot]][[k]])
+                              )
+                            )
+        )}
+      
+      if (unique(barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID == y_name)) {
+        Samples_ID <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      }else{
+        Samples_ID <- paste0( y_name, "__", barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID)
+      }
+      
+      # plot
+      library(viridis)
+      p_Level<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_noUnassigned_percentage,
+                                 aes(x=Samples_ID,
+                                     y=read_percentage,
+                                     fill=Levels),
+                                 colour="White",
+                                 size=0.1,
+                                 stat = "identity")+theme_bw()+theme(legend.title=element_blank())+theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) 
+      # + scale_y_continuous(labels = scales::percent_format())
+      
+      p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+    }
+    
+    return(plot_LeveltoSamples_noUnassigned_save(TaxaTable_merge(), input$select_level_bar))
+  })
+  
+  barplot_sub_download <- reactive({
+    
+    plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group(), topN){
+      
+      # topN_species_list <- lapply(1:ncol(taxtable), function(i){
+      #   
+      #   sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+      # })
+      # 
+      # topN_species_union <- unique(unlist(topN_species_list))
+      # 
+      # new_taxtable <- taxtable[topN_species_union,]
+      
+      species_taxtable<-row.names(taxtable) 
+      barplot_taxa_table_data<-as_tibble(taxtable) 
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+      
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      #
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+      
+      TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        topN <- topN
+        species_name <- a$Levels %>% as.character()
+        species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+        species_name_topN <- species_name_sort[1:topN]
+        return(species_name_topN)
+      })
+      
+      names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      species_union <- unique(unlist(TopN_list))
+      species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+      species_diff <- setdiff(species_Levels, species_union)
+      
+      # others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+      #   a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+      #   topN <- topN
+      #   species_name <- a$Levels %>% as.character()
+      #   species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+      #   species_name_topN <- species_name_sort[-c(1:topN)]
+      #   return(species_name_topN)
+      # })
+      '%!in%' <- function(x,y)!('%in%'(x,y))
+      others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+        a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+        b <- filter(a, Levels %!in% species_union)
+        b$Levels <- as.character(b$Levels)
+        return(b)
+      })
+      names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+      
+      others_list_1 <- lapply(1:length(others_list), function(i){
+        c("Unassigned", others_list[[i]]$Levels)
+      })
+      names(others_list_1) <- names(others_list)
+      
+      others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+      })
+      names(others_taxtable_list) <- names(others_list_1)
+      
+      others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+        data.frame(Levels = "Others", 
+                   Sample_ID = names(others_taxtable_list)[i], 
+                   read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+      })
+      
+      # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+      #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+      # })
+      topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+        filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+      })
+      
+      append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+        bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+      })
+      
+      append_taxtable_list_all <- bind_rows(append_taxtable_list)
+      #
+      
+      
+      y_name <-append_taxtable_list_all$Sample_ID 
+      
+      sample_original_names <- append_taxtable_list_all$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+        
+        sapply(1:length(unique(metadata[, i])), function(j){
+          
+          update_rownames(i, metadata,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      factor_levels <- append_taxtable_list_all$Levels %>% unique()
+      others_position <- which(factor_levels=="Others")
+      factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+      factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+      append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                levels = factor_levels_new
+      )
+      
+      
+      p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+        
+        
+        # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+        sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+        
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+        
+        number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+        
+        barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100
+        
+        library(viridis)
+        
+        p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                        aes(x=Sample_ID,
+                                            y=read_percentage,
+                                            fill=Levels),
+                                        colour="White",
+                                        size=0.1,
+                                        # show.legend = T,
+                                        stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                          y="Relative abundance (%)",
+                                                                                                                                          fill="")
+        
+        
+      }
+      
+      p_Level_plot_list <- list()
+      p_Level_plot_list <- lapply(names(names_list), function(i){
+        lapply(names(names_list[[i]]), function(j){
+          
+          p_Level_plot_sub(append_taxtable_list_all, i, j) 
+          
+        })
+        
+      })
+      
+      names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(p_Level_plot_list))) {
+        names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        for (j in 2:length(names(names_list[[i]]))) {
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+        }
+        
+      }
+      
+      for (i in 1:(length(p_Level_plot_list[[features]])-1)) {
+        
+        p_Level_plot_list[[features]][[i]] <- p_Level_plot_list[[features]][[i]] + theme(legend.position="none")
+        
+      }
+      
+      nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+      p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+      
+      egg::ggarrange(plots = p_Level_plot_list[[features]], nrow=1)
+      
+    }
+    
+    return(plot_LeveltoSamples_sub(taxtable = TaxaTable_merge(), metadata = Metadata_stats(), features = input$metadata_barplot, Level = input$select_level_bar, topN = input$integer))
+  })
+  
+  barplot_noUnassigned_sub_download <- reactive({
+    
+    plot_LeveltoSamples_sub_noUnassigned<-function(taxtable, metadata,features, Level=level_group()){
+      
+      species_taxtable<-row.names(taxtable) 
+      barplot_taxa_table_data<-as_tibble(taxtable) 
+      barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+      
+      barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                           rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+      barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+      
+      
+      library(tidyr)
+      barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                              key = "Sample_ID",
+                                              value = "read_percentage",
+                                              colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                         "", 
+                                                         barplot_taxa_table_data_percent$Species_name)
+      
+      
+      
+      barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                col = "Species_name",
+                                                into = level_group(),
+                                                sep = ";")
+      
+      
+      
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="__",
+                                               "Unassigned")
+      
+      barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                               barplot_taxa_table_data_percent=="",
+                                               "Unassigned")
+      
+      
+      barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+      
+      
+      colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+      
+      
+      barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                           levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+      )
+      
+      barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+      
+      # remove unassigned
+      barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+      
+      # compute percentage again
+      h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+        
+        filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+        
+      })
+      
+      for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+        
+        h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+        
+      }
+      
+      
+      barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+      
+      
+      y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+      
+      sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+        
+        sapply(1:length(unique(metadata[, i])), function(j){
+          
+          update_rownames(i, metadata,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      
+      
+      
+      
+      p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, features, features_sub){
+        
+        barplot_taxa_table_data_percent_Level_sub <- subset(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, Sample_ID %in% names_list[[features]][[features_sub]])  
+        
+        barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+        
+        
+        library(viridis)
+        
+        p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                        aes(x=Sample_ID,
+                                            y=read_percentage,
+                                            fill=Levels),
+                                        colour="White",
+                                        size=0.1,
+                                        show.legend = T,
+                                        stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=features_sub, fill="")
+        
+        p_Level_plot <- p_Level_plot + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+        
+      }
+      
+      p_Level_plot_list <- list()
+      p_Level_plot_list <- lapply(names(names_list), function(i){
+        lapply(names(names_list[[i]]), function(j){
+          
+          p_Level_plot_sub(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, i, j) 
+          
+        })
+        
+      })
+      
+      names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+      
+      for (i in 1:length(names(p_Level_plot_list))) {
+        names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        for (j in 2:length(names(names_list[[i]]))) {
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+        }
+        
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        
+        for (j in 1:(length(names(names_list[[i]]))-1)){
+          
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]] + theme(legend.position="none")
+        }
+        
+      }
+      
+      for (i in 1:length(names(names_list))) {
+        
+        for (j in 2:length(names(names_list[[i]]))){
+          
+          p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]] + theme(axis.title.y=element_blank())
+        }
+        
+      }
+      
+      nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+      p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+      
+      egg::ggarrange(plots = p_Level_plot_list[[features]], nrow=1)
+      
+    }
+    
+    return(plot_LeveltoSamples_sub_noUnassigned(taxtable = TaxaTable_merge(), metadata = Metadata_stats(), features = input$metadata_barplot, Level = input$select_level_bar))
+  })
+  
+  
+  output$download_barplot <- downloadHandler(
+    
+    filename = function(){
+      paste0("barplot_", input$metadata_barplot, "_", input$select_level_bar, ".jpg")
+    },
+    content = function(file){
+      
+      
+      if (input$metadata_barplot=="SampleID"){
+        # if (input$without_unassigned == F){
+        ggsave(file, plot = barplot_download(), width = 80, height = 40, units = "cm")
+        # }else{
+        #   ggsave(file, plot = barplot_noUnassigned_download(), width = 80, height = 40, units = "cm")
+        # }
+        
+      }else{
+        
+        # if(input$without_unassigned == F){
+        
+        
+        ggsave(file, plot = barplot_sub_download(), width = 80, height = 40, units = "cm")
+        
+        
+        # }else{
+        #     ggsave(file, plot = barplot_noUnassigned_sub_download(), width = 80, height = 40, units = "cm")
+        # }
+        
+        
+      }
+    }
+  )
+  
+  # Alpha diversity Table---------------------------------------------------------------------------------------
+  
+  output$contents2<-renderDataTable({
+    
+    return(alpha_diversity_table())
+    
+  })
+  
+  
+  # Alpha diversity table for download--------------------------------------------------------------------------
+  
+  output$downloadAlpha<-downloadHandler(
+    
+    filename = "AlphaDiversityTable_result.csv",
+    content = function(file) {
+      
+      write.csv(alpha_diversity_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  # Alpha diversity boxplot--------------------------------------------------------------------------------------
+  
+  output$alpha_boxplot <- renderPlot({
+    
+    if(input$select_stat=="ANOVA"){
+      return(alpha_anova_boxplot())
+    }else{
+      return(alpha_KW_boxplot())
+    }
+    
+    
+  })
+  
+  # Alpha diversity statistics----------------------------------------------------------------------------------
+  
+  output$post_test_type <- renderText({
+    
+    if(input$select_stat=="ANOVA"){
+      return("Tukey test")
+    }else{
+      return("Dunn test")
+    } 
+    
+  })
+  
+  output$post_test <- renderTable({
+    
+    if(input$select_stat=="ANOVA"){
+      return(alpha_anova_tukey())
+    }else{
+      return(alpha_KW_Dunn())
+    }
+    
+  })
+  
+  # Alpha diversity statistics for download----------------------------------------------------------------------------------
+  
+  output$Alpha_posttest_DL <- downloadHandler(
+    
+    filename = function(){
+      
+      if(input$select_stat=="ANOVA"){
+        paste0("Alpha_diversity_Tukey_", input$metadata_alpha, "_",input$select_diversity,".csv")
+      }else{
+        paste0("Alpha_diversity_Dunn_", input$metadata_alpha, "_",input$select_diversity,".csv")
+      }
+      
+    },
+    
+    content = function(file){
+      
+      if(input$select_stat=="ANOVA"){
+        write.csv(alpha_anova_tukey(), file, row.names = F)
+      }else{
+        write.csv(alpha_KW_Dunn(), file, row.names = F)
+      }
+      
+    }
+  )
+  # Alpha diversity boxplot for download---------------------------------------------------------------------------------
+  
+  output$downloadAlphaBoxPlot <- downloadHandler(
+    
+    filename = function(){
+      paste0("Alpha_diversity_boxplot_", input$metadata_alpha, "_",input$select_diversity,".jpg")
+    },
+    content = function(file){
+      if(input$select_stat=="ANOVA"){
+        ggsave(file, plot = alpha_anova_boxplot())
+      }else{
+        ggsave(file, plot = alpha_KW_boxplot())
+      }
+      
+      
+    }
+  )
+  # Beta diversity distance matrix heatmap-------------------------------------------------------------------------------------------------
+  
+  output$beta_dsmx_hm <- renderPlotly({
+    
+    return(Beta_dsmx_heatmap())
+  })
+  
+  # Beta diversity distance matrix heatmap for download------------------------------------------------------------------------------------
+  
+  output$download_beta_dsmx_hm <- downloadHandler(
+    
+    filename = "Beta_dsmx_data.csv",
+    content = function(file){
+      write.csv(BetaTable_bray(), file, row.names = T)
+    }
+  )
+  
+  # Produce PCoA and NMDS
+  output$betaplot<-renderPlot({
+    
+    return(BetaPlot())
+    
+  })
+  
+  
+  # PCoA and NMDS plot for download---------------------------------------------------------------------------------
+  
+  output$downloadBetaPlot<-downloadHandler(
+    
+    filename = function(){
+      if(input$sep == "PCA"){
+        paste0("BetaPlot_PCA_", input$metadata_beta,".jpg")
+      }
+      else if(input$sep == "PCoA") {
+        paste0("BetaPlot_PCoA_", input$metadata_beta,".jpg")
+      }
+      else {
+        paste0("BetaPlot_NMDS_", input$metadata_beta, ".jpg")
+      }
+    },
+    content = function(file){
+      
+      return(ggsave(file, plot = BetaPlot()))
+      
+    }
+  )
+  
+  # Permanova table------------------------------------------------------------------------------------------------
+  
+  Permanova_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    
+    adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+      
+      adonis(bray_df~nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+      
+    })
+    
+    names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+    
+    for (i in colnames(nonNA_metadata)[-1]) {
+      
+      rownames(adonis_result_table_list[[i]])[1] <- i
+    }
+    
+    adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_beta]][1, c(5,6)]
+    colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+    
+    
+    
+    adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+    adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+    
+    return(adonis_result_table_list_show)
+  })
+  
+  output$Permanova_title <- renderText({
+    
+    if(is.data.frame(Permanova_table())){
+      
+      return("PERMANOVA")
+    }else{
+      return(NULL)
+    }
+    
+  })
+  
+  output$permanova_table <- renderTable({
+    
+    return(Permanova_table())
+    
+  }
+  #, caption = "PERMANOVA", caption.placement = getOption("xtable.caption.placement", "top")
+  )
+  
+  # download permanova table
+  output$download_permanova <- downloadHandler(
+    
+    filename = "PerMANOVA_table.csv",
+    content = function(file) {
+      
+      write.csv(Permanova_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  # When length(group_names)<=2, hide the download button of pair table
+  observe({
+
+    req(input$sample_data, input$taxonomic_table, input$table_dada2_upload)
+
+    selection_position <- which(colnames(Metadata_stats())==input$metadata_beta)
+    nonNA_position <- which(Metadata_stats()[,selection_position] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+
+    # nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+
+    group_names <- unique(nonNA_metadata[,selection_position])
+    # group_names <- unique(select(nonNA_metadata, colnames(Metadata_stats()[selection_position])))
+
+    if(length(group_names)<=2){
+      shinyjs::hide("download_permanova_pair")
+      shinyjs::hide("download_ANOSIM_pair")
+      shinyjs::hide("download_MRPP_pair")
+    }else{
+      shinyjs::show("download_permanova_pair")
+      shinyjs::show("download_ANOSIM_pair")
+      shinyjs::show("download_MRPP_pair")
+    }
+
+  })
+  
+  
+  Permanova_pair_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    
+    group_names <- unique(nonNA_metadata[,input$metadata_beta])
+    
+    if(length(group_names)>2){
+      
+      sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+        
+        sample_cb_meta <- nonNA_metadata[,c(1,x)]
+        
+      })
+      names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+      
+      
+      taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+        
+        feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+        
+        sample_f1_f2 <- sample_list[[input$metadata_beta]] %>% filter(sample_list[[input$metadata_beta]][,input$metadata_beta] %in% feature1_feature2)
+        return(nonNA_taxtable[, sample_f1_f2[,"SampleID"]])
+        
+      })
+      
+      adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+        
+        bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+        metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+        adonis_result_pair <- adonis(bray_df_pair~metadata_pair[,input$metadata_beta], 
+                                     metadata_pair, permutations = 999) 
+        
+      })
+      
+      pair_names <- c()
+      df_pair<- t(combn(group_names, 2))
+      for (i in 1:ncol(combn(group_names, 2))) {
+        
+        pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+        
+      }
+      names(adonis_result_pair_list) <- pair_names
+      
+      adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+      for (i in 1:(ncol(combn(group_names, 2))-1)) {
+        adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                               as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+      }
+      
+      colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+      adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+      
+      for (i in 3:7) {
+        
+        adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+        
+      }
+      
+      return(adonis_result_pair_list_table[, c(1, 6, 7)])
+      
+    }else{
+      return(NULL)
+    }
+    
+  })
+  
+  
+  
+  output$Permanova_pair_title <- renderText({
+    
+    if(is.null(Permanova_pair_table())){
+      
+      return(NULL)
+    }else{
+      return("PERMANOVA pair")
+    }
+    
+    
+  })
+  
+  output$permanova_pair_table <- renderTable({
+    
+    return(Permanova_pair_table())
+  })
+  
+  
+  # download permanova pair table
+  output$download_permanova_pair <- downloadHandler(
+    
+    filename = "PerMANOVA_pair_table.csv",
+    content = function(file) {
+      
+      write.csv(Permanova_pair_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  # ANOSIM table------------------------------------------------------------------------------------------------
+  
+  ANOSIM_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    anosim_result <- anosim(bray_df, nonNA_metadata[, input$metadata_beta], permutations = 999)
+    anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+    anosim_result_table <- anosim_result_table[,c(2,1)]
+    colnames(anosim_result_table) <- c("R", "P value")
+    
+    anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+    anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+    
+    return(anosim_result_table)
+    
+  })
+  
+  output$ANOSIM_title <- renderText({
+    
+    if(is.data.frame(ANOSIM_table())){
+      
+      return("ANOSIM")
+    }else{
+      return(NULL)
+    }
+    
+    
+  })
+  
+  output$ANOSIM_table <- renderTable({
+    
+    return(ANOSIM_table())
+  })
+  
+  # download ANOSIM table
+  output$download_ANOSIM <- downloadHandler(
+    
+    filename = "ANOSIM_table.csv",
+    content = function(file) {
+      
+      write.csv(ANOSIM_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  ANOSIM_pair_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    
+    group_names <- unique(nonNA_metadata[,input$metadata_beta])
+    
+    if(length(group_names)>2){
+      
+      sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+        
+        sample_cb_meta <- nonNA_metadata[,c(1,x)]
+        
+      })
+      names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+      
+      
+      taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+        
+        feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+        
+        sample_f1_f2 <- sample_list[[input$metadata_beta]] %>% filter(sample_list[[input$metadata_beta]][,input$metadata_beta] %in% feature1_feature2)
+        return(asv_table()[, sample_f1_f2[,"SampleID"]])
+        
+      })
+      
+      anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+        
+        bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+        metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+        anosim_result_pair <- anosim(bray_df_pair, metadata_pair[,input$metadata_beta],
+                                     metadata_pair, permutations = 999)
+        
+      })
+      
+      pair_names <- c()
+      df_pair <- t(combn(group_names, 2))
+      for (i in 1:ncol(combn(group_names, 2))) {
+        
+        pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+        
+      }
+      names(anosim_result_pair_list) <- pair_names
+      
+      anosim_result_pair_list_signif <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        
+        anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+      }
+      
+      anosim_result_pair_list_R <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        
+        anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+      }
+      
+      anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                  R=anosim_result_pair_list_R,
+                                                  "P_value"=anosim_result_pair_list_signif)
+      
+      anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+      anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+      colnames(anosim_result_pair_list_table)[3] <- "P value"
+      
+      return(anosim_result_pair_list_table)
+      
+    }else{
+      return(NULL)
+    }
+    
+  })
+  
+  output$ANOSIM_pair_title <- renderText({
+    
+    if(is.null(ANOSIM_pair_table())){
+      
+      return(NULL)
+    }else{
+      return("ANOSIM pair")
+    }
+  })
+  
+  output$ANOSIM_pair_table <- renderTable({
+    
+    return(ANOSIM_pair_table())
+  })
+  
+  # download ANOSIM pair table
+  output$download_ANOSIM_pair <- downloadHandler(
+    
+    filename = "ANOSIM_pair_table.csv",
+    content = function(file) {
+      
+      write.csv(ANOSIM_pair_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  # MRPP table------------------------------------------------------------------------------------------------
+  
+  MRPP_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    mrpp_result <- mrpp(bray_df, nonNA_metadata[, input$metadata_beta], permutations = 999)
+    mrpp_result_table <- data.frame(Group = 'all', 
+                                    Distance = 'Bray-Curtis', 
+                                    A = mrpp_result$A,            
+                                    Observe.delta = mrpp_result$delta,            
+                                    Expect.delta = mrpp_result$E.delta,            
+                                    P.value = mrpp_result$Pvalue)
+    mrpp_result_table_show <- mrpp_result_table[,3:6]
+    colnames(mrpp_result_table_show)[4] <- "P value"
+    
+    for (i in 1:4) {
+      
+      mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+      
+    }
+    
+    return(mrpp_result_table_show)
+  })
+  
+  output$MRPP_title <- renderText({
+    
+    if(is.data.frame(MRPP_table())){
+      
+      return("MRPP")
+    }else{
+      return(NULL)
+    }
+  })
+  
+  output$MRPP_table <- renderTable({
+    
+    return(MRPP_table())
+    
+  })
+  
+  # download MRPP table
+  output$download_MRPP <- downloadHandler(
+    
+    filename = "MRPP_pair_table.csv",
+    content = function(file) {
+      
+      write.csv(MRPP_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  MRPP_pair_table <- reactive({
+    
+    nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    
+    nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+    nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+    
+    bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+    group_names <- unique(nonNA_metadata[,input$metadata_beta])
+    
+    if(length(group_names)>2){
+      
+      sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+        
+        sample_cb_meta <- nonNA_metadata[,c(1,x)]
+        
+      })
+      names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+      
+      
+      taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+        
+        feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+        
+        sample_f1_f2 <- sample_list[[input$metadata_beta]] %>% filter(sample_list[[input$metadata_beta]][,input$metadata_beta] %in% feature1_feature2)
+        return(asv_table()[, sample_f1_f2[,"SampleID"]])
+        
+      })
+      
+      MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+        
+        bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+        metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+        MRPP_result_pair <- mrpp(bray_df_pair, metadata_pair[,input$metadata_beta], permutations = 999)
+        
+      })
+      
+      pair_names <- c()
+      df_pair <- t(combn(group_names, 2))
+      for (i in 1:ncol(combn(group_names, 2))) {
+        
+        pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+        
+      }
+      names(MRPP_result_pair_list) <- pair_names
+      
+      MRPP_result_pair_list_Pvalue <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+      }
+      
+      MRPP_result_pair_list_A <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+      }
+      
+      MRPP_result_pair_list_delta <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+      }
+      
+      MRPP_result_pair_list_Edelta <- c()
+      for (i in 1:ncol(combn(group_names, 2))) {
+        MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+      }
+      
+      MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                A=MRPP_result_pair_list_A,
+                                                delta=MRPP_result_pair_list_delta,
+                                                E.delta=MRPP_result_pair_list_Edelta,
+                                                P_value=MRPP_result_pair_list_Pvalue)
+      
+      for (i in 2:5) {
+        
+        MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+        
+      }
+      
+      colnames(MRPP_result_pair_list_table)[5] <- "P value"
+      
+      return(MRPP_result_pair_list_table)
+    }else{
+      return(NULL)
+    }
+  })
+  
+  output$MRPP_pair_title <- renderText({
+    
+    if(is.null(MRPP_pair_table())){
+      
+      return(NULL)
+    }else{
+      return("MRPP pair")
+    }
+  })
+  
+  output$MRPP_pair_table <- renderTable({
+    
+    return(MRPP_pair_table())
+    
+    })
+  
+  output$download_MRPP_pair <- downloadHandler(
+    
+    filename = "MRPP_pair_table.csv",
+    content = function(file) {
+      
+      write.csv(MRPP_pair_table(), file, row.names = FALSE)
+      
+    }
+  )
+  
+  
+  
+  # Krona ------------------------------------------------------------------------------------------------------
+  
+  # observeEvent(input$run_krona, {
+  # 
+  #   Sys.setenv(TERM="xterm")
+  # 
+  #   # showModal(modalDialog(title = "Running Krona ...", "Waiting for a moment", footer = NULL))
+  #   show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+  # 
+  #   Krona_data<-function(taxtable, sampleID){
+  #     taxtable_0<-taxtable[, sampleID]
+  #     taxtable_1<-data.frame(taxtable_0, Species=row.names(taxtable))
+  #     colnames(taxtable_1)[1]<-sampleID
+  #     taxtable_2<-as_tibble(taxtable_1)
+  #     taxtable_3<-separate(data = taxtable_2, col = "Species", into = level_group(),sep = ";")
+  #     write.table(taxtable_3,file = paste("taxtable_forKrona", sampleID, sep = "_"), quote = F, sep = "\t", row.names = F, col.names = F)
+  #   }
+  # 
+  #   for (i in colnames(TaxaTable())) {
+  #     Krona_data(TaxaTable(), i)
+  #   }
+  # 
+  #   filename_forKrona <- list.files(pattern = "taxtable_forKrona") %>% paste(collapse = " ")
+  #   system(paste('ktImportText -o /home/imuser/Krona_rawdata.html', filename_forKrona))
+  #   file.remove(list.files(pattern = "taxtable_forKrona"))
+  #   # filesstrings::file.move("/home/imuser/Krona_rawdata.html", "/home/imuser/www", overwrite = T)
+  #   # filesstrings::file.move(files = c("/home/imuser/www/Krona_rawdata.html", "home/imuser/www/iframe.html"),
+  #   #                         destinations = "/srv/shiny-server/www", overwrite = T)
+  #   # file.remove(list.files(path = "/srv/shiny-server/www/", full.names = T))
+  #   # file.copy(from = "/home/imuser/www/iframe.html", to = "/srv/shiny-server/www/", overwrite = T, copy.mode = T)
+  #   # file.copy(from = "/home/imuser/www/Krona_rawdata.html", to = "/srv/shiny-server/www/", overwrite = T, copy.mode = T)
+  # 
+  #   # system("rm /srv/shiny-server/www/*")
+  #   # system("cp /home/imuser/www/iframe.html /srv/shiny-server/www/")
+  #   system("cp /home/imuser/www/Krona_rawdata.html /var/www/html/")
+  #   # system("cp /home/imuser/www/Krona_rawdata.html /srv/shiny-server/www/")
+  # 
+  #   output$krona_output <- renderUI(includeHTML(path = "/var/www/html/iframe_krona.html"))
+  # 
+  # 
+  #   # removeModal()
+  #   remove_modal_spinner()
+  # })
+  
+  output$krona_output <- renderUI({
+    
+    Krona_data<-function(taxtable, sampleID){
+      taxtable_0<-taxtable[, sampleID]
+      taxtable_1<-data.frame(taxtable_0, Species=row.names(taxtable))
+      colnames(taxtable_1)[1]<-sampleID
+      taxtable_2<-as_tibble(taxtable_1)
+      taxtable_3<-separate(data = taxtable_2, col = "Species", into = level_group(),sep = ";")
+      setwd("/home/imuser/Krona_files/")
+      write.table(taxtable_3,file = paste("taxtable_forKrona", sampleID, sep = "_"), quote = F, sep = "\t", row.names = F, col.names = F)
+    }
+    
+    for (i in colnames(TaxaTable())) {
+      Krona_data(TaxaTable(), i)
+    }
+    
+    file.remove("/home/imuser/Krona_files/Krona_rawdata.html")
+    
+    filename_forKrona <- list.files(pattern = "taxtable_forKrona") %>% paste(collapse = " ")
+    system(paste('ktImportText -o /home/imuser/Krona_files/Krona_rawdata.html', filename_forKrona))
+    file.remove(list.files(pattern = "taxtable_forKrona"))
+    
+    
+    krona_html <- readLines("/home/imuser/Krona_files/Krona_rawdata.html")
+    krona_html_new <- gsub(x = krona_html, pattern = 'id="linkButton" value="Link"', replacement = 'id="linkButton" value="Link" style="display: none;"')
+    krona_html_new <- gsub(x = krona_html_new, pattern = 'id="snapshot" value="Snapshot"', replacement = 'id="snapshot" value="Snapshot" style="display: none;"')
+    writeLines(krona_html_new, con="/home/imuser/Krona_files/Krona_rawdata.html")
+    
+    
+    # file.copy(from = "/home/imuser/Krona_files/Krona_rawdata.html",
+    #           to = "/var/www/html/",
+    #           overwrite = T)
+    # 
+    # write_file(x = paste0('<iframe src="http://', my_qiime_ip, my_qiime_port(),'/Krona_rawdata.html" height=800px width=100% align = middle frameborder = 0></iframe>'),
+    #            path = "/home/imuser/Krona_files/iframe_krona.html",
+    #            append = F)
+    # file.copy(from = "/home/imuser/Krona_files/iframe_krona.html",
+    #           to = "/var/www/html/",
+    #           overwrite = T)
+    
+    
+    # includeHTML(path = paste0("http://",
+    #                           my_qiime_ip, my_qiime_port(),
+    #                           "/iframe_krona.html"))
+    
+
+    # file.copy("/home/imuser/Krona_files/Krona_rawdata.html", "/home/imuser/www", overwrite = T)
+      
+    system("sudo rm /srv/shiny-server/www/*.html")
+    system("sudo cp /home/imuser/Krona_files/Krona_rawdata.html /srv/shiny-server/www/Krona_rawdata.html")
+    system("sudo cp /home/imuser/www/iframe.html /srv/shiny-server/www/")
+    # system("sudo cp /home/imuser/www/Krona_rawdata.html /srv/shiny-server/www/")
+    system("sudo chmod -R 777 /srv/shiny-server/www")
+  
+    includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe.html")
+    
+  })
+  
+  options(shiny.sanitize.errors = T)
+  options(shiny.trace = F)
+  
+  # Krona download ---------------------------------------------------------------------------------------------
+  output$download_krona <- downloadHandler(
+    
+    
+    filename = "Krona_results.zip",
+    # filename = "selected_sampleID.tsv",
+    
+    content = function(file){
+      system("zip -rj Krona.zip /home/imuser/Krona_files/Krona_rawdata.html")
+      file.copy("/home/imuser/Krona_files//Krona.zip", file)
+      # file.copy("/srv/shiny-server/www/Krona_rawdata.html", file, overwrite = T)
+      # file.copy("/home/imuser/selected_sampleID.tsv", file)
+    }
+    
+  )
+  
+  
+  # Phylogenetic diversity analysis ---------------------------------------------------------------------------
+  
+  output$example_rep_seqs <- downloadHandler(
+    
+    filename = "Seqs_forPhylo_example.qza",
+    
+    content = function(file){
+      file.copy(from = "/home/imuser/example_files/rep-seqs.qza", to = file)
+    },
+    contentType = "application/qza"
+  )
+  
+  output$example_feature_table <- downloadHandler(
+    
+    filename = "ASVs_table_example.qza",
+    
+    content = function(file){
+      file.copy(from = "/home/imuser/example_files/table.qza", to = file)
+    },
+    contentType = "application/qza"
+  )
+  
+  observeEvent(req(input$phylogenetic_tree, input$table_dada2_upload), {
+    
+    if(is.null(input$rep_seq_dada2_upload)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the file!", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+    
+    start_time <- Sys.time()
+    # showModal(modalDialog(title = "Running making tree ...", "Waiting for a moment",footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    
+    system(paste0("mkdir", " /home/imuser/web_version/users_files/", job_id(), "_DA_phylo"))
+    system(paste0(qiime_cmd, 
+                  " phylogeny align-to-tree-mafft-fasttree --i-sequences ", input$rep_seq_dada2_upload$datapath, 
+                 " --p-n-threads ", input$threads_phylogenetic,
+                 " --o-alignment /home/imuser/web_version/users_files/",
+                 job_id(),"_DA_phylo",
+                 "/aligned-rep-seqs-dada2.qza",
+                 " --o-masked-alignment /home/imuser/web_version/users_files/",
+                 job_id(),"_DA_phylo",
+                 "/masked-aligned-rep-seqs-dada2.qza",
+                 " --o-tree /home/imuser/web_version/users_files/",
+                 job_id(),"_DA_phylo",
+                 "/unrooted-tree.qza --o-rooted-tree /home/imuser/web_version/users_files/",
+                 job_id(),"_DA_phylo",
+                 "/rooted-tree.qza"))
+    
+    write.table(Metadata_stats(), 
+                file=paste0("/home/imuser/web_version/users_files/",
+                             job_id(),"_DA_phylo",
+                            "/metadata.tsv")
+                , quote=FALSE, sep='\t', row.names = F)
+    # system("rm -r /home/imuser/qiime_output/core-metrics-results/")
+    system(paste0(qiime_cmd, 
+                  " diversity core-metrics-phylogenetic --i-phylogeny /home/imuser/web_version/users_files/",
+                  job_id(),"_DA_phylo","/rooted-tree.qza",
+                 " --i-table ", input$table_dada2_upload$datapath,
+                 " --p-sampling-depth ", input$sampling_depth,
+                 " --m-metadata-file",
+                 " /home/imuser/web_version/users_files/",
+                             job_id(),"_DA_phylo",
+                            "/metadata.tsv", 
+                 " --output-dir /home/imuser/web_version/users_files/",
+                 job_id(),"_DA_phylo","/core-metrics-results"))
+    
+    # show phylo ui
+    if(file.exists(paste0("//home/imuser/web_version/users_files/",
+                          job_id(),"_DA_phylo",
+                          "/core-metrics-results/faith_pd_vector.qza"))){
+      shinyjs::show("phylo_output_ui")
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your input files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    faith_PD <- reactive({
+      read_qza(paste0("/home/imuser/web_version/users_files/",
+                      job_id(),"_DA_phylo","/core-metrics-results/faith_pd_vector.qza"))[["data"]]
+    })
+    
+    output$contents4 <- renderDataTable({
+      a <- faith_PD()
+      b <- data.frame(SampleID=rownames(a),
+                      FaithPD=a[,1])
+      return(b)
+    })
+    
+    output$download_faithPD_table <- downloadHandler(
+      filename = "faithPD_table.csv",
+      content = function(file){
+        a <- faith_PD()
+        b <- data.frame(SampleID=rownames(a),
+                        FaithPD=a[,1])
+        write.csv(b, file, row.names = FALSE)
+      }
+    )
+    
+    faithPD_boxplot_anova <- reactive({
+      
+      as_faithPD_boxplot <- function(metadata, feature)
+        
+      {
+        
+        A_diversity <- faith_PD()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(metadata)[1]
+        A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(metadata)[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name != "NA")
+        
+        anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+        anova_summary <- summary(anova_result)
+        # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+        # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+        options(scipen=999)
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list[[feature]]$faith_pd) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Phylogenetic Alpha diversity") +
+          xlab(input$metadata_phylo_alpha) +
+          ylab("Faith_PD")+
+          labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                   geom = "text", 
+                                                                                                                                                   hjust = 0.5,
+                                                                                                                                                   vjust = 0.9)
+        
+      }
+      
+      
+      
+      return(as_faithPD_boxplot(Metadata_stats(), input$metadata_phylo_alpha
+      )
+      )
+      
+      
+    })
+    
+    faithPD_boxplot_KWtest <- reactive({
+      
+      as_faithPD_boxplot <- function(metadata, feature)
+        
+      {
+        
+        A_diversity <- faith_PD()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(metadata)[1]
+        A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(metadata)[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name!="NA")
+        
+        KW_result <- kruskal.test(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+        # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+        # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+        options(scipen=999)
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list[[feature]]$faith_pd) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Phylogenetic Alpha diversity") +
+          xlab(input$metadata_phylo_alpha) +
+          ylab("Faith_PD")+
+          labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                            geom = "text", 
+                                                                                                                                            hjust = 0.5,
+                                                                                                                                            vjust = 0.9) 
+        
+      }
+      
+      
+      
+      return(as_faithPD_boxplot(Metadata_stats(), input$metadata_phylo_alpha
+      )
+      )
+      
+      
+    })
+    
+    
+    
+    output$faith_PD_boxplot <- renderPlot({
+      
+      if(input$select_stat_phylo=="ANOVA"){
+        return(faithPD_boxplot_anova())
+      }else{
+        return(faithPD_boxplot_KWtest())
+      }
+      
+    })
+    
+    output$download_faithPD_boxplot <- downloadHandler(
+      
+      filename = function(){
+        paste0("faithPD_boxplot_", input$select_stat_phylo, "_", input$metadata_phylo_alpha, ".jpg")
+      },
+      content = function(file){
+        if(input$select_stat_phylo=="ANOVA"){
+          ggsave(file, plot = faithPD_boxplot_anova())
+        }else{
+          ggsave(file, plot = faithPD_boxplot_KWtest())
+        }
+        
+        
+        
+      })
+    
+    
+    faith_PD_post_test_tukey <- reactive({
+      
+      A_diversity <- faith_PD()
+      
+      A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+      colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+      A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+      
+      A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+        
+        A_diversity_metadata_merge <- merge(A_diversity, 
+                                            Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                            by= colnames(Metadata_stats())[1])
+      })
+      
+      names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+      
+      for (i in 1:length(A_diversity_metadata_list)) {
+        
+        colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+      }
+      
+      A_diversity_metadata_list[[input$metadata_phylo_alpha]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha]], feature_name != "NA")
+      
+      anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[input$metadata_phylo_alpha]])
+      tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+      tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+      tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+      tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+      order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+      tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+      colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+      return(tukey_result_table_separate_order[,c(1,2,3,6)])
+    })
+    
+    faith_PD_post_test_Dunn <- reactive({
+      
+      A_diversity <- faith_PD()
+      
+      A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+      colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
+      A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
+      
+      A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+        
+        A_diversity_metadata_merge <- merge(A_diversity, 
+                                            Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                            by= colnames(Metadata_stats())[1])
+      })
+      
+      names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+      
+      for (i in 1:length(A_diversity_metadata_list)) {
+        
+        colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+      }
+      
+      A_diversity_metadata_list[[input$metadata_phylo_alpha]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha]], feature_name!="NA")
+      
+      Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list[[input$metadata_phylo_alpha]]$faith_pd, A_diversity_metadata_list[[input$metadata_phylo_alpha]]$feature_name)
+      Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                               Z=Dunn_result$Z,
+                               Pvalue= Dunn_result$P)
+      Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+      Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+      order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+      Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+      colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+      return(Dunn_table_separate_order)
+    })
+    
+    output$post_test_type_phylo <- renderText({
+      
+      if(input$select_stat_phylo=="ANOVA"){
+        return("Tukey test")
+      }else{
+        return("Dunn test")
+      }
+    })
+    
+    output$post_test_phylo <- renderTable({
+      
+      if(input$select_stat_phylo=="ANOVA"){
+        return(faith_PD_post_test_tukey())
+      }else{
+        return(faith_PD_post_test_Dunn())
+      }
+    })
+    
+    
+    output$download_faithPD_posttest <- downloadHandler(
+      filename = function(){
+        
+        if(input$select_stat_phylo=="ANOVA"){
+          paste0("faithPD_Tukey_", input$metadata_phylo_alpha,".csv")
+        }else{
+          paste0("faithPD_diversity_Dunn_", input$metadata_phylo_alpha, ".csv")
+        }
+        
+      },
+      content = function(file){
+        if(input$select_stat_phylo=="ANOVA"){
+          write.csv(faith_PD_post_test_tukey(), file, row.names = F)
+        }else{
+          write.csv(faith_PD_post_test_Dunn(), file, row.names = F)
+        }
+        
+      }
+    )
+    
+    
+    
+    output$unif_dm_hm <- renderPlotly({
+      
+      if(input$UnW_or_W=="Unweighted"){
+        unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                          job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix()
+        plot_ly(x=colnames(unW_unifrac_dm),
+                y=rownames(unW_unifrac_dm),
+                z=unW_unifrac_dm,
+                # colors = palette(50),
+                colors = colorRamp(c("green", "red")),
+                type = "heatmap") %>% layout(title="Unweighted unifrac distance matrix heatmap", xaxis=list(tickangle=45))
+      }else{
+        W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix()
+        plot_ly(x=colnames(W_unifrac_dm),
+                y=rownames(W_unifrac_dm),
+                z=W_unifrac_dm,
+                # colors = palette(50),
+                colors = colorRamp(c("green", "red")),
+                type = "heatmap") %>% layout(title="Weighted unifrac distance matrix heatmap", xaxis=list(tickangle=45)) 
+      }
+    })
+    
+    
+    output$download_unif_dm<-downloadHandler(
+      
+      filename = "unifrac_distance_matrix.csv",
+      content = function(file) {
+        
+        write.csv(as.matrix(read_qza(paste0("/home/imuser/web_version/users_files/",
+                                            job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]), file, row.names = T)
+        
+      }
+    )
+    
+    unW_unif_pcoa_plot <- reactive({
+      
+      #PCoA
+      unW_unifrac_dm_pcoa_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_pcoa_results.qza"))[["data"]]
+      unW_unifrac_dm_pcoa_qiime_forplot <- unW_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+      unW_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats(), unW_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+      
+      unW_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats()), function(i){
+        
+        unW_unifrac_dm_pcoa_qiime_forplot_table <- unW_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+      })
+      
+      names(unW_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats())
+      
+      # Make all feature name to "feature"
+      for (i in 1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+        names(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+      }
+      
+      
+      unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+               aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = F)+
+          xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+          ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("Unweighted unifrac PCoA plot")+
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+      })
+      
+      names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
+      return(unW_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      
+    })
+    
+    # unW_unif_pca_plot <- reactive({
+    # 
+    #   #PCA
+    #   nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta]!="NA")
+    #   taxatable_beta <- TaxaTable_merge()[, nonNA_position]
+    #   metadata_beta <- Metadata_stats()[nonNA_position,]
+    #   colnames(metadata_beta)[1] <- "SampleID"
+    #   
+    #   # unW_unifrac_dm_qiime <- read_qza("/home/imuser/qiime_output/core-metrics-results/unweighted_unifrac_distance_matrix.qza")[["data"]]
+    #   pca_Bray_df_data <- prcomp(unW_unifrac_dm_qiime)
+    #   PCA_rowname <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
+    #   
+    #   metadata_beta_unW_unifrac <- filter(metadata_beta, SampleID %in% PCA_rowname)
+    #   
+    #   sample_original_names <- pca_Bray_df_data$scores %>% row.names()
+    #   
+    #   update_rownames <- function(feature_name, metadata, i){
+    #     
+    #     names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+    #     names_order <- which(names_TF==T)
+    #     
+    #     sample_names <- metadata[,1][names_order] %>% as.character()
+    #     return(sample_names)
+    #   }
+    #   
+    #   names_list <- lapply(colnames(metadata_beta_unW_unifrac)[1:ncol(metadata_beta_unW_unifrac)], function(i){
+    #     
+    #     sapply(1:length(unique(metadata_beta[, i])), function(j){
+    #       
+    #       update_rownames(i, metadata_beta,j)
+    #       
+    #       
+    #     })
+    #     
+    #   })
+    #   
+    #   names(names_list) <- colnames(metadata_beta_unW_unifrac)[1:ncol(metadata_beta_unW_unifrac)]
+    #   
+    #   for (i in 1:length(names(names_list))) {
+    #     names(names_list[[i]]) <- unique(metadata_beta_unW_unifrac[,names(names_list)[i]]) %>% as.character()
+    #   }
+    #   
+    #   samples_unW <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
+    #   colnames(metadata_beta_unW_unifrac)[1] <- "SampleID"
+    #   # metadata_beta_unW <- filter(metadata_beta, SampleID %in% samples_unW)
+    #   
+    #   # metadata_beta_unW_arrange <- arrange(metadata_beta_unW_unifrac, "SampleID")
+    #   # PCA_rowname_arrange <- metadata_beta_unW_arrange[, input$metadata_phylo_beta]
+    #   
+    #   
+    #   
+    #   
+    #   library(ggplot2)
+    #   pca_Bray_df_data_plot <- data.frame(sample=PCA_rowname, 
+    #                                       PC1=pca_Bray_df_data$scores[,1],
+    #                                       PC2=pca_Bray_df_data$scores[,2])
+    #   pc_prop <- pca_Bray_df_data$sdev^2/sum(pca_Bray_df_data$sdev^2)
+    #   
+    #   library(ggrepel)
+    #   pca_Bray_df_data_plot_gg <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_unW, color=sample))+
+    #     geom_point(size = 1.5)+
+    #     geom_text_repel(show.legend = FALSE)+
+    #     xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+    #     ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+    #     geom_vline(xintercept = 0, linetype="dotted")+
+    #     geom_hline(yintercept = 0, linetype="dotted")+
+    #     theme_bw()+
+    #     ggtitle("PCA plot")+
+    #     scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15)) 
+    #   
+    #   
+    # })
+    
+    unW_unif_nmds_plot <- reactive({
+      
+      #NMDS
+      nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta]!="NA")
+      taxatable_beta <- asv_table()[, nonNA_position]
+      metadata_beta <- Metadata_stats()[nonNA_position,]
+      colnames(metadata_beta)[1] <- "SampleID"
+      
+      unW_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                              job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+      sample_original_names <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+        
+        sapply(1:length(unique(metadata_beta[, i])), function(j){
+          
+          update_rownames(i, metadata_beta,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+      
+      metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+      
+      NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta]
+      
+      metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
+      NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+      # NMDS_rowname <- NMDS_rowname_arrange
+      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+      
+      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+        geom_point(size=1.5)+
+        ggrepel::geom_text_repel(show.legend = FALSE)+
+        xlab("NMDS1")+
+        ylab("NMDS2")+
+        geom_vline(xintercept = 0, linetype = "dotted")+
+        geom_hline(yintercept = 0, linetype = "dotted")+
+        theme_bw()+
+        labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+        #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15)) 
+      
+      return(NMDS_beta_df_data_plot_gg)
+    })
+    
+    W_unif_pcoa_plot <- reactive({
+      
+      #PCoA
+      W_unifrac_dm_pcoa_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_pcoa_results.qza"))[["data"]]
+      W_unifrac_dm_pcoa_qiime_forplot <- W_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+      W_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats(), W_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+      
+      W_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats()), function(i){
+        
+        W_unifrac_dm_pcoa_qiime_forplot_table <- W_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+      })
+      
+      names(W_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats())
+      
+      # Make all feature name to "feature"
+      for (i in 1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+        names(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+      }
+      
+      
+      W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+               aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = F)+
+          xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+          ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("Weighted unifrac PCoA plot")+
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+      })
+      
+      names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
+      
+      return(W_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      
+      
+    })
+    
+    W_unif_nmds_plot <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta]!="NA")
+      taxatable_beta <- asv_table()[, nonNA_position]
+      metadata_beta <- Metadata_stats()[nonNA_position,]
+      colnames(metadata_beta)[1] <- "SampleID"
+      
+      W_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                            job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]
+      sample_original_names <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+      
+      update_rownames <- function(feature_name, metadata, i){
+        
+        names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+        names_order <- which(names_TF==T)
+        
+        sample_names <- metadata[,1][names_order] %>% as.character()
+        return(sample_names)
+      }
+      
+      names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+        
+        sapply(1:length(unique(metadata_beta[, i])), function(j){
+          
+          update_rownames(i, metadata_beta,j)
+          
+          
+        })
+        
+      })
+      
+      names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+      
+      for (i in 1:length(names(names_list))) {
+        names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+      }
+      
+      metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+      
+      metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+      
+      NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta]
+      
+      
+      metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
+      NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+      # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+      
+      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+        geom_point(size=1.5)+
+        ggrepel::geom_text_repel(show.legend = FALSE)+
+        xlab("NMDS1")+
+        ylab("NMDS2")+
+        geom_vline(xintercept = 0, linetype = "dotted")+
+        geom_hline(yintercept = 0, linetype = "dotted")+
+        theme_bw()+
+        labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+        #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15))
+      
+      return(NMDS_beta_df_data_plot_gg)
+    })
+    
+    
+    output$unW_unif_ordination <- renderPlot({
+      
+      if(input$UnW_or_W_phylo=="Unweighted" & input$phylo_cluster == F & input$ordination_phylo == "PCoA"){
+        
+        return(unW_unif_pcoa_plot())
+        
+      }else if (input$UnW_or_W_phylo=="Unweighted" & input$phylo_cluster == F & input$ordination_phylo == "NMDS"){
+        
+        return(unW_unif_nmds_plot())
+        
+      }else if (input$UnW_or_W_phylo=="Unweighted" & input$phylo_cluster == T & input$ordination_phylo == "PCoA"){
+        
+        return(unW_unif_pcoa_plot() + stat_ellipse(type = "t"))
+        
+      }else if (input$UnW_or_W_phylo=="Unweighted" & input$phylo_cluster == T & input$ordination_phylo == "NMDS"){
+        
+        return(unW_unif_nmds_plot() + stat_ellipse(type = "t"))
+        
+      }else if(input$UnW_or_W_phylo=="Weighted" & input$phylo_cluster ==F & input$ordination_phylo == "PCoA"){
+        
+        return(W_unif_pcoa_plot())
+        
+      }else if(input$UnW_or_W_phylo=="Weighted" & input$phylo_cluster ==F & input$ordination_phylo == "NMDS"){
+        
+        return(W_unif_nmds_plot())
+        
+      }else if(input$UnW_or_W_phylo=="Weighted" & input$phylo_cluster ==T & input$ordination_phylo == "PCoA"){
+        
+        return(W_unif_pcoa_plot() + stat_ellipse(type = "t"))
+        
+      }else{
+        
+        return(W_unif_nmds_plot() + stat_ellipse(type = "t"))
+        
+      }
+      
+      
+    })
+    
+    output$download_unif_plot <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_plot_", input$UnW_or_W_phylo, "_", input$ordination_phylo,"_", input$metadata_phylo_beta, ".jpg")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          
+          if(input$ordination_phylo=="PCoA"){
+            if(input$phylo_cluster){
+              ggsave(file, plot = unW_unif_pcoa_plot() + stat_ellipse(type = "t"))
+            }else{
+              ggsave(file, plot = unW_unif_pcoa_plot())
+            }
+            
+          }else{
+            if(input$phylo_cluster){
+              ggsave(file, plot = unW_unif_nmds_plot() + stat_ellipse(type = "t"))
+            }else{
+              ggsave(file, plot = unW_unif_nmds_plot())
+            }
+            
+          }
+          
+        }else{
+          if(input$ordination_phylo=="PCoA"){
+            if(input$phylo_cluster){
+              ggsave(file, plot = W_unif_pcoa_plot() + stat_ellipse(type = "t"))
+            }else{
+              ggsave(file, plot = W_unif_pcoa_plot())
+            }
+            
+          }else{
+            if(input$phylo_cluster){
+              ggsave(file, plot = W_unif_nmds_plot() + stat_ellipse(type = "t"))
+            }else{
+              ggsave(file, plot = W_unif_nmds_plot())
+            }
+            
+          }
+          
+        }
+        
+      }
+      
+    )
+    
+    
+    Permanova_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+        
+        adonis(unW_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+        
+      })
+      
+      names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+      
+      for (i in colnames(nonNA_metadata)[-1]) {
+        
+        rownames(adonis_result_table_list[[i]])[1] <- i
+      }
+      
+      adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta]][1, c(5,6)]
+      colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+      
+      
+      
+      adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+      adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+      
+      return(adonis_result_table_list_show)
+    })
+    
+    Permanova_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+        
+        adonis(W_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+        
+      })
+      
+      names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+      
+      for (i in colnames(nonNA_metadata)[-1]) {
+        
+        rownames(adonis_result_table_list[[i]])[1] <- i
+      }
+      
+      adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta]][1, c(5,6)]
+      colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+      
+      
+      
+      adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+      adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+      
+      return(adonis_result_table_list_show)
+    })
+    
+    # Show permanova title
+    output$Permanova_title_phylo <- renderText({
+      
+      if(is.null(Permanova_table_phylo_unW()) && is.null(Permanova_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("PerMANOVA")
+      }
+      
+      
+    })
+    
+    # Show permanova table
+    output$permanova_table_phylo <- renderTable({
+      
+      permanova_table_phylo_list <- list(Permanova_table_phylo_unW(), Permanova_table_phylo_W())
+      names(permanova_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(permanova_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    # Download permanova table
+    output$download_permanova_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("UniFrac_PerMANOVA_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(Permanova_table_phylo_unW(), file)
+        }else{
+          write_csv(Permanova_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    
+    # When length(group_names)<=2, hide the download button of pair table
+    observe({
+      
+      req(input$sample_data, input$taxonomic_table, input$table_dada2_upload)
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+
+      group_names <- unique(nonNA_metadata[, input$metadata_phylo_beta])
+      
+      if(length(group_names)<=2){
+        shinyjs::hide("download_permanova_pair_phylo")
+        shinyjs::hide("download_ANOSIM_pair_phylo")
+        shinyjs::hide("download_MRPP_pair_phylo")
+      }else{
+        shinyjs::show("download_permanova_pair_phylo")
+        shinyjs::show("download_ANOSIM_pair_phylo")
+        shinyjs::show("download_MRPP_pair_phylo")
+      }
+      
+    })
+    
+    Permanova_pair_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        
+        unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                            job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+        })
+        
+        
+        adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+          adonis_result_pair <- adonis(unW_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta], metadata_pair, permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair<- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(adonis_result_pair_list) <- pair_names
+        
+        adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+        for (i in 1:(ncol(combn(group_names, 2))-1)) {
+          adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                 as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+        }
+        
+        colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+        
+        for (i in 3:7) {
+          
+          adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+          
+        }
+        
+        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7)]))
+        
+      }else{
+        return(NULL)
+      }
+      
+    })
+    
+    Permanova_pair_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        
+        W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                          job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+        })
+        
+        
+        adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+          adonis_result_pair <- adonis(W_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta], metadata_pair, permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair<- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(adonis_result_pair_list) <- pair_names
+        
+        adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+        for (i in 1:(ncol(combn(group_names, 2))-1)) {
+          adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                 as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+        }
+        
+        colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+        
+        for (i in 3:7) {
+          
+          adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+          
+        }
+        
+        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7)]))
+        
+      }else{
+        return(NULL)
+      }
+      
+    })
+    
+    # Show permanova pair title
+    output$Permanova_pair_title_phylo <- renderText({
+      
+      if(is.null(Permanova_pair_table_phylo_unW()) && is.null(Permanova_pair_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("PerMANOVA pair")
+      }
+      
+      
+    })
+    
+    # Show permanova pair table
+    output$permanova_pair_table_phylo <- renderTable({
+      
+      permanova_pair_table_phylo_list <- list(Permanova_pair_table_phylo_unW(), Permanova_pair_table_phylo_W())
+      names(permanova_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(permanova_pair_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    # Download permanova pair table
+    output$download_permanova_pair_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_PerMANOVA_pair_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(Permanova_pair_table_phylo_unW(), file)
+        }else{
+          write_csv(Permanova_pair_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    
+    ANOSIM_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      anosim_result <- anosim(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta], permutations = 999)
+      anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+      anosim_result_table <- anosim_result_table[,c(2,1)]
+      colnames(anosim_result_table) <- c("R", "P value")
+      
+      anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+      anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+      
+      return(anosim_result_table)
+      
+    })
+    ANOSIM_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      anosim_result <- anosim(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta], permutations = 999)
+      anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+      anosim_result_table <- anosim_result_table[,c(2,1)]
+      colnames(anosim_result_table) <- c("R", "P value")
+      
+      anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+      anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+      
+      return(anosim_result_table)
+      
+    })
+    ANOSIM_pair_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        
+        unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                            job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+        })
+        
+        anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+          adonis_result_pair <- anosim(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta], metadata_pair, permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair <- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(anosim_result_pair_list) <- pair_names
+        
+        anosim_result_pair_list_signif <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+        }
+        
+        anosim_result_pair_list_R <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+        }
+        
+        anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    R=anosim_result_pair_list_R,
+                                                    "P_value"=anosim_result_pair_list_signif)
+        
+        anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+        colnames(anosim_result_pair_list_table)[3] <- "P value"
+        
+        return(anosim_result_pair_list_table)
+        
+      }else{
+        return(NULL)
+      }
+      
+    })
+    ANOSIM_pair_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        
+        W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                          job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+        })
+        
+        anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+          anosim_result_pair <- anosim(W_unifrac_dm_pair, metadata_pair[,input$metadata_phylo_beta], metadata_pair, permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair <- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(anosim_result_pair_list) <- pair_names
+        
+        anosim_result_pair_list_signif <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+        }
+        
+        anosim_result_pair_list_R <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+        }
+        
+        anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    R=anosim_result_pair_list_R,
+                                                    "P_value"=anosim_result_pair_list_signif)
+        
+        anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+        colnames(anosim_result_pair_list_table)[3] <- "P value"
+        
+        return(anosim_result_pair_list_table)
+        
+      }else{
+        return(NULL)
+      }
+      
+    })
+    
+    # Show ANOSIM title
+    output$ANOSIM_title_phylo <- renderText({
+      
+      if(is.null(ANOSIM_table_phylo_unW()) && is.null(ANOSIM_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("ANOSIM")
+      }
+      
+      
+    })
+    
+    # Show ANOSIM table
+    output$ANOSIM_table_phylo <- renderTable({
+      
+      ANOSIM_table_phylo_list <- list(ANOSIM_table_phylo_unW(), ANOSIM_table_phylo_W())
+      names(ANOSIM_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(ANOSIM_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    # Download ANOSIM table
+    output$download_ANOSIM_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_ANOSIM_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(ANOSIM_table_phylo_unW(), file)
+        }else{
+          write_csv(ANOSIM_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    # Show ANOSIM pair title
+    output$ANOSIM_pair_title_phylo <- renderText({
+      
+      if(is.null(ANOSIM_pair_table_phylo_unW()) && is.null(ANOSIM_pair_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("ANOSIM pair")
+      }
+      
+    })
+    
+    # Show ANOSIM pair table
+    output$ANOSIM_pair_table_phylo <- renderTable({
+      
+      ANOSIM_pair_table_phylo_list <- list(ANOSIM_pair_table_phylo_unW(), ANOSIM_pair_table_phylo_W())
+      names(ANOSIM_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(ANOSIM_pair_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    
+    
+    
+    # Download ANOSIM pair table
+    output$download_ANOSIM_pair_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_ANOSIM_pair_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(ANOSIM_pair_table_phylo_unW(), file)
+        }else{
+          write_csv(ANOSIM_pair_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    
+    MRPP_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      mrpp_result <- mrpp(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta], permutations = 999)
+      mrpp_result_table <- data.frame(Group = 'all', 
+                                      Distance = 'Bray-Curtis', 
+                                      A = mrpp_result$A,            
+                                      Observe.delta = mrpp_result$delta,            
+                                      Expect.delta = mrpp_result$E.delta,            
+                                      P.value = mrpp_result$Pvalue)
+      mrpp_result_table_show <- mrpp_result_table[,3:6]
+      colnames(mrpp_result_table_show)[4] <- "P value"
+      
+      for (i in 1:4) {
+        
+        mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+        
+      }
+      
+      return(mrpp_result_table_show)
+    })
+    MRPP_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      mrpp_result <- mrpp(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta], permutations = 999)
+      mrpp_result_table <- data.frame(Group = 'all', 
+                                      Distance = 'Bray-Curtis', 
+                                      A = mrpp_result$A,            
+                                      Observe.delta = mrpp_result$delta,            
+                                      Expect.delta = mrpp_result$E.delta,            
+                                      P.value = mrpp_result$Pvalue)
+      mrpp_result_table_show <- mrpp_result_table[,3:6]
+      colnames(mrpp_result_table_show)[4] <- "P value"
+      
+      for (i in 1:4) {
+        
+        mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+        
+      }
+      
+      return(mrpp_result_table_show)
+    })
+    MRPP_pair_table_phylo_unW <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                        job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                            job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          
+        })
+        
+        MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+          MRPP_result_pair <- mrpp(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta], permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair <- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(MRPP_result_pair_list) <- pair_names
+        
+        MRPP_result_pair_list_Pvalue <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+        }
+        
+        MRPP_result_pair_list_A <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+        }
+        
+        MRPP_result_pair_list_delta <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+        }
+        
+        MRPP_result_pair_list_Edelta <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+        }
+        
+        MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                  A=MRPP_result_pair_list_A,
+                                                  delta=MRPP_result_pair_list_delta,
+                                                  E.delta=MRPP_result_pair_list_Edelta,
+                                                  P_value=MRPP_result_pair_list_Pvalue)
+        
+        for (i in 2:5) {
+          
+          MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        colnames(MRPP_result_pair_list_table)[5] <- "P value"
+        
+        return(MRPP_result_pair_list_table)
+      }else{
+        return(NULL)
+      }
+    })
+    MRPP_pair_table_phylo_W <- reactive({
+      
+      nonNA_position <- which(Metadata_stats()[,input$metadata_phylo_beta] != "NA")
+      nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+      
+      nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+      nonNA_metadata <- Metadata_stats()[nonNA_position, ]
+      
+      W_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+      
+      nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+      
+      group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta])
+      
+      if(length(group_names)>2){
+        
+        sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+          
+          sample_cb_meta <- nonNA_metadata[,c(1,x)]
+          
+        })
+        names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+        
+        W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+          
+          feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+          sample_f1_f2 <- sample_list[[input$metadata_phylo_beta]] %>% filter(sample_list[[input$metadata_phylo_beta]][,input$metadata_phylo_beta] %in% feature1_feature2)
+          W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                          job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]
+          return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          
+        })
+        
+        MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+          
+          W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+          metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+          MRPP_result_pair <- mrpp(W_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta], permutations = 999)
+          
+        })
+        
+        pair_names <- c()
+        df_pair <- t(combn(group_names, 2))
+        for (i in 1:ncol(combn(group_names, 2))) {
+          
+          pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+          
+        }
+        names(MRPP_result_pair_list) <- pair_names
+        
+        MRPP_result_pair_list_Pvalue <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+        }
+        
+        MRPP_result_pair_list_A <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+        }
+        
+        MRPP_result_pair_list_delta <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+        }
+        
+        MRPP_result_pair_list_Edelta <- c()
+        for (i in 1:ncol(combn(group_names, 2))) {
+          MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+        }
+        
+        MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                  A=MRPP_result_pair_list_A,
+                                                  delta=MRPP_result_pair_list_delta,
+                                                  E.delta=MRPP_result_pair_list_Edelta,
+                                                  P_value=MRPP_result_pair_list_Pvalue)
+        
+        for (i in 2:5) {
+          
+          MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        colnames(MRPP_result_pair_list_table)[5] <- "P value"
+        
+        return(MRPP_result_pair_list_table)
+      }else{
+        return(NULL)
+      }
+    })
+    
+    # Show MRPP title
+    output$MRPP_title_phylo <- renderText({
+      
+      if(is.null(MRPP_table_phylo_unW()) && is.null(MRPP_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("ANOSIM")
+      }
+      
+      
+    })
+    
+    # Show MRPP table
+    output$MRPP_table_phylo <- renderTable({
+      
+      MRPP_table_phylo_list <- list(MRPP_table_phylo_unW(), MRPP_table_phylo_W())
+      names(MRPP_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(MRPP_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    # Download MRPP table
+    output$download_MRPP_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_MRPP_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(MRPP_table_phylo_unW(), file)
+        }else{
+          write_csv(MRPP_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    # Show MRPP pair title
+    output$MRPP_pair_title_phylo <- renderText({
+      
+      if(is.null(MRPP_pair_table_phylo_unW()) && is.null(MRPP_pair_table_phylo_W())){
+        
+        return(NULL)
+      }else{
+        return("MRPP pair")
+      }
+      
+      
+    })
+    
+    # Show MRPP pair table
+    output$MRPP_pair_table_phylo <- renderTable({
+      
+      MRPP_pair_table_phylo_list <- list(MRPP_pair_table_phylo_unW(), MRPP_pair_table_phylo_W())
+      names(MRPP_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+      return(MRPP_pair_table_phylo_list[[input$UnW_or_W_phylo]])
+      
+    })
+    
+    # Download MRPP pair table
+    output$download_MRPP_pair_phylo <- downloadHandler(
+      
+      filename = function(){
+        paste0("Unifrac_MRPP_pair_table_", input$UnW_or_W_phylo, ".csv")
+      },
+      content = function(file){
+        if(input$UnW_or_W_phylo=="Unweighted"){
+          write_csv(MRPP_pair_table_phylo_unW(), file)
+        }else{
+          write_csv(MRPP_pair_table_phylo_W(), file)
+        }
+      }
+    )
+    
+    # removeModal()
+    remove_modal_spinner()
+    
+    end_time <- Sys.time()
+    
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    if(file.exists(paste0('/home/imuser/web_version/users_files/', job_id(), '_DA_phylo', '/core-metrics-results/faith_pd_vector.qza'))){
+      
+      showModal(modalDialog(title = strong("Successful!"), 
+                            HTML(
+                              paste0(
+                                "This analysis took ", spent_time, ". ",
+                                "You can inspect the results now.")
+                            ), 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    } # if 
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  # ANCOM ------------------------------------------------------------------------------------------------------
+  observeEvent(input$ANCOM_start, {
+    
+    start_time <- Sys.time()
+    # showModal(modalDialog(title = "Running ANCOM ...", "Waiting for a moment", footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    Sys.setenv(LANG="C.UTF-8")
+    # file.remove("/home/imuser/qiime_output/ancom_comparison.qzv")
+    # selected_metadata <- Metadata_stats() %>% filter(Metadata_stats()[,input$metadata8] == input$metadata8_factor) %>% as_tibble()
+    # colnames(selected_metadata)[1] <- "SampleID"
+    # write.table(selected_metadata[,1], file='/home/imuser/selected_sampleID.tsv', quote=FALSE, sep='\t', row.names = F)
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    
+    nonNA_position <- which(Metadata_stats()[, input$metadata_ANCOM]!="NA")
+    nonNA_sampleid <- Metadata_stats()[,1][nonNA_position]
+    nonNA_metadata <- Metadata_stats()[nonNA_position,]
+    
+    nonNA_metadata_categorical <- apply(as.matrix(nonNA_metadata[,2:ncol(nonNA_metadata)]), MARGIN = 2, FUN = function(x){
+      if(sum(grepl("^[A-Za-z]+", x, perl = T)) > 0){
+        return(x)
+      }else{
+        x <- paste0("[ ", x, " ]")
+      }
+      
+    })
+    
+    # for (r in 1:nrow(nonNA_metadata)) {
+    #   for (c in 2:ncol(nonNA_metadata)) {
+    #     
+    #     x <- nonNA_metadata[r,c]
+    #     if(sum(grepl("^[A-Za-z]+", x, perl = T)) > 0){
+    #       return(x)
+    #     }else{
+    #       x <- paste0("[ ", x, " ]")
+    #     }
+    #   }
+    #   
+    # }
+    
+    
+    nonNA_metadata_1stcol <- nonNA_metadata[,1] %>% as.data.frame()
+    colnames(nonNA_metadata_1stcol) <- "SampleID"
+    nonNA_metadata_categorical <- as.data.frame(nonNA_metadata_categorical)
+    colnames(nonNA_metadata[,2:ncol(nonNA_metadata)])
+    nonNA_metadata_categorical <- cbind(nonNA_metadata_1stcol, nonNA_metadata_categorical)
+    colnames(nonNA_metadata_categorical) <- c("SampleID", colnames(nonNA_metadata)[-1])
+    
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/", job_id(), '_DA_ancom'))
+    system(paste0("mkdir ", "/home/imuser/web_version/users_files/", job_id(), '_DA_ancom'))
+    write.table(nonNA_metadata_categorical, 
+                file=paste0('/home/imuser/web_version/users_files/',
+                            job_id(), '_DA_ancom',
+                            '/nonNA_metadata_categorical.tsv'), quote = F, sep='\t', row.names = F)
+    
+    # system("sed -i '2i\ #q2:types  categorical	categorical	categorical	categorical	categorical	categorical	categorical	categorical' /home/imuser/nonNA_metadata.tsv")
+    
+    # # add categorical line
+    # categorical_word <- paste(rep("categorical", ncol(Metadata_stats())), collapse = " ")
+    # type_word <- paste("#q2:types", categorical_word)
+    # a <- read.csv('/home/imuser/nonNA_metadata.tsv', stringsAsFactors = F, header = F)
+    # b <- rbind(type_word, a) %>% as_tibble()
+    # colnames(b) <- b[2,]
+    # c <- b[-2,]
+    # write.table(c, file = "/home/imuser/nonNA_metadata_addline.tsv", sep = "/t", row.names = F, quote = F, col.names = T)
+    
+    # file.copy(from = input$taxonomic_table$datapath, to = "/home/imuser/upload_taxtable.qza", overwrite = T)
+    file.copy(from = input$taxonomic_table$datapath, 
+              to = paste0("/home/imuser/web_version/users_files/",
+                            job_id(), "_DA_ancom",
+                          "/upload_taxtable.qza"),
+              overwrite = T)
+    nonNA_sampleid_1 <- c("SampleID", nonNA_sampleid) # for qiime2 reading format
+    write.table(x = nonNA_sampleid_1, 
+                file = paste0("/home/imuser/web_version/users_files/",
+                              job_id(), "_DA_ancom",
+                              "/nonNA_sampleid.tsv"),
+                quote = F, row.names = F, col.names = F)
+    
+    system(paste0(qiime_cmd, 
+                  " feature-table filter-samples", 
+                  " --i-table /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/upload_taxtable.qza", 
+                  " --m-metadata-file /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/nonNA_sampleid.tsv", 
+                  " --o-filtered-table /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/nonNA_table.qza"))
+    system(paste0(qiime_cmd, 
+                  " composition add-pseudocount --i-table ", 
+                  "/home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/nonNA_table.qza", 
+                  " --o-composition-table /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/comp_table.qza"))
+    system(paste0(qiime_cmd, 
+                  " composition ancom --i-table /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/comp_table.qza --m-metadata-file ", "/home/imuser/web_version/users_files/",
+                            job_id(), "_DA_ancom",
+                  "/nonNA_metadata_categorical.tsv",
+                 " --m-metadata-column ", input$metadata_ANCOM,
+                 " --o-visualization /home/imuser/web_version/users_files/",
+                 job_id(), "_DA_ancom",
+                 "/ancom_comparison.qzv"))
+    
+    # unlink("/home/imuser/qiime_output/ancom_comparison_unzip/new_dirname", recursive = T)
+    # system("cp /home/imuser/qiime_output/ancom_comparison.qzv /home/imuser/qiime_output/ancom_comparison.zip")
+    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",job_id(), "/ancom_comparison_unzip"))
+    system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/ancom_comparison_unzip /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/ancom_comparison.qzv"))
+    
+    if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                          job_id(), "_DA_ancom",
+                          "/ancom_comparison.qzv"))){
+      shinyjs::show("ancom_output_ui") 
+      shinyjs::show("ancom_table_download")
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please check your input files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    ancom_unzip_dirname <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                             job_id(), "_DA_ancom",
+                                             "/ancom_comparison_unzip"), 
+                                      full.names = T)
+    system(paste0("mv ", 
+                  ancom_unzip_dirname, 
+                  " /home/imuser/web_version/users_files/",
+                  job_id(), "_DA_ancom",
+                  "/ancom_comparison_unzip/new_dirname"))
+    
+    output$word_ancom_plotly <- renderUI({
+      
+      h3("ANCOM Volcano Plot", 
+         style = "color: black;top: 10px;")
+    })
+    
+    output$ancom_plotly <- renderPlotly({
+      
+      ancom_data <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(), "_DA_ancom",
+                                      "/ancom_comparison_unzip/new_dirname/data/data.tsv"), 
+                               sep = "\t", header = T)
+      ancom_sig <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                     job_id(), "_DA_ancom",
+                                     "/ancom_comparison_unzip/new_dirname/data/ancom.tsv"), 
+                              sep = "\t", header = T)
+      names(ancom_sig)[1] <- "id"
+      
+      ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+      
+      plot_ly(data = ancom_merge,
+              x = ~ clr,
+              y = ~ W,
+              color = ~ Reject.null.hypothesis,
+              colors = c("grey","red")[1:length(unique(ancom_sig$Reject.null.hypothesis))],
+              type = "scatter",
+              hoverinfo = "text",
+              hovertext = paste("Species:", ancom_merge$id,
+                                "<br> clr:", ancom_merge$clr,
+                                "<br> W:", ancom_merge$W) 
+      ) %>% layout(showlegend = T)
+      
+    })
+    
+    
+    output$annotation_ancom <- renderUI({
+      HTML("<p>The W value is the number of sub-hypotheses that have rejected for a given taxon in ANCOM analysis.<br>The clr represents log-fold change relative to the average microbe.</p>")
+    })
+    
+    output$word_ancom_table <- renderUI({
+      
+      h3("ANCOM results (Taxa with significant W value)", 
+         style = "color: black;top: 10px;")
+    })
+    
+    output$ancom_sig <- renderDataTable({
+      
+      ancom_sig <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                     job_id(), "_DA_ancom",
+                                     "/ancom_comparison_unzip/new_dirname/data/ancom.tsv"), 
+                              sep = "\t", header = T)
+      names(ancom_sig)[1] <- "Species"
+      
+      ancom_sig_true <- filter(ancom_sig, Reject.null.hypothesis == "True")
+      return(ancom_sig_true[,1:2])
+      
+    })
+    
+    
+    
+    # removeModal()
+    remove_modal_spinner()
+    
+    end_time <- Sys.time()
+    
+    spent_time <- format(round(end_time-start_time, digits = 2))
+    
+    if (file.exists(paste0("/home/imuser/web_version/users_files/",
+                           job_id(), "_DA_ancom","/ancom_comparison.qzv"))){
+      
+      # output$word_ANCOM <- renderText(print("ANCOM successfully!"))
+      showModal(modalDialog(title = strong("Successful!"),
+                            HTML(
+                              paste0(
+                                "This analysis took ", spent_time, ". ",
+                                "You can inspect the results.")
+                            ), 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if (is.character(Metadata_stats()[, input$metadata_ANCOM])==F){
+      
+      # output$word_ANCOM <- renderText(print("Error!The factor should be categorical data."))
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "The factor should be categorical data.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                            "Please check your files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+    
+  })
+  
+  
+  output$ancom_plot_download <- downloadHandler(
+    filename = "ANCOM_plot.jpg",
+    content = function(file){
+      ancom_data <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(), "_DA_ancom",
+                                      "/ancom_comparison_unzip/new_dirname/data/data.tsv"), 
+                               sep = "\t", header = T)
+      ancom_sig <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                     job_id(), "_DA_ancom",
+                                     "/ancom_comparison_unzip/new_dirname/data/ancom.tsv"), 
+                              sep = "\t", header = T)
+      names(ancom_sig)[1] <- "id"
+      
+      ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+      
+      k <- ggplot(data = ancom_merge, 
+                  aes(clr, W, col = Reject.null.hypothesis))+geom_point()+scale_colour_discrete("Reject null hypothesis")+theme_bw()
+      
+      ggsave(file, plot = k, width = 80, height = 40, units = "cm")
+    }
+  )
+  
+  output$ancom_table_download <- downloadHandler(
+    filename = "ANCOM_table.csv",
+    content = function(file){
+      
+      ancom_data <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                      job_id(), "_DA_ancom",
+                                      "/ancom_comparison_unzip/new_dirname/data/data.tsv")
+                               , sep = "\t", header = T)
+      ancom_sig <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                     job_id(), "_DA_ancom",
+                                     "/ancom_comparison_unzip/new_dirname/data/ancom.tsv")
+                              , sep = "\t", header = T)
+      names(ancom_sig)[1] <- "id"
+      
+      ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+      write_csv(ancom_merge, file, col_names = T)
+    }
+  )
+  
+  
+  # User results ----
+  output$taxa_download_user <- downloadHandler(
+    
+    filename = paste0("taxa_result_" ,input_job_id() ,".zip"),
+    
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxonomy.zip"), 
+                file)
+    }
+  )
+  
+  
+  output$taxatable_download_user <- downloadHandler(
+    
+    filename = paste0("taxonomic_table_" ,input_job_id() ,".qza"),
+    
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxatable7.qza"), file)
+    }
+    
+  )
+  
+  output$table_dada2_download_user <- downloadHandler(
+    
+    filename = paste0("ASVs_table_", input_job_id(), ".qza"),
+    
+    content = function(file){
+      # if(input$seqs_type == "Single end"){
+      #   file.copy("/home/imuser/qiime_output/table-dada2_single.qza", file)
+      # }else{
+      #   file.copy("/home/imuser/qiime_output/table-dada2_paired.qza", file)
+      # }
+      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^table-dada2_ | grep qza$"), intern = T)[1]
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file), file)
+      
+    }
+  )
+  
+  output$rep_seq_dada2_download_user <- downloadHandler(
+    
+    filename = paste0("rep_seqs_forPhylo_", input_job_id(), ".qza"),
+    
+    content = function(file){
+      # if(input$seqs_type == "Single end"){
+      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_single.qza", file)
+      # }else{
+      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_paired.qza", file)
+      # }
+      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^rep-seqs-dada2 | grep qza$"), intern = T)[1]
+      file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file), file)
+      
+    }
+  )
+  
+  # Function Analysis-------------------------------------------------------------------------------------------
+  observeEvent(input$function_analysis, {
+    
+    if(is.null(input$sample_data_FA) | is.null(input$taxonomic_table_FA)){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the files!", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+    req(input$sample_data_FA)
+    req(input$taxonomic_table_FA)
+    # showModal(modalDialog(title = "Running FAPROTAX ...", "Waiting for a moment", footer = NULL))
+    show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+    
+    qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+    
+    
+    system(paste0("rm ",
+                  "/home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/func-table7.qza"))
+    
+    system(paste0(qiime_cmd, 
+                  " tools export --input-path ", 
+                  input$taxonomic_table_FA$datapath, 
+                  " --output-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/exported-feature-table7"))
+    # system(paste0("/usr/local/envs/python-2.7/bin/python2.7 /home/imuser/FAPROTAX_1.2.1/collapse_table.py ",
+    system(paste0("/home/imuser/miniconda3/envs/python-2.7/bin/python2.7 /home/imuser/FAPROTAX_1.2.1/collapse_table.py ",
+                  " --force -i /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/exported-feature-table7/feature-table.biom -o /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/FAPROTAX_output/func-table7.biom -g /home/imuser/FAPROTAX_1.2.1/FAPROTAX.txt -r /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/FAPROTAX_output/report7-record.txt --out_groups2records_table /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/FAPROTAX_output/groups2record.biom"))
+    system(paste0(qiime_cmd, 
+                  " tools import --input-path /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/FAPROTAX_output/func-table7.biom --type 'FeatureTable[Frequency]' --input-format BIOMV100Format --output-path /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/func-table7.qza"))
+    system(paste0(qiime_cmd, 
+                  " tools import --input-path /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/FAPROTAX_output/groups2record.biom --type 'FeatureTable[Frequency]' --input-format BIOMV100Format --output-path /home/imuser/web_version/users_files/",
+                  job_id(), "_FA",
+                  "/groups2record.qza"))
+    
+    # removeModal() 
+    remove_modal_spinner()
+    
+    
+    output$func_table_BY_sampleid <- renderDataTable({
+      
+      req(input$sample_data_FA, input$taxonomic_table_FA, input$function_analysis)
+      
+      func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                job_id(), "_FA",
+                                                "/func-table7.qza"))[["data"]]
+      
+      TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+      
+      func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+      
+      return(func_table_BY_sampleid_filtered_tibble)
+      
+    })
+    
+    
+    output$Function_barplot <- renderPlotly({
+      
+      func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                job_id(), "_FA",
+                                                "/func-table7.qza"))[["data"]]
+      
+      TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+      
+      func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+      
+      func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+      
+      # df_barplot <- data.frame(
+      #   Type = func_table_BY_sampleid_filtered_tibble[,1],
+      #   reads = rowSums(func_table_BY_sampleid_filtered_tibble[,-1]),
+      #   treatment = rep(c("low", "hight"), length(func_table_BY_sampleid_filtered_tibble[,1])),
+      #   stringsAsFactors = F
+      # )
+      
+      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, reads, -Type)
+      
+      df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                      from = Metadata_FA()[,1],
+                                      to = as.character(Metadata_FA()[, input$metadata_FA]))
+      
+      FA_ggplot <- ggplot(df_barplot,
+                          aes(y = reads, fill = feature, x = Type))+
+        geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8)+
+        coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
+        labs(x="Function types", y="Reads")+
+        theme(axis.title.x = element_text(color="black", size=16))+
+        theme(axis.title.y = element_text(color="black", size=16)) 
+      
+      y <- list(
+        title = list(text="Function types",standoff=20)
+      )
+      
+      ggplotly(FA_ggplot) %>% layout(yaxis=y)
+      
+    })
+    
+    output$function_report <- renderUI({
+      
+      a <- read_table(paste0("/home/imuser/web_version/users_files/",
+                      job_id(), "_FA",
+                      "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+      a_report <- a[104:106,2]
+      a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
+      a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
+      a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
+      a_report[2] <- str_replace_all(a_report[2], pattern = "group", replacement = "function type.")
+      a_report[2] <- str_remove(a_report[2], pattern = "\\(leftovers\\)")
+      a_report[3] <- str_replace_all(a_report[3], pattern = "record", replacement = "taxa")
+      a_report[3] <- str_replace_all(a_report[3], pattern = "group", replacement = "function type")
+      a_report[3] <- str_replace_all(a_report[3], pattern = "taxa", replacement = "taxon.")
+      
+      HTML(paste(a_report[1], a_report[2] ,a_report[3], sep = "<br/>"))
+      
+      
+    })
+    
+    }
+  })
+  
+  
+  
+  # output$word_FA1 <- renderText({
+  #   
+  #   if(is.null(input$taxonomic_table_FA$datapath) == F){
+  #     
+  #     return("")
+  #     
+  #   }else{
+  #     return("Please upload the file from the last steps of the sequnecing preprocessing.")
+  #   }
+  # })
+  
+  
+  
+  
+  # output$word_FA2 <- renderText({
+  #   
+  #   if(file.exists("/home/imuser/qiime_output/func-table7.qza")){
+  #     
+  #     return("")
+  #     
+  #   }else{
+  #     
+  #     return("Please finish the steps of the sequnecing preprocessing.")
+  #   }
+  # })
+  
+  
+  
+  
+  # output$word_FA3 <- renderText({
+  #   
+  #   if(file.exists("/home/imuser/qiime_output/func-table7.qza")){
+  #     
+  #     return("")
+  #     
+  #   }else{
+  #     
+  #     return("Please finish the steps of the sequnecing preprocessing.")
+  #   }
+  # })
+  
+  
+  observeEvent(input$function_info, {
+    showModal(
+      modalDialog(
+        title = "Message",
+        tagList(
+          span("MOCHI uses "),
+          a("FAPROTAX",
+            href ="https://pages.uoregon.edu/slouca/LoucaLab/archive/FAPROTAX/lib/php/index.php",
+            target="_blank",
+            style = "font-weight: 700; color:black;"),
+          span(" database for function analysis. FAPROTAX is a database that maps prokaryotic clades (e.g. genera or species) to established metabolic or other ecologically relevant functions.")
+        ),
+        footer = NULL,
+        easyClose = T
+      )
+    )
+  })
+  
+  
+  output$func_table_ID<-downloadHandler(
+    
+    # filename = "function_table_bySampleID.csv",
+    filename = "function_table.csv",
+    content = function(file) {
+      
+      func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                job_id(), "_FA",
+                                                "/func-table7.qza"))[["data"]]
+      
+      TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+      
+      func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+      
+      write.csv(func_table_BY_sampleid_filtered_tibble, file, row.names = F)
+      
+    }
+  )
+  
+  # output$func_table_Sp<-downloadHandler(
+  #   
+  #   filename = "function_table_bySpeciesName.csv",
+  #   content = function(file) {
+  #     
+  #     func_table_BY_sampleid <- read_qza("/home/imuser/qiime_output/func-table7.qza")[["data"]]
+  #     
+  #     TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+  #     
+  #     func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+  #     
+  #     func_name_filtered <- rownames(func_table_BY_sampleid_filtered)
+  #     
+  #     
+  #     func_table_BY_speciesname <- read_qza("/home/imuser/qiime_output/groups2record.qza")[["data"]]
+  #     
+  #     func_table_BY_speciesname_filtered <- func_table_BY_speciesname[,func_name_filtered]
+  #     
+  #     func_table_BY_speciesname_filtered_tibble <- cbind("Species names"=rownames(func_table_BY_speciesname_filtered), func_table_BY_speciesname_filtered) %>% as_tibble()
+  #     
+  #     write.csv(func_table_BY_speciesname_filtered_tibble, file, row.names = F)
+  #     
+  #   }
+  # )
+  
+  
+  output$FA_plot_download <- downloadHandler(
+    
+    filename = function(){
+      paste0("Functional_analysis_plot_", input$metadata_FA, ".jpg")
+      },
+    
+    content = function(file){
+      
+      func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                job_id(), "_FA",
+                                                "/func-table7.qza"))[["data"]]
+      
+      TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+      
+      func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+      
+      func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+      
+      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, reads, -Type)
+      
+      df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                      from = Metadata_FA()[,1],
+                                      to = as.character(Metadata_FA()[, input$metadata_FA]))
+      
+      FA_plot <- ggplot(df_barplot,
+                        aes(y = reads, fill = feature, x = Type)) + geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))
+      
+      ggsave(file, plot = FA_plot, width = 80, height = 40, units = "cm")
+    }
+  )
+  
+  
+  # Tutorial ---------------------------------------------------------------------------------------------------
+  # output$tutorial <- renderUI({
+  #     # p <- includeHTML("/home/imuser/text_files/tutorial.html")
+  #     # return(HTML(p))
+  #   HTML(markdown::markdownToHTML(knit("/home/imuser/text_files/tutorial.Rmd", quiet = T)))
+  # })
+  
+  # dockerfile ----
+  output$download_yml <- downloadHandler(
+    filename = "docker-compose.yml",
+    content = function(file){
+      file.copy("/home/imuser/docker-compose.yml", file)
+    }
+  )
+  
+}
+
