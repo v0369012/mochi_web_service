@@ -874,6 +874,109 @@ server <- function(session, input, output) {
     
   })
   
+  # TA fileinput ----
+  values_1 <- reactiveValues(
+    upload_state = NULL
+  )
+  values_2 <- reactiveValues(
+    upload_state = NULL
+  )
+  values_3 <- reactiveValues(
+    upload_state = NULL
+  )
+  
+  observeEvent(input$sample_data, {
+    values_1$upload_state <- 'uploaded'
+  })
+  
+  observeEvent(input$taxonomic_table, {
+    values_2$upload_state <- 'uploaded'
+  })
+  
+  observeEvent(input$table_dada2_upload, {
+    values_3$upload_state <- 'uploaded'
+  })
+  
+  observeEvent(input$TA_reset, {
+    values_1$upload_state <- 'reset'
+    values_2$upload_state <- 'reset'
+    values_3$upload_state <- 'reset'
+  })
+  
+  file_input_1 <- reactive({
+    if (is.null(values_1$upload_state)) {
+      return(NULL)
+    } else if (values_1$upload_state == 'uploaded') {
+      return(input$sample_data)
+    } else if (values_1$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  file_input_2 <- reactive({
+    if (is.null(values_2$upload_state)) {
+      return(NULL)
+    } else if (values_2$upload_state == 'uploaded') {
+      return(input$taxonomic_table)
+    } else if (values_2$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  file_input_3 <- reactive({
+    if (is.null(values_3$upload_state)) {
+      return(NULL)
+    } else if (values_3$upload_state == 'uploaded') {
+      return(input$table_dada2_upload)
+    } else if (values_3$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  
+  # FA fileinput ----
+  values_1_FA <- reactiveValues(
+    upload_state = NULL
+  )
+  values_2_FA <- reactiveValues(
+    upload_state = NULL
+  )
+  
+  
+  observeEvent(input$sample_data_FA, {
+    values_1_FA$upload_state <- 'uploaded'
+  })
+  
+  observeEvent(input$taxonomic_table_FA, {
+    values_2_FA$upload_state <- 'uploaded'
+  })
+  
+ 
+  observeEvent(input$FA_reset, {
+    values_1_FA$upload_state <- 'reset'
+    values_2_FA$upload_state <- 'reset'
+    
+  })
+  
+  file_input_1_FA <- reactive({
+    if (is.null(values_1_FA$upload_state)) {
+      return(NULL)
+    } else if (values_1_FA$upload_state == 'uploaded') {
+      return(input$sample_data_FA)
+    } else if (values_1_FA$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  file_input_2_FA <- reactive({
+    if (is.null(values_2_FA$upload_state)) {
+      return(NULL)
+    } else if (values_2_FA$upload_state == 'uploaded') {
+      return(input$taxonomic_table_FA)
+    } else if (values_2_FA$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
   
   
   # reactive object---------------------------------------------------------------------------------------------
@@ -1459,27 +1562,14 @@ server <- function(session, input, output) {
   })
   
   
-  observeEvent(req(input$sample_data, input$taxonomic_table, input$table_dada2_upload), {
+  observeEvent(input$TA_start, {
     
-    if(read_qza(input$taxonomic_table$datapath)$type == "FeatureTable[Frequency]") {
+    if(is.null(file_input_1()) || is.null(file_input_2()) || is_null(file_input_3())) {
       
-      shinyjs::toggle("taxatable_ui")
-      
-      shinyjs::toggle("taxabarplot_ui")
-      
-      shinyjs::toggle("taxaheatmap_ui") 
-      
-      shinyjs::toggle("krona_ui")
-      
-      shinyjs::toggle("alpha_ui")
-      
-      shinyjs::toggle("beta_ui")
-      
-      shinyjs::show("phylo_ui")
-      
-      shinyjs::show("ancom_ui")
-      
-    }else{
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    
       shinyjs::hide("taxatable_ui")
       
       shinyjs::hide("taxabarplot_ui")
@@ -1495,6 +1585,25 @@ server <- function(session, input, output) {
       shinyjs::hide("phylo_ui")
       
       shinyjs::hide("ancom_ui")
+      
+      
+    }else{
+      shinyjs::show("taxatable_ui")
+      
+      shinyjs::show("taxabarplot_ui")
+      
+      shinyjs::show("taxaheatmap_ui") 
+      
+      shinyjs::show("krona_ui")
+      
+      shinyjs::show("alpha_ui")
+      
+      shinyjs::show("beta_ui")
+      
+      shinyjs::show("phylo_ui")
+      
+      shinyjs::show("ancom_ui")
+      
     }
     
   })
@@ -1638,21 +1747,29 @@ server <- function(session, input, output) {
   })
   
   
-  observeEvent(req(input$sample_data_FA, input$taxonomic_table_FA, input$function_analysis), {
-    if(file.exists(
-      paste0("/home/imuser/web_version/users_files/",
-             job_id(), "_FA",
-             "/func-table7.qza")
-    )){
-      shinyjs::show("func_table_ui")
-      shinyjs::show("func_barplot_ui")
-    }else{
-      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-                            "Please check your input files.", 
-                            footer = NULL, easyClose = T, size = "l"))
-    }
-    
-  })
+  # observeEvent(input$function_analysis, {
+  #   
+  #   if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
+  #     showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+  #                           "Please upload the files.", 
+  #                           footer = NULL, easyClose = T, size = "l")) 
+  #   }else{
+  #     # if(file.exists(
+  #     #   paste0("/home/imuser/web_version/users_files/",
+  #     #          job_id(), "_FA",
+  #     #          "/func-table7.qza")
+  #     # )){
+  #       shinyjs::show("func_table_ui")
+  #       shinyjs::show("func_barplot_ui")
+  #     # }else{
+  #     #   showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+  #     #                         "Please check your input files.", 
+  #     #                         footer = NULL, easyClose = T, size = "l"))
+  #     # }
+  #   }
+  #   
+  #   
+  # })
   
   
   # taxa ref-seqs min max
@@ -5368,6 +5485,14 @@ server <- function(session, input, output) {
         shinyjs::reset("sample_data")
         shinyjs::reset("taxonomic_table")
         shinyjs::reset("table_dada2_upload")
+        shinyjs::hide("taxatable_ui")
+        shinyjs::hide("taxabarplot_ui")
+        shinyjs::hide("taxaheatmap_ui") 
+        shinyjs::hide("krona_ui")
+        shinyjs::hide("alpha_ui")
+        shinyjs::hide("beta_ui")
+        shinyjs::hide("phylo_ui")
+        shinyjs::hide("ancom_ui")
         closeAlert(session, "sampleAlert")
     
  
@@ -5380,6 +5505,8 @@ server <- function(session, input, output) {
     shinyjs::reset("sample_data_FA")
     shinyjs::reset("taxonomic_table_FA")
     shinyjs::reset("table_dada2_upload_FA")
+    shinyjs::hide("func_table_ui")
+    shinyjs::hide("func_barplot_ui")
     closeAlert(session, "sampleAlert_FA")
     
   })
@@ -10280,7 +10407,7 @@ server <- function(session, input, output) {
   # Function Analysis-------------------------------------------------------------------------------------------
   observeEvent(input$function_analysis, {
     
-    if(is.null(input$sample_data_FA) | is.null(input$taxonomic_table_FA)){
+    if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Please upload the files!", 
                             footer = NULL, easyClose = T, size = "l"))
@@ -10328,8 +10455,19 @@ server <- function(session, input, output) {
                   job_id(), "_FA",
                   "/groups2record.qza"))
     
-    # removeModal() 
-    remove_modal_spinner()
+    
+    if(file.exists(
+            paste0("/home/imuser/web_version/users_files/",
+                   job_id(), "_FA",
+                   "/func-table7.qza")
+          )){
+            shinyjs::show("func_table_ui")
+            shinyjs::show("func_barplot_ui")
+          }else{
+            showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                                  "Please check your input files.",
+                                  footer = NULL, easyClose = T, size = "l"))
+          }
     
     
     output$func_table_BY_sampleid <- renderDataTable({
@@ -10413,6 +10551,8 @@ server <- function(session, input, output) {
       
       
     })
+    
+    remove_modal_spinner()
     
     }
   })
