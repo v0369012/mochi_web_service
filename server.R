@@ -3307,6 +3307,49 @@ server <- function(session, input, output) {
         
         shinyjs::show("dada2_results_single")
         
+        # update reference seqs filter length
+        if(input$seqs_type == "Single end"){
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input$input_job_id_taxa,
+                                "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[3,2]
+            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[4,2]
+            updateTextInput(session, inputId = "min_length", value = min_length)
+            updateTextInput(session, inputId = "max_length", value = max_length)
+          }else{
+            updateTextInput(session, inputId = "min_length", value = 0)
+            updateTextInput(session, inputId = "max_length", value = 0)
+          }
+        }else{
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input$input_job_id_taxa,
+                                "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[3,2]
+            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[4,2]
+            updateTextInput(session, inputId = "min_length", value = min_length)
+            updateTextInput(session, inputId = "max_length", value = max_length)
+          }else{
+            updateTextInput(session, inputId = "min_length", value = 0)
+            updateTextInput(session, inputId = "max_length", value = 0)
+          }
+        }
+        
         # removeModal()
         remove_modal_spinner()
         end_time <- Sys.time()
@@ -3785,6 +3828,50 @@ server <- function(session, input, output) {
                   "/rarefaction-dada2_paired.zip"))
     
     shinyjs::show("dada2_results_paired")
+    
+    
+    # update reference seqs filter length
+    if(input$seqs_type == "Single end"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
+    }else{
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
+    }
     
     # removeModal()
     remove_modal_spinner()
