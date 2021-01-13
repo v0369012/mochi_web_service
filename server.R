@@ -1229,9 +1229,10 @@ server <- function(session, input, output) {
         }
       }) %>% unlist()
       
-      metadata <- metadata[, c("SampleID", OKstats_col)]
+      metadata <- metadata[, c("SampleID", OKstats_col)] %>% as.data.frame()
       
       return(metadata)
+      
     }
   })
   
@@ -1291,6 +1292,12 @@ server <- function(session, input, output) {
     # updateRadioButtons(session, "metadata_FA", choices = newchoices_FA[-1], inline = T)
     
   })
+  
+  # observe({
+  #   req(input$sample_data)
+  #   newchoices_stats <- colnames(Metadata_stats())
+  #   
+  # })
   
   observe({
     newchoices_FA <- colnames(Metadata_FA())
@@ -1416,15 +1423,35 @@ server <- function(session, input, output) {
       
       word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
       
+      OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+        if(sum(table(metadata[, x])<=1)==0){
+          return(x)
+        }
+      }) %>% unlist()
+      metadata <- metadata[, c("SampleID", OKstats_col)] %>% as.data.frame()
+      word_content_del <- "Therefore, the metadata cannot be used to conduct statistical analysis."
       
       if(length(position_1)!=0 | length(noOK_col)!=0) {
-        createAlert(session, 
-                    anchorId = "sample_data_alert", 
-                    alertId = "sampleAlert", 
-                    title = "Warning!",
-                    content = word_content, 
-                    append = FALSE,
-                    style = "warning")
+        
+        
+        if(length(metadata)<=1){
+          createAlert(session,
+                      anchorId = "sample_data_alert",
+                      alertId = "sampleAlert",
+                      title = "Error!",
+                      content = paste(word_content, word_content_del),
+                      append = T,
+                      style = "danger")
+          
+        }else {
+          createAlert(session,
+                      anchorId = "sample_data_alert",
+                      alertId = "sampleAlert",
+                      title = "Warning!",
+                      content = word_content,
+                      append = F,
+                      style = "warning")
+        }
         
       } else {
         closeAlert(session, "sampleAlert")
