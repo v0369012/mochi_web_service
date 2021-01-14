@@ -7624,7 +7624,9 @@ server <- function(session, input, output) {
       
       if (input$metadata_barplot=="SampleID"){
         # if (input$without_unassigned == F){
-        ggsave(file, plot = barplot_download(), width = 80, height = 40, units = "cm")
+        ggsave(file, 
+               plot = barplot_download() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                 , width = 80, height = 40, units = "cm")
         # }else{
         #   ggsave(file, plot = barplot_noUnassigned_download(), width = 80, height = 40, units = "cm")
         # }
