@@ -176,7 +176,7 @@ shinyUI(
                               #                            ),
                               
                               fileInput(inputId = "seqs_data_upload",
-                                        label = span("Please select and upload the sequence files (*.fastq.gz)",
+                                        label = span("Please select and upload the sequence files (*.fastq.gz or *.fq.gz)",
                                                      style= "font-size: 20px; font-weight: 300; color: white;"),
                                         multiple = T
                                         # accept = ".fastq.gz"
