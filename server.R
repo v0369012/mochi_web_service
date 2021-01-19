@@ -1319,7 +1319,7 @@ server <- function(session, input, output) {
     a <- list.files(path = raw_data_path_list[[1]])
     a <- str_replace_all(a, pattern = ".fq.gz", replacement = ".fastq.gz")
 
-    if(sum(str_detect(a, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))==length(a)){
+    if(sum(str_detect(a, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))==length(a)){
 
       if(sum(stringr::str_detect(a, "_R2[(\\.)(_)]")) > 0 ){
         updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end"))
@@ -2523,10 +2523,16 @@ server <- function(session, input, output) {
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "File format must be .fastq.gz or .fq.gz!",
                               footer = NULL, easyClose = T, size = "l"))
-    }else if(!str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_001\\.") | !str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")){
-      showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                            "File names must be {Sample ID}_{barcode id}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
-                            footer = NULL, easyClose = T, size = "l"))
+    }else if(sum(str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\."))==0){
+      if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\."))==0){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }
     }
   })
   
@@ -2551,10 +2557,16 @@ server <- function(session, input, output) {
                             "File format must be .fastq.gz or .fq.gz!",
                             footer = NULL, easyClose = T, size = "l"))
       
-    }else if(!str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_001\\.") | !str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")){
-      showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                            "File names must be {Sample ID}_{barcode id}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
-                            footer = NULL, easyClose = T, size = "l"))
+    }else if(sum(str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\."))==0){
+      if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\."))==0){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }
       
     }else if(sum(input$seqs_data_upload$size > 20000000)>0){
       showModal(modalDialog(title = strong("Error!", style = "color: red"),
@@ -2591,7 +2603,7 @@ server <- function(session, input, output) {
     seqs_name <- list.files("/home/imuser/seqs_upload")
     
     
-    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))<length(seqs_name)){
+    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))<length(seqs_name)){
       
     
       library(stringr)
@@ -2835,10 +2847,16 @@ server <- function(session, input, output) {
                             "File format must be .fastq.gz or .fq.gz!",
                             footer = NULL, easyClose = T, size = "l"))
       
-    }else if(!str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_001\\.") | !str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")){
-      showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                            "File names must be {Sample ID}_{barcode id}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
-                            footer = NULL, easyClose = T, size = "l"))
+    }else if(sum(str_detect(input$seqs_data_upload$name, ".+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\."))==0){
+      if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\."))==0){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              footer = NULL, easyClose = T, size = "l"))
+      }
       
     }else if(sum(input$seqs_data_upload$size > 10000000)>0){
       showModal(modalDialog(title = strong("Error!", style = "color: red"),
@@ -2869,7 +2887,7 @@ server <- function(session, input, output) {
     file.rename(from = list.files("/home/imuser/seqs_upload", full.names = T), to = paste0("/home/imuser/seqs_upload/", seqs_name))
     seqs_name <- list.files("/home/imuser/seqs_upload")
     
-    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_001\\.fastq\\.gz'))<length(seqs_name)){
+    if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))<length(seqs_name)){
     
       library(stringr)
       seqs_name_split <- str_split(seqs_name, "_")
