@@ -1906,7 +1906,7 @@ server <- function(session, input, output) {
           span(
             id = "user_demux_single",
             h4("Single end"),
-            # downloadButton(outputId = "demux_single_download", label = "Download") %>% shinyjs::disabled(),
+            
             
             if(file.exists(paste0("/home/imuser/web_version/users_files/", 
                                   input_job_id(),
@@ -1933,6 +1933,17 @@ server <- function(session, input, output) {
               
               
                                     },
+            
+            if(file.exists(
+              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_single.zip")
+            )){
+              downloadButton(outputId = "demux_single_download", label = "Download")
+            }else{
+              actionButton(inputId = "demux_single_download_not",
+                           label = "Download",
+                           style = "color:grey;"
+              )
+            },
             
             if(file.exists(
               paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_single.csv")
@@ -1977,6 +1988,17 @@ server <- function(session, input, output) {
                  },
             
             if(file.exists(
+              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_paired.zip")
+            )){
+              downloadButton(outputId = "demux_paired_download", label = "Download")
+            }else{
+              actionButton(inputId = "demux_paired_download_not",
+                           label = "Download",
+                           style = "color:grey;"
+              )
+            },
+            
+            if(file.exists(
               paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_paired.csv")
             )){
               downloadButton("log_demux_paired", "log file")
@@ -1992,10 +2014,11 @@ server <- function(session, input, output) {
             
           ),
           
-         
+         # denoising
           h1("2. Sequence denoising"),
           h4("Single end"),
           
+         # summary table
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_single_position_table/new_dirname/data/index.html"))){
@@ -2006,13 +2029,28 @@ server <- function(session, input, output) {
                                           "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                           "/denoise_single_position_table/new_dirname/data/index.html",
                                           "')"),
-                         icon = icon("eye"))
+                         icon = icon("eye"),
+                         style = "margin-bottom:5px")
           }else{
             actionButton(inputId = "user_show_dada2_single_table",
                          label = "Show summary table",
-                         style = "color: grey")
+                         style = "color: grey;margin-bottom:5px")
           },
           
+          if(file.exists(
+            paste0("/home/imuser/web_version/users_files/",
+                   input_job_id(),
+                   "/table-dada2_single.zip")
+          )){
+            downloadButton("summary_table_single", "Download", style = "margin-bottom:5px")
+          }else{
+            actionButton(inputId = "summary_table_single_not",
+                         label = "Download",
+                         style = "color: grey;margin-bottom:5px")
+          },
+          br(),
+          
+         # rep-seqs
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_single_seqs/new_dirname/data/index.html"))){
@@ -2023,13 +2061,28 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_single_seqs/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye"))
+                       icon = icon("eye"),
+                       style = "margin-bottom:5px")
             }else{
               actionButton(inputId = "user_show_dada2_single_seqs",
                            label = "Show seqs info",
-                           style ="color: grey")
+                           style ="color: grey;margin-bottom:5px")
             },
           
+          if(file.exists(
+            paste0("/home/imuser/web_version/users_files/",
+                   input_job_id(),
+                   "/rep-seqs-dada2_single.zip")
+          )){
+            downloadButton("seqs_info_single", "Download", style = "margin-bottom:5px")
+          }else{
+            actionButton(inputId = "seqs_info_single_not",
+                         label = "Download",
+                         style = "color: grey;margin-bottom:5px")
+          },
+          br(),
+          
+         # filter info
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_single_stats/new_dirname/data/index.html"))){
@@ -2040,13 +2093,28 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_single_stats/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye"))
+                       icon = icon("eye"),
+                       style = "margin-bottom:5px")
             }else{
               actionButton(inputId = "user_show_dada2_single_stats",
                            label = "Show filter info",
-                           style = "color: grey")
+                           style = "color: grey;margin-bottom:5px")
             },
           
+          if(file.exists(
+            paste0("/home/imuser/web_version/users_files/",
+                   input_job_id(),
+                   "/stats-dada2_single.zip")
+          )){
+            downloadButton("filter_info_single", "Download", style = "margin-bottom:5px")
+          }else{
+            actionButton(inputId = "filter_info_single_not",
+                         label = "Download",
+                         style = "color: grey;margin-bottom:5px")
+          },
+          br(),
+          
+         # rarefaction
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_single_rarefaction/new_dirname/data/index.html"))){
@@ -2057,15 +2125,30 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_single_rarefaction/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye")
+                       icon = icon("eye"),
+                       style = "margin-bottom:5px"
           )
             }else{
               actionButton(inputId = "user_show_dada2_single_rarefaction",
                            label = "Show alpha rarefaction",
-                           style = "color: grey"
+                           style = "color: grey;margin-bottom:5px"
               )
             },
           
+          if(file.exists(
+            paste0("/home/imuser/web_version/users_files/",
+                   input_job_id(),
+                   "/rarefaction-dada2_single.zip")
+          )){
+            downloadButton("alpha_rarefaction_single", "Download", style = "margin-bottom:5px")
+          }else{
+            actionButton(inputId = "alpha_rarefaction_single_not",
+                         label = "Download",
+                         style = "color: grey;margin-bottom:5px")
+          },
+          br(),
+          
+         # log
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/parameter_denoise_single.csv"))){
@@ -2083,6 +2166,7 @@ server <- function(session, input, output) {
           br(),br(),
           h4("Paired end"),
           
+         # summary table
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_paired_position_table/new_dirname/data/index.html"))){
@@ -2093,13 +2177,27 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_paired_position_table/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye"))
+                       icon = icon("eye"), style = "margin-bottom:5px")
             }else{
               actionButton(inputId = "user_show_dada2_paired_table",
                            label = "Show summary table",
                            style = "color: grey")
             },
+         
+         if(file.exists(
+           paste0("/home/imuser/web_version/users_files/",
+                  input_job_id(),
+                  "/table-dada2_paired.zip")
+         )){
+           downloadButton("summary_table_paired", "Download", style = "margin-bottom:5px")
+         }else{
+           actionButton(inputId = "summary_table_paired_not",
+                        label = "Download",
+                        style = "color: grey;margin-bottom:5px")
+         },
+         br(),
           
+         # rep-seqs
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_paired_seqs/new_dirname/data/index.html"))){
@@ -2110,13 +2208,27 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_paired_seqs/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye"))
+                       icon = icon("eye"), style = "margin-bottom:5px")
             }else{
               actionButton(inputId = "user_show_dada2_paired_seqs",
                            label = "Show seqs info",
                            style = "color: grey")
             },
+         
+         if(file.exists(
+           paste0("/home/imuser/web_version/users_files/",
+                  input_job_id(),
+                  "/rep-seqs-dada2_paired.zip")
+         )){
+           downloadButton("seqs_info_paired", "Download", style = "margin-bottom:5px")
+         }else{
+           actionButton(inputId = "seqs_info_paired_not",
+                        label = "Download",
+                        style = "color: grey;margin-bottom:5px")
+         },
+         br(),
           
+         # filter info
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_paired_stats/new_dirname/data/index.html"))){
@@ -2127,13 +2239,27 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_paired_stats/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye"))
+                       icon = icon("eye"), style = "margin-bottom:5px")
             }else{
               actionButton(inputId = "user_show_dada2_paired_stats",
                            label = "Show filter info",
                            style = "color: grey")
             },
-          
+         
+         if(file.exists(
+           paste0("/home/imuser/web_version/users_files/",
+                  input_job_id(),
+                  "/stats-dada2_paired.zip")
+         )){
+           downloadButton("filter_info_paired", "Download", style = "margin-bottom:5px")
+         }else{
+           actionButton(inputId = "filter_info_paired_not",
+                        label = "Download",
+                        style = "color: grey;margin-bottom:5px")
+         },
+         br(),
+         
+         # rarefaction 
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/denoise_paired_rarefaction/new_dirname/data/index.html"))){
@@ -2144,15 +2270,29 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/denoise_paired_rarefaction/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye")
+                       icon = icon("eye"), style = "margin-bottom:5px"
           )
             }else{
               actionButton(inputId = "user_show_dada2_paired_rarefaction",
                            label = "Show alpha rarefaction",
-                           style = "color: grey"
+                           style = "color: grey;margin-bottom:5px"
               )
             },
-          
+         
+         if(file.exists(
+           paste0("/home/imuser/web_version/users_files/",
+                  input_job_id(),
+                  "/rarefaction-dada2_paired.zip")
+         )){
+           downloadButton("alpha_rarefaction_paired", "Download", style = "margin-bottom:5px")
+         }else{
+           actionButton(inputId = "alpha_rarefaction_paired_not",
+                        label = "Download",
+                        style = "color: grey;margin-bottom:5px")
+         },
+         br(),
+         
+         # log
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input_job_id(),
                                 "/parameter_denoise_paired.csv"))){
@@ -2180,56 +2320,70 @@ server <- function(session, input, output) {
                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
                                         "/taxonomy_unzip/new_dirname/data/index.html",
                                         "')"),
-                       icon = icon("eye")
+                       icon = icon("eye"), style = "margin-bottom:5px"
           )
             }else{
               actionButton(inputId = "user_view_taxa",
                            label = "View!",
-                           style = "color: grey"
+                           style = "color: grey;margin-bottom:5px"
               )
             },
           
-          # downloadButton(outputId = "taxa_download_user", label = "Download the taxonomy result."),
+         if(file.exists(
+           paste0("/home/imuser/web_version/users_files/",
+                  input_job_id(),
+                  "/taxonomy.zip")
+         )){
+           downloadButton(outputId = "taxa_download_user", label = "Download", style = "margin-bottom:5px")
+         }else{
+           actionButton(inputId = "taxa_download_user_not",
+                        label = "Download",
+                        style = "color: grey;margin-bottom:5px"
+           )
+         },
+         br(),
+          
           if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxatable7.qza"))){
-            downloadButton(outputId = "taxatable_download_user", label = "Download the taxonomic table")
+            downloadButton(outputId = "taxatable_download_user", label = "Download the taxonomic table", style = "margin-bottom:5px")
           }else{
             # HTML('<button type="submit" style="color: grey; background-color: white">Download the taxonomic table</button>')
             actionButton(inputId = "user_taxatable_download_bttn",
                          label = "Download the taxonomic table",
-                         style = "color: grey"
+                         style = "color: grey;margin-bottom:5px"
             )
           },
           
           
           if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/", lastest_file_table))){
-          downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table")
+          downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table", style = "margin-bottom:5px")
             }else{
               # HTML('<button type="submit style="color: grey; background-color: white">Download the ASVs table</button>')
               actionButton(inputId = "user_table_dada2_download_bttn",
                            label = "Download the ASVs table",
-                           style = "color: grey"
+                           style = "color: grey;margin-bottom:5px"
               )
             },
           
           
           if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file_seqs))){
-            downloadButton(outputId = "rep_seq_dada2_download_user", label = "Download the seqs data")
+            downloadButton(outputId = "rep_seq_dada2_download_user", label = "Download the seqs data", style = "margin-bottom:5px")
           }else{
             # HTML('<button type="submit style="color: grey; background-color: white">Download the seqs data</button>')
             actionButton(inputId = "user_rep_seq_dada2_download_bttn",
                          label = "Download the seqs data",
-                         style = "color: grey"
+                         style = "color: grey;margin-bottom:5px"
             )
           },
           
+         br(),
           if(file.exists(paste0(
             "/home/imuser/web_version/users_files/", input_job_id(),"/parameter_taxonomy_classification.csv"
           ))){
-            downloadButton(outputId = "log_file_taxonomy_classification", label = "log file")
+            downloadButton(outputId = "log_file_taxonomy_classification", label = "log file", style = "margin-bottom:5px")
           }else{
             actionButton(inputId = "log_file_taxonomy_classification_no",
                          label = "log file",
-                         style = "color: grey"
+                         style = "color: grey;margin-bottom:5px"
             )
           }
           
@@ -2789,21 +2943,24 @@ server <- function(session, input, output) {
       actionButton(inputId = "show_demux_single",
                          label = "View!",
                          icon = icon("eye"),
-                         style = "margin: 10px; display: inline-block;",
+                         style = "margin-left:10px; display: inline-block;",
                          onclick = paste0("window.open('http://",
                                           # my_qiime_ip, my_qiime_port,
                                           "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_demux,
                                           "/demux_single_unzip/new_dirname/data/index.html#",
                                           "', '_blank')")
                    ),
+      
+      downloadButton("zip_demux_single", "Download", style="margin-left:5px;"),
+      br(),
       if(file.exists(
         paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_single.csv")
       )){
-        downloadButton("f_log_demux_single", "log file")
+        downloadButton("f_log_demux_single", "log file", style = "margin-left:10px;margin-top:5px;")
       }else{
         actionButton(inputId = "f_log_demux_single_not",
                      label = "log file",
-                     style = "color:grey;"
+                     style = "color:grey;", style = "margin-left:10px;margin-top:5px;"
         )
       }
     
@@ -2811,6 +2968,13 @@ server <- function(session, input, output) {
     
   })
   
+  
+  output$zip_demux_single <- downloadHandler(
+    filename = "demux_single.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single.zip"), file)
+    }
+  )
   
   output$f_log_demux_single <- downloadHandler(
     filename = "demux_single_log.csv",
@@ -3068,26 +3232,35 @@ server <- function(session, input, output) {
       actionButton(inputId = "show_demux_paired",
                    label = "View!",
                    icon = icon("eye"),
-                   style = "margin: 10px; display: inline-block;",
+                   style = "margin-left:10px; display: inline-block;",
                    onclick = paste0("window.open('http://",
                                     # my_qiime_ip, my_qiime_port,
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_demux,
                                     "/demux_paired_unzip/new_dirname/data/index.html#",
                                     "', '_blank')")
       ),
+      downloadButton("zip_demux_paired", "Download", style="margin-left:5px;"),
+      br(),
       if(file.exists(
         paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_demux_paired.csv")
       )){
-        downloadButton("f_log_demux_paired", "log file")
+        downloadButton("f_log_demux_paired", "log file", style = "margin-left:10px;margin-top:5px;")
       }else{
         actionButton(inputId = "f_log_demux_paired_not",
                      label = "log file",
-                     style = "color:grey;"
+                     style = "color:grey;", style = "margin-left:10px;margin-top:5px;"
         )
       }
     )
     
   })
+  
+  output$zip_demux_paired <- downloadHandler(
+    filename = "demux_paired.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired.zip"), file)
+    }
+  )
   
   output$f_log_demux_paired <- downloadHandler(
     filename = "demux_paired_log.csv",
@@ -3499,6 +3672,9 @@ server <- function(session, input, output) {
     
   output$dada2_single_results_bttn <- renderUI({
     tagList(
+      div(
+      style="margin-left:10px;",
+      
       actionButton(inputId = "show_dada2_single_table",
                    label = "Show summary table",
                    onclick = paste0("window.open('http://",
@@ -3506,7 +3682,10 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_single_position_table/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"),
+                   style="margin-bottom:5px"),
+      downloadButton("zip_dada2_single_table", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_single_seqs",
                    label = "Show seqs info",
                    onclick = paste0("window.open('http://",
@@ -3514,7 +3693,9 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_single_seqs/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"), style = "margin-bottom:5px"),
+      downloadButton("zip_dada2_single_seqs_info", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_single_stats",
                    label = "Show filter info",
                    onclick = paste0("window.open('http://",
@@ -3522,7 +3703,9 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_single_stats/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"), style = "margin-bottom:5px"),
+      downloadButton("zip_dada2_single_filter_info", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_single_rarefaction",
                    label = "Show alpha rarefaction",
                    onclick = paste0("window.open('http://",
@@ -3530,8 +3713,10 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_single_rarefaction/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")
+                   icon = icon("eye"), style = "margin-bottom:5px"
       ),
+      downloadButton("zip_dada2_single_rarefaction", "Download", style = "margin-bottom:5px"),
+      br(),
       if(file.exists(
         paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_denoise_single.csv")
       )){
@@ -3544,7 +3729,44 @@ server <- function(session, input, output) {
       }
       
     )
+    )
   })
+  
+  output$zip_dada2_single_table <- downloadHandler(
+    filename = "denoise_summary_table_single.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/table-dada2_single.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_single_seqs_info <- downloadHandler(
+    filename = "denoise_seqs_info_single.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/rep-seqs-dada2_single.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_single_filter_info <- downloadHandler(
+    filename = "denoise_filter_info_single.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/stats-dada2_single.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_single_rarefaction <- downloadHandler(
+    filename = "denoise_rarefaction_single.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/rarefaction-dada2_single.zip"), file)
+    }
+  )
   
   output$f_log_denoise_single <- downloadHandler(
     filename = "denoise_single_log.csv",
@@ -4022,6 +4244,7 @@ server <- function(session, input, output) {
   
   output$dada2_paired_results_bttn <- renderUI({
     tagList(
+      div(style="margin-left:10px",
       actionButton(inputId = "show_dada2_paired_table",
                    label = "Show summary table",
                    onclick = paste0("window.open('http://",
@@ -4029,7 +4252,9 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_paired_position_table/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"), style = "margin-bottom:5px"),
+      downloadButton("zip_dada2_paired_table", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_paired_seqs",
                    label = "Show seqs info",
                    onclick = paste0("window.open('http://",
@@ -4037,7 +4262,9 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_paired_seqs/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"), style = "margin-bottom:5px"),
+      downloadButton("zip_dada2_paired_seqs_info", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_paired_stats",
                    label = "Show filter info",
                    onclick = paste0("window.open('http://",
@@ -4045,7 +4272,9 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_paired_stats/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")),
+                   icon = icon("eye"), style = "margin-bottom:5px"),
+      downloadButton("zip_dada2_paired_filter_info", "Download", style = "margin-bottom:5px"),
+      br(),
       actionButton(inputId = "show_dada2_paired_rarefaction",
                    label = "Show alpha rarefaction",
                    onclick = paste0("window.open('http://",
@@ -4053,8 +4282,10 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_denoise,
                                     "/denoise_paired_rarefaction/new_dirname/data/index.html",
                                     "')"),
-                   icon = icon("eye")
+                   icon = icon("eye"), style = "margin-bottom:5px"
       ),
+      downloadButton("zip_dada2_paired_rarefaction", "Download", style = "margin-bottom:5px"),
+      br(),
       if(file.exists(
         paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/parameter_denoise_paired.csv")
       )){
@@ -4066,7 +4297,44 @@ server <- function(session, input, output) {
         )
       }
     )
+    )
   })
+  
+  output$zip_dada2_paired_table <- downloadHandler(
+    filename = "denoise_summary_table_paired.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/table-dada2_paired.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_paired_seqs_info <- downloadHandler(
+    filename = "denoise_seqs_info_paired.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/rep-seqs-dada2_paired.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_paired_filter_info <- downloadHandler(
+    filename = "denoise_filter_info_paired.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/stats-dada2_paired.zip"), file)
+    }
+  )
+  
+  output$zip_dada2_paired_rarefaction <- downloadHandler(
+    filename = "denoise_rarefaction_paired.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_demux,
+                       "/rarefaction-dada2_paired.zip"), file)
+    }
+  )
   
   output$f_log_denoise_paired <- downloadHandler(
     filename = "denoise_paired_log.csv",
@@ -4795,23 +5063,34 @@ server <- function(session, input, output) {
                                     "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_taxa,
                                     "/taxonomy_unzip/new_dirname/data/index.html",
                                     "')"),
-                   style = "margin-left: 10px",
+                   style = "margin-left: 10px; margin-bottom:5px",
                    icon = icon("eye")
       ),
+      downloadButton("zip_taxonomy_classification", "Download", style = "margin-bottom:5px"),
+      br(),
       if(file.exists(paste0(
         "/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/parameter_taxonomy_classification.csv"
       ))){
-        downloadButton(outputId = "f_log_file_taxonomy_classification", label = "log file")
+        downloadButton(outputId = "f_log_file_taxonomy_classification", label = "log file", style = "margin-left:10px")
       }else{
         actionButton(inputId = "f_log_file_taxonomy_classification_no",
                      label = "log file",
-                     style = "color: grey"
+                     style = "color: grey;margin-left:10px"
         )
       }
       
     )
     
   })
+  
+  output$zip_taxonomy_classification <- downloadHandler(
+    filename = "taxonomy_classification.zip",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/",
+                       input$input_job_id_taxa,
+                       "/taxonomy.zip"), file)
+    }
+  )
   
   output$f_log_file_taxonomy_classification <- downloadHandler(
     filename = "taxonomy_classification_log.csv",
@@ -10508,7 +10787,7 @@ server <- function(session, input, output) {
   # User results ----
   output$taxa_download_user <- downloadHandler(
     
-    filename = paste0("taxa_result_" ,input_job_id() ,".zip"),
+    filename = paste0("taxonomy_classification_" ,input_job_id() ,".zip"),
     
     content = function(file){
       file.copy(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxonomy.zip"), 

@@ -311,10 +311,10 @@ shinyUI(
                                   div(
                                     id = "demux_results_view_single",
                                     h4('(2) Inspect the result.'),
-                                    uiOutput("show_demux_single_bttn"),
+                                    uiOutput("show_demux_single_bttn")
                                     
-                                    span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
-                                         style = "position: relative; top:5px;")
+                                    # span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
+                                    #      style = "position: relative; top:5px;")
                                   ) %>% shinyjs::hidden(),
                                   
                                   # span("Go to", strong('User results'), ", you can inspect the result by your user id."),
@@ -381,8 +381,8 @@ shinyUI(
                                     h4('(2) Inspect the result.'),
                                     uiOutput("show_demux_paired_bttn"),
                                     
-                                    span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
-                                         style = "position: relative; top:5px;")
+                                    # span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
+                                    #      style = "position: relative; top:5px;")
                                   ) %>% shinyjs::hidden(),
                                   
                                 # span("Go to", strong('User results'), ", you can inspect the result by your user id."),
