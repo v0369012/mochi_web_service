@@ -10950,11 +10950,17 @@ server <- function(session, input, output) {
                                       from = Metadata_FA()[,1],
                                       to = as.character(Metadata_FA()[, input$metadata_FA]))
       
+      reads_percent <- lapply(unique(Metadata_FA()[, input$metadata_FA]), function(x){
+        filter(df_barplot, feature == x)$reads/sum(filter(df_barplot, feature == x)$reads)
+      }) %>% unlist() %>% round(digits = 4)
+      
+      df_barplot$reads_percent <- reads_percent
+      
       FA_ggplot <- ggplot(df_barplot,
-                          aes(y = reads, fill = feature, x = Type))+
+                          aes(y = reads_percent, fill = feature, x = Type))+
         geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8)+
         coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
-        labs(x="Function types", y="Reads")+
+        labs(x="Function types", y="Read percentage")+
         theme(axis.title.x = element_text(color="black", size=16))+
         theme(axis.title.y = element_text(color="black", size=16)) 
       
