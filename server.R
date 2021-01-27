@@ -2799,8 +2799,9 @@ server <- function(session, input, output) {
     
     # demuxed transform
     Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2020.8/bin')
-    # file.remove("/home/imuser/qiime_output/demux_single_trimmed.qza", "/home/imuser/qiime_output/demux_single_end.qzv")
-    # file.remove("", "/home/imuser/qiime_output/demux_single_end.qzv")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_trimmed.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_end.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_end.qzv"))
     
     
     if(input$checkbox_primer==T){
@@ -3091,7 +3092,9 @@ server <- function(session, input, output) {
     
     # demux
     Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2020.8/bin')
-    # file.remove("/home/imuser/qiime_output/demux_paired_trimmed.qza", "/home/imuser/qiime_output/demux_paired_end.qzv")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_trimmed.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_end.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_end.qzv"))
   
     if(input$checkbox_primer==T){
       system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
@@ -3316,12 +3319,12 @@ server <- function(session, input, output) {
         
         qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
         
-        # file.remove("/home/imuser/qiime_output/rep-seqs-dada2_single.qza", 
-        #             "/home/imuser/qiime_output/table-dada2_single.qza",
-        #             "/home/imuser/qiime_output/stats-dada2_single.qza",
-        #             "/home/imuser/qiime_output/rep-seqs-dada2_single.qzv",
-        #             "/home/imuser/qiime_output/table-dada2_single.qzv",
-        #             "/home/imuser/qiime_output/stats-dada2_single.qzv")
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_single.qza"))
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_single.qza"))
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_single.qzv"))
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qzv"))
+        file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_single.qzv"))
         
         if(is.null(input$sample_data_single$datapath)){
           add_metadata_table <- ""
@@ -3887,12 +3890,12 @@ server <- function(session, input, output) {
     
     qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
     
-    # file.remove("/home/imuser/qiime_output/rep-seqs-dada2_paired.qza", 
-    #             "/home/imuser/qiime_output/table-dada2_paired.qza",
-    #             "/home/imuser/qiime_output/stats-dada2_paired.qza",
-    #             "/home/imuser/qiime_output/rep-seqs-dada2_paired.qzv",
-    #             "/home/imuser/qiime_output/table-dada2_paired.qzv",
-    #             "/home/imuser/qiime_output/stats-dada2_paired.qzv")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_paired.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_paired.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_paired.qzv"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qzv"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_paired.qzv"))
     
     if(is.null(input$sample_data_paired$datapath)){
       add_metadata_table <- ""
@@ -4787,7 +4790,8 @@ server <- function(session, input, output) {
     )
     
     #  transform database to .qza
-    # rm("/home/imuser/qiime_output/identity_otus.qza", "/home/imuser/qiime_output/ref-taxonomy-7.qza")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/identity_otus.qza"))
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/ref-taxonomy-7.qza"))
     system(paste0(qiime_cmd, 
                   " tools import --type 'FeatureData[Sequence]' --input-path ", database_list[[input$select_database]][1], 
                  " --output-path /home/imuser/web_version/users_files/",
@@ -4819,7 +4823,7 @@ server <- function(session, input, output) {
     )
     
     
-    # rm("/home/imuser/qiime_output/ref-seqs.qza")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/ref-seqs.qza"))
     if(input$primer_f != "other" & input$primer_r != "other"){
       system(paste0(qiime_cmd, 
                     " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
@@ -4884,7 +4888,7 @@ server <- function(session, input, output) {
                     "/ref-seqs.qza"))
     }
     
-    # rm("/home/imuser/qiime_output/classifier.qza")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/classifier.qza"))
     system(paste0(qiime_cmd, 
                   " feature-classifier fit-classifier-naive-bayes --i-reference-reads /home/imuser/web_version/users_files/",
                   input$input_job_id_taxa, "/ref-seqs.qza",
@@ -4895,7 +4899,7 @@ server <- function(session, input, output) {
                   input$input_job_id_taxa,
                   "/classifier.qza"))
     
-    # rm("/home/imuser/qiime_output/taxonomy.qza")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.qza"))
     if(input$seqs_type == "Single end"){
       system(paste0(qiime_cmd, 
                    " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
@@ -4926,7 +4930,7 @@ server <- function(session, input, output) {
     #              "--p-n-jobs", input$n_jobs,
     #              "--o-classification /home/imuser/qiime_output/taxonomy.qza"))
     
-    # rm("/home/imuser/qiime_output/taxonomy.qzv")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.qzv"))
     system(paste0(qiime_cmd, 
                  " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
                  input$input_job_id_taxa,
@@ -4936,7 +4940,7 @@ server <- function(session, input, output) {
                  "/taxonomy.qzv"))
     
     
-    # rm("/home/imuser/qiime_output/taxatable7.qza")
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7.qza"))
     if(input$seqs_type == "Single end"){
       system(paste0(qiime_cmd, 
                     " taxa collapse --i-table /home/imuser/web_version/users_files/",
@@ -4986,6 +4990,7 @@ server <- function(session, input, output) {
                   " /srv/shiny-server/www/users_files/",
                   input$input_job_id_taxa))
 
+    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.zip"))
     system(paste0("cp /home/imuser/web_version/users_files/",
                   input$input_job_id_taxa,
                   "/taxonomy.qzv /home/imuser/web_version/users_files/",
