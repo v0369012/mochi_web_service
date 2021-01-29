@@ -831,7 +831,7 @@ shinyUI(
                                       strong("Reference sequence filtering", style = "font-size:24px;color:white"),
                                       br(),br(),
                                       strong("1. Check primers", style = "color: white;font-size: 20px;"),
-                                      p("If incorrect, go to 'Sequence summary' to select the correct primer.", style = "font-size:18px;"),
+                                      p("If incorrect, go to 'Step 1.Sequence summary' to select the correct primer.", style = "font-size:18px;"),
                                       # p(HTML("<b>1. Check your primers</b>"), span(shiny::icon("info-circle"), id = "info_check")
                                       #   , style = "font-size:20px;font-weight:700; margin-top:15px"),
                                       # tippy::tippy_this(elementId = "info_check", tooltip = "If incorrect, go to Sequences summary to change", placement = "right"),
