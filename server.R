@@ -2538,7 +2538,7 @@ server <- function(session, input, output) {
     updateCheckboxInput(session, inputId = "checkbox_primer", value = T)
     updateSelectInput(session, inputId = "primer_f", selected = "515F")
     updateSelectInput(session, inputId = "primer_r", selected = "806R")
-    updateTextInput(session, inputId = "n_jobs_demux", value = my_cores-2)
+    updateTextInput(session, inputId = "n_jobs_demux", value = suggested_cores)
 
   })
   
@@ -2559,7 +2559,7 @@ server <- function(session, input, output) {
     updateTextInput(session, inputId = "trim_left_single", value = 0)
     updateTextInput(session, inputId = "trunc_len_single", value = 120)
     updateTextInput(session, inputId = "qvalue_single", value = 2)
-    updateTextInput(session, inputId = "threads_single", value = my_cores-2)
+    updateTextInput(session, inputId = "threads_single", value = suggested_cores)
     # updateSelectInput(session, inputId = "select_database", selected = "Greengenes_16S_85")
     # updateTextInput(session, inputId = "min_length", value = 100)
     # updateTextInput(session, inputId = "max_length", value = 400)
@@ -2579,7 +2579,7 @@ server <- function(session, input, output) {
     updateSelectInput(session, inputId = "primer_r", selected = "806R")
     updateTextInput(session, inputId = "min_length", value = 100)
     updateTextInput(session, inputId = "max_length", value = 400)
-    updateTextInput(session, inputId = "n_jobs", value = my_cores-2)
+    updateTextInput(session, inputId = "n_jobs", value = suggested_cores)
   })
   
   observeEvent(input$TA_demo, {
@@ -2630,7 +2630,7 @@ server <- function(session, input, output) {
   observeEvent(input$phylo_demo, {
     
     updateTextInput(session, "sampling_depth", value = colSums(TaxaTable()) %>% min())
-    updateTextInput(session, "threads_phylogenetic", value = my_cores-2)
+    updateTextInput(session, "threads_phylogenetic", value = suggested_cores)
     
     showModal(modalDialog(
       title = "Message",
@@ -4187,7 +4187,8 @@ server <- function(session, input, output) {
     
     # output$message_mycore_single_position <- renderUI({
     my_cores <- parallel::detectCores()
-    str1 <- paste0("The number of your threads is ", my_cores, "."," If 0 is provided, all available cores will be used. (default: all threads - 2)")
+
+    str1 <- paste0("The number of your threads is ", my_cores, "."," If 0 is provided, all available cores will be used. (default: all threads - 2, min: 1 thread)")
     # str2 <- " If 0 is provided, all available cores will be used. (default: all threads - 2)"
     sr3 <- "The multithreaded processing is used to speed up the analysis."
     #   HTML(paste(str1, str2, sep = "</br>"))

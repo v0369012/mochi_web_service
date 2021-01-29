@@ -256,7 +256,7 @@ shinyUI(
                               strong("Computing setting", style = "font-size:24px;color:white"),
                               textInput(inputId = "n_jobs_demux", 
                                         label = span("Number of threads MOCHI can use", style = "font-size: 18px; font-weight: 300; color: white; margin-top: 5px;"),
-                                        value = my_cores-2,
+                                        value = suggested_cores,
                                         placeholder = "Input number",
                                         width = "300px"),
                               actionButton(inputId = "my_cores_demux", 
@@ -871,7 +871,7 @@ shinyUI(
                                       strong("Computing setting", style = "font-size:24px;color:white"),
                                       textInput(inputId = "n_jobs", 
                                                 label = "Number of threads MOCHI can use",
-                                                value = my_cores-2,
+                                                value = suggested_cores,
                                                 placeholder = "Input number",
                                                 width = "300px")
                                       # br(),br(),
