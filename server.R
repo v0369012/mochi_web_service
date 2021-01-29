@@ -3108,7 +3108,7 @@ server <- function(session, input, output) {
       # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
       system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
                     " --input-path", " /home/imuser/seqs_upload",
-                    " --input-format 'CasavaOneEightpairedLanePerSampleDirFmt'" ,
+                    " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
                     ' --output-path /home/imuser/web_version/users_files/',
                     input$input_job_id_demux,
                     '/demux_paired_end.qza'))
