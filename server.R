@@ -10815,7 +10815,7 @@ server <- function(session, input, output) {
         
         return(NULL)
       }else{
-        return("ANOSIM")
+        return("MRPP")
       }
       
       
