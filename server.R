@@ -11116,6 +11116,7 @@ server <- function(session, input, output) {
       ancom_sig_true$Species <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_sig_true$Species)
       ancom_sig_true$Species <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_sig_true$Species)
       ancom_sig_true$Species <- gsub("__", "", ancom_sig_true$Species)
+      ancom_sig_true <- separate(ancom_sig_true, col = "Species", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
       return(ancom_sig_true[,1:8])
       
     })
