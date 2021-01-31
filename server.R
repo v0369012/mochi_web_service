@@ -11075,6 +11075,9 @@ server <- function(session, input, output) {
       names(ancom_sig)[1] <- "id"
       
       ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+      ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+      ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+      ancom_merge$id <- gsub("__", "", ancom_merge$id)
       
       plot_ly(data = ancom_merge,
               x = ~ clr,
@@ -11110,7 +11113,10 @@ server <- function(session, input, output) {
       names(ancom_sig)[1] <- "Species"
       
       ancom_sig_true <- filter(ancom_sig, Reject.null.hypothesis == "True")
-      return(ancom_sig_true[,1:2])
+      ancom_sig_true$Species <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_sig_true$Species)
+      ancom_sig_true$Species <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_sig_true$Species)
+      ancom_sig_true$Species <- gsub("__", "", ancom_sig_true$Species)
+      return(ancom_sig_true[,1:8])
       
     })
     
@@ -11188,6 +11194,10 @@ server <- function(session, input, output) {
       names(ancom_sig)[1] <- "id"
       
       ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+      ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+      ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+      ancom_merge$id <- gsub("__", "", ancom_merge$id)
+      ancom_merge <- separate(ancom_merge, col = "id", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
       write_csv(ancom_merge, file, col_names = T)
     }
   )
