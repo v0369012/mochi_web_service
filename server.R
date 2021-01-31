@@ -9089,6 +9089,9 @@ server <- function(session, input, output) {
       taxtable_0<-taxtable[, sampleID]
       taxtable_1<-data.frame(taxtable_0, Species=row.names(taxtable))
       colnames(taxtable_1)[1]<-sampleID
+      taxtable_1[,"Species"] <- gsub("k__|p__|c__|o__|f__|g__|s__", "",taxtable_1[,"Species"])
+      taxtable_1[,"Species"] <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "",taxtable_1[,"Species"])
+      taxtable_1[,"Species"] <- gsub("__", "",taxtable_1[,"Species"])
       taxtable_2<-as_tibble(taxtable_1)
       taxtable_3<-separate(data = taxtable_2, col = "Species", into = level_group(),sep = ";")
       setwd("/home/imuser/Krona_files/")
