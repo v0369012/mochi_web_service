@@ -5158,6 +5158,24 @@ server <- function(session, input, output) {
                             "Please download taxonomy database first!", 
                             footer = NULL, easyClose = T, size = "l"))
       
+      }else if(input$seqs_type == "Single end" & file.exists(paste0(
+      "/home/imuser/web_version/users_files/",
+                      input$input_job_id_taxa,
+                      "/rep-seqs-dada2_single.qza"
+      ))==F){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please check the sequence type.", 
+                              footer = NULL, easyClose = T, size = "l"))
+    
+      }else if(input$seqs_type == "Paired end" & file.exists(paste0(
+        "/home/imuser/web_version/users_files/",
+        input$input_job_id_taxa,
+        "/rep-seqs-dada2_paired.qza"
+      ))==F){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please check the sequence type.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      
     }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_taxa)>0){
     
     start_time <- Sys.time()
@@ -5302,17 +5320,19 @@ server <- function(session, input, output) {
     
     file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.qza"))
     if(input$seqs_type == "Single end"){
-      system(paste0(qiime_cmd, 
-                   " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
-                   input$input_job_id_taxa,
-                   "/classifier.qza",
-                   " --i-reads /home/imuser/web_version/users_files/",
-                   input$input_job_id_taxa,
-                   "/rep-seqs-dada2_single.qza", 
-                   " --p-n-jobs ", input$n_jobs,
-                   " --o-classification /home/imuser/web_version/users_files/",
-                   input$input_job_id_taxa,
-                   "/taxonomy.qza"))
+      
+        system(paste0(qiime_cmd, 
+                      " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
+                      input$input_job_id_taxa,
+                      "/classifier.qza",
+                      " --i-reads /home/imuser/web_version/users_files/",
+                      input$input_job_id_taxa,
+                      "/rep-seqs-dada2_single.qza", 
+                      " --p-n-jobs ", input$n_jobs,
+                      " --o-classification /home/imuser/web_version/users_files/",
+                      input$input_job_id_taxa,
+                      "/taxonomy.qza"))
+      
     }else{
       system(paste0(qiime_cmd, 
                     " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
@@ -5446,7 +5466,7 @@ server <- function(session, input, output) {
         #   print('Error')
         # })
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                              "Please check your files.", 
+                              "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
       }
     
