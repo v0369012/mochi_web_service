@@ -1403,61 +1403,69 @@ server <- function(session, input, output) {
     if(is.data.frame(try(read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
       
       metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t" )
-      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
-      col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
-      
-      position_1 <- which(col_vector==1)
-      
-      
-      noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
-        if(sum(table(metadata[, x])<=1)!=0){
-          return(x)
-        }
-      }) %>% unlist()
-      
-      noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
-      
-      if(noOK_col==""){
-        noOK_col <- c()
-      }
-      
-      word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
-      
-      OKstats_col <- lapply(colnames(metadata)[-1], function(x){
-        if(sum(table(metadata[, x])<=1)==0){
-          return(x)
-        }
-      }) %>% unlist()
-      metadata <- metadata[, c("SampleID", OKstats_col)] %>% as.data.frame()
-      word_content_del <- "Therefore, the metadata cannot be used to conduct statistical analysis."
-      
-      if(length(position_1)!=0 | length(noOK_col)!=0) {
+      if(colnames(metadata)[1]!="SampleID"){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please check the file!", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        position_1 <- which(col_vector==1)
         
         
-        if(length(metadata)<=1){
-          createAlert(session,
-                      anchorId = "sample_data_alert",
-                      alertId = "sampleAlert",
-                      title = "Error!",
-                      content = paste(word_content, word_content_del),
-                      append = T,
-                      style = "danger")
+        noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)!=0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
+        
+        if(noOK_col==""){
+          noOK_col <- c()
+        }
+        
+        word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
+        
+        OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)==0){
+            return(x)
+          }
+        }) %>% unlist()
+        metadata <- metadata[, c("SampleID", OKstats_col)] %>% as.data.frame()
+        word_content_del <- "Therefore, the metadata cannot be used to conduct statistical analysis."
+        
+        if(length(position_1)!=0 | length(noOK_col)!=0) {
           
-        }else {
-          createAlert(session,
-                      anchorId = "sample_data_alert",
-                      alertId = "sampleAlert",
-                      title = "Warning!",
-                      content = word_content,
-                      append = F,
-                      style = "warning")
+          
+          if(length(metadata)<=1){
+            createAlert(session,
+                        anchorId = "sample_data_alert",
+                        alertId = "sampleAlert",
+                        title = "Error!",
+                        content = paste(word_content, word_content_del),
+                        append = T,
+                        style = "danger")
+            
+          }else {
+            createAlert(session,
+                        anchorId = "sample_data_alert",
+                        alertId = "sampleAlert",
+                        title = "Warning!",
+                        content = word_content,
+                        append = F,
+                        style = "warning")
+          }
+          
+        } else {
+          closeAlert(session, "sampleAlert")
+          
         }
-        
-      } else {
-        closeAlert(session, "sampleAlert")
-        
       }
+      
       
     }
     
@@ -1710,40 +1718,48 @@ server <- function(session, input, output) {
     if(is.data.frame(try(read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" ), silent = T))){
       
       metadata <- read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t" )
-      colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
-      col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
-      
-      position_1 <- which(col_vector==1)
-      
-      
-      noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
-        if(sum(table(metadata[, x])<=1)!=0){
-          return(x)
+      if(colnames(metadata)[1]!="SampleID"){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please check the file!", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(metadata[,1:ncol(metadata)], MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        position_1 <- which(col_vector==1)
+        
+        
+        noOKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)!=0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
+        
+        if(noOK_col==""){
+          noOK_col <- c()
         }
-      }) %>% unlist()
-      
-      noOK_col <- c(names(col_vector)[position_1], noOKstats_col) %>% paste(collapse = ", ")
-      
-      if(noOK_col==""){
-        noOK_col <- c()
+        
+        word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
+        
+        if(length(position_1)!=0 | length(noOK_col)!=0) {
+          createAlert(session, 
+                      anchorId = "sample_data_alert_FA", 
+                      alertId = "sampleAlert_FA", 
+                      title = "Warning!",
+                      content = word_content, 
+                      append = FALSE,
+                      style = "warning")
+          
+        } else {
+          closeAlert(session, "sampleAlert_FA")
+          
+        }
       }
       
-      word_content <- paste("Your column '", noOK_col, "' would be ignored because the data don't have more than 2 categories or sample size of every category is less than 2.")
-      
-      if(length(position_1)!=0 | length(noOK_col)!=0) {
-        createAlert(session, 
-                    anchorId = "sample_data_alert_FA", 
-                    alertId = "sampleAlert_FA", 
-                    title = "Warning!",
-                    content = word_content, 
-                    append = FALSE,
-                    style = "warning")
-        
-      } else {
-        closeAlert(session, "sampleAlert_FA")
-        
-      }
       
     }
     
