@@ -1214,7 +1214,7 @@ shinyUI(
                                           selectInput(inputId = "select_diversity", 
                                                       label = "Choose the index", 
                                                       choices = c("Richness", "Chao1", "ACE", 
-                                                                  "Shannon_diverstiy", "Simpon_diversity", "InvSimpson_diversity",
+                                                                  "Shannon_diverstiy", "Simpson_diversity", "InvSimpson_diversity",
                                                                   "Shannon_evenness", "Simpson_evenness", "Goods_coverage")),
                                           radioButtons(inputId = "select_stat", 
                                                        label = "Choose the statistic method", 

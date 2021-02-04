@@ -5819,7 +5819,7 @@ server <- function(session, input, output) {
         diversity(taxatable_data[,i], index = "shannon")
       })
       
-      alpha_diversity_Simpsom<-sapply(1:ncol(taxatable_data), function(i){
+      alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
         diversity(taxatable_data[,i], index = "simpson")
       })
       
@@ -5875,7 +5875,7 @@ server <- function(session, input, output) {
                                         Chao1=alpha_diversity_Choa1,
                                         ACE=alpha_diversity_ACE,
                                         Shannon_diverstiy=alpha_diversity_Shannon,
-                                        Simspon_diversity=alpha_diversity_Simpsom,
+                                        Simpson_diversity=alpha_diversity_Simpson,
                                         InvSimpson_diversity=alpha_diversity_InvSimpson,
                                         Shannon_evenness=alpha_diversity_ShannonEvenness,
                                         Simpson_evenness=alpha_diversity_SimpsonEveness,
