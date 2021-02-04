@@ -1618,6 +1618,10 @@ shinyUI(
                                                        label = "Select an attribute comparison.", 
                                                        choices = " ", 
                                                        inline = T),
+                                          selectInput(inputId = "ANCOM_level", 
+                                                      label = "Choose the level", 
+                                                      choices = c("Phylum","Class","Order","Family","Genus","Species") 
+                                          ),
                                           actionButton(inputId = "ANCOM_start", 
                                                        label = strong("Start!"),
                                                        icon = icon("play-circle")
