@@ -11173,7 +11173,7 @@ server <- function(session, input, output) {
               type = "scatter",
               hoverinfo = "text",
               hovertext = paste("Species:", ancom_merge$id,
-                                "<br> clr:", ancom_merge$clr,
+                                "<br> clr:", round(ancom_merge$clr, digits = 4),
                                 "<br> W:", ancom_merge$W) 
       ) %>% layout(showlegend = T)
       
