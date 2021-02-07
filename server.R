@@ -5863,7 +5863,7 @@ server <- function(session, input, output) {
         
         D<-diversity(data_vector, index = "simpson")
         species_number<-length(data_vector)
-        E<-(1/D)/species_number
+        E<-(1/(1-D))/species_number
         print(E)
         
       }
