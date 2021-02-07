@@ -11460,10 +11460,9 @@ server <- function(session, input, output) {
                                       to = as.character(Metadata_FA()[, input$metadata_FA]))
       
       
-      df_barplot_ag_mean <- aggregate(reads_percent~Type+feature , data=df_barplot , mean)
+      df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
       colnames(df_barplot_ag_mean)[3] <- "mean"
-      df_barplot_ag_mean$mean <- round(df_barplot_ag_mean$mean, 4)
-      df_barplot_ag_sd <- aggregate(reads_percent~Type+feature , data=df_barplot , sd)
+      df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
       colnames(df_barplot_ag_sd)[3] <- "sd"
       
       df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
@@ -11664,10 +11663,9 @@ server <- function(session, input, output) {
                                       to = as.character(Metadata_FA()[, input$metadata_FA]))
       
       
-      df_barplot_ag_mean <- aggregate(reads_percent~Type+feature , data=df_barplot , mean)
+      df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
       colnames(df_barplot_ag_mean)[3] <- "mean"
-      df_barplot_ag_mean$mean <- round(df_barplot_ag_mean$mean, 4)
-      df_barplot_ag_sd <- aggregate(reads_percent~Type+feature , data=df_barplot , sd)
+      df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
       colnames(df_barplot_ag_sd)[3] <- "sd"
       
       df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
