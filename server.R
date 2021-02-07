@@ -11435,40 +11435,47 @@ server <- function(session, input, output) {
                                                 job_id(), "_FA",
                                                 "/func-table7.qza"))[["data"]]
       
+      taxa_table <- read_qza(input$taxonomic_table_FA$datapath)$data
+      reads_persample <- colSums(taxa_table)
+      
       TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
       
       func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      for (i in 1:length(reads_persample)) {
+        for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+          func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+        }
+        
+      }
       
       func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
       
       func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
       
-      # df_barplot <- data.frame(
-      #   Type = func_table_BY_sampleid_filtered_tibble[,1],
-      #   reads = rowSums(func_table_BY_sampleid_filtered_tibble[,-1]),
-      #   treatment = rep(c("low", "hight"), length(func_table_BY_sampleid_filtered_tibble[,1])),
-      #   stringsAsFactors = F
-      # )
-      
-      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, reads, -Type)
+      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
       
       df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
                                       from = Metadata_FA()[,1],
                                       to = as.character(Metadata_FA()[, input$metadata_FA]))
       
-      reads_percent <- lapply(unique(Metadata_FA()[, input$metadata_FA]), function(x){
-        filter(df_barplot, feature == x)$reads/sum(filter(df_barplot, feature == x)$reads)
-      }) %>% unlist() %>% round(digits = 4)
       
-      df_barplot$reads_percent <- reads_percent
+      df_barplot_ag_mean <- aggregate(reads_percent~Type+feature , data=df_barplot , mean)
+      colnames(df_barplot_ag_mean)[3] <- "mean"
+      df_barplot_ag_mean$mean <- round(df_barplot_ag_mean$mean, 4)
+      df_barplot_ag_sd <- aggregate(reads_percent~Type+feature , data=df_barplot , sd)
+      colnames(df_barplot_ag_sd)[3] <- "sd"
       
-      FA_ggplot <- ggplot(df_barplot,
-                          aes(y = reads_percent, fill = feature, x = Type))+
-        geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8)+
-        coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
-        labs(x="Function types", y="Read percentage")+
+      df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+      
+      FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+        geom_bar(stat="identity", color="black", 
+                 position=position_dodge()) +
+        geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                      position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
+        labs(x="Function types", y="Relative abundance")+
         theme(axis.title.x = element_text(color="black", size=16))+
-        theme(axis.title.y = element_text(color="black", size=16)) 
+        theme(axis.title.y = element_text(color="black", size=16))
       
       y <- list(
         title = list(text="Function types",standoff=20)
@@ -11625,22 +11632,68 @@ server <- function(session, input, output) {
                                                 job_id(), "_FA",
                                                 "/func-table7.qza"))[["data"]]
       
+      taxa_table <- read_qza(input$taxonomic_table_FA$datapath)$data
+      reads_persample <- colSums(taxa_table)
+      
       TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
       
       func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+      
+      for (i in 1:length(reads_persample)) {
+        for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+          func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+        }
+        
+      }
       
       func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
       
       func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
       
-      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, reads, -Type)
+      # df_barplot <- data.frame(
+      #   Type = func_table_BY_sampleid_filtered_tibble[,1],
+      #   reads = rowSums(func_table_BY_sampleid_filtered_tibble[,-1]),
+      #   treatment = rep(c("low", "hight"), length(func_table_BY_sampleid_filtered_tibble[,1])),
+      #   stringsAsFactors = F
+      # )
+      
+      df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
       
       df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
                                       from = Metadata_FA()[,1],
                                       to = as.character(Metadata_FA()[, input$metadata_FA]))
       
-      FA_plot <- ggplot(df_barplot,
-                        aes(y = reads, fill = feature, x = Type)) + geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))
+      
+      df_barplot_ag_mean <- aggregate(reads_percent~Type+feature , data=df_barplot , mean)
+      colnames(df_barplot_ag_mean)[3] <- "mean"
+      df_barplot_ag_mean$mean <- round(df_barplot_ag_mean$mean, 4)
+      df_barplot_ag_sd <- aggregate(reads_percent~Type+feature , data=df_barplot , sd)
+      colnames(df_barplot_ag_sd)[3] <- "sd"
+      
+      df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+      
+      FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+        geom_bar(stat="identity", color="black", 
+                 position=position_dodge()) +
+        geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                      position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
+        labs(x="Function types", y="Relative abundance")+
+        theme(axis.title.x = element_text(color="black", size=16))+
+        theme(axis.title.y = element_text(color="black", size=16))
+      
+      # FA_ggplot <- ggplot(df_barplot,
+      #                     aes(y = reads_percent, fill = feature, x = Type))+
+      #   geom_bar(stat = "identity", position = "dodge", alpha = 1, width = .8)+
+      #   coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
+      #   labs(x="Function types", y="Relative abundance")+
+      #   theme(axis.title.x = element_text(color="black", size=16))+
+      #   theme(axis.title.y = element_text(color="black", size=16)) 
+      
+      y <- list(
+        title = list(text="Function types",standoff=20)
+      )
+      
+      ggplotly(FA_ggplot) %>% layout(yaxis=y)
       
       ggsave(file, plot = FA_plot, width = 80, height = 40, units = "cm")
     }
