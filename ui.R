@@ -1695,7 +1695,7 @@ shinyUI(
                              multiple = F,
                              accept = ".tsv"),
                    tippy::tippy_this(elementId = "info_metadata_FA", 
-                                     tooltip = HTML("<p>1st column name must be <b>#SampleID</b></p>"), 
+                                     tooltip = HTML("<p>1st column name must be <b>SampleID</b></p>"), 
                                      placement = "right",
                                      allowHTML = TRUE),
                    
