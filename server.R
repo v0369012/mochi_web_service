@@ -8702,7 +8702,8 @@ server <- function(session, input, output) {
       }
       
       colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
-      adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+      adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+      adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
       
       for (i in 3:7) {
         
@@ -8710,7 +8711,7 @@ server <- function(session, input, output) {
         
       }
       
-      return(adonis_result_pair_list_table[, c(1, 6, 7)])
+      return(adonis_result_pair_list_table[, c(1, 6, 7, 8)])
       
     }else{
       return(NULL)
@@ -8726,7 +8727,7 @@ server <- function(session, input, output) {
       
       return(NULL)
     }else{
-      return("PERMANOVA pair")
+      return("Pairwise PERMANOVA")
     }
     
     
@@ -8867,7 +8868,8 @@ server <- function(session, input, output) {
       
       anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
       anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
-      colnames(anosim_result_pair_list_table)[3] <- "P value"
+      anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+      colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
       
       return(anosim_result_pair_list_table)
       
@@ -8883,7 +8885,7 @@ server <- function(session, input, output) {
       
       return(NULL)
     }else{
-      return("ANOSIM pair")
+      return("Pairwise ANOSIM")
     }
   })
   
@@ -8930,7 +8932,7 @@ server <- function(session, input, output) {
       
     }
     
-    return(mrpp_result_table_show)
+    return(mrpp_result_table_show[,c(1,4)])
   })
   
   output$MRPP_title <- renderText({
@@ -9031,17 +9033,18 @@ server <- function(session, input, output) {
                                                 A=MRPP_result_pair_list_A,
                                                 delta=MRPP_result_pair_list_delta,
                                                 E.delta=MRPP_result_pair_list_Edelta,
-                                                P_value=MRPP_result_pair_list_Pvalue)
+                                                P_value=MRPP_result_pair_list_Pvalue,
+                                                P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
       
-      for (i in 2:5) {
+      for (i in 2:6) {
         
         MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
         
       }
       
-      colnames(MRPP_result_pair_list_table)[5] <- "P value"
+      colnames(MRPP_result_pair_list_table)[c(5,6)] <- c("P value", "Adjusted P value")
       
-      return(MRPP_result_pair_list_table)
+      return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
     }else{
       return(NULL)
     }
@@ -9053,7 +9056,7 @@ server <- function(session, input, output) {
       
       return(NULL)
     }else{
-      return("MRPP pair")
+      return("Pairwise MRPP")
     }
   })
   
@@ -10185,7 +10188,8 @@ server <- function(session, input, output) {
         }
         
         colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
-        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+        adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
         
         for (i in 3:7) {
           
@@ -10193,7 +10197,7 @@ server <- function(session, input, output) {
           
         }
         
-        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7)]))
+        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7, 8)]))
         
       }else{
         return(NULL)
@@ -10260,7 +10264,9 @@ server <- function(session, input, output) {
         }
         
         colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
-        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table)
+        adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
+
         
         for (i in 3:7) {
           
@@ -10268,7 +10274,7 @@ server <- function(session, input, output) {
           
         }
         
-        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7)]))
+        return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7, 8)]))
         
       }else{
         return(NULL)
@@ -10283,7 +10289,7 @@ server <- function(session, input, output) {
         
         return(NULL)
       }else{
-        return("PERMANOVA pair")
+        return("Pairwise PERMANOVA")
       }
       
       
@@ -10435,7 +10441,8 @@ server <- function(session, input, output) {
         
         anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
         anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
-        colnames(anosim_result_pair_list_table)[3] <- "P value"
+        anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+        colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
         
         return(anosim_result_pair_list_table)
         
@@ -10515,7 +10522,8 @@ server <- function(session, input, output) {
         
         anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
         anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
-        colnames(anosim_result_pair_list_table)[3] <- "P value"
+        anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+        colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
         
         return(anosim_result_pair_list_table)
         
@@ -10569,7 +10577,7 @@ server <- function(session, input, output) {
         
         return(NULL)
       }else{
-        return("ANOSIM pair")
+        return("Pairwise ANOSIM")
       }
       
     })
@@ -10632,7 +10640,7 @@ server <- function(session, input, output) {
         
       }
       
-      return(mrpp_result_table_show)
+      return(mrpp_result_table_show[,c(1,4)])
     })
     MRPP_table_phylo_W <- reactive({
       
@@ -10664,7 +10672,7 @@ server <- function(session, input, output) {
         
       }
       
-      return(mrpp_result_table_show)
+      return(mrpp_result_table_show[,c(1,4)])
     })
     MRPP_pair_table_phylo_unW <- reactive({
       
@@ -10741,17 +10749,18 @@ server <- function(session, input, output) {
                                                   A=MRPP_result_pair_list_A,
                                                   delta=MRPP_result_pair_list_delta,
                                                   E.delta=MRPP_result_pair_list_Edelta,
-                                                  P_value=MRPP_result_pair_list_Pvalue)
+                                                  P_value=MRPP_result_pair_list_Pvalue,
+                                                  P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
         
-        for (i in 2:5) {
+        for (i in 2:6) {
           
           MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
           
         }
         
-        colnames(MRPP_result_pair_list_table)[5] <- "P value"
+        colnames(MRPP_result_pair_list_table)[c(5, 6)] <- c("P value", "Adjusted P value")
         
-        return(MRPP_result_pair_list_table)
+        return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
       }else{
         return(NULL)
       }
@@ -10831,17 +10840,18 @@ server <- function(session, input, output) {
                                                   A=MRPP_result_pair_list_A,
                                                   delta=MRPP_result_pair_list_delta,
                                                   E.delta=MRPP_result_pair_list_Edelta,
-                                                  P_value=MRPP_result_pair_list_Pvalue)
+                                                  P_value=MRPP_result_pair_list_Pvalue,
+                                                  P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
         
-        for (i in 2:5) {
+        for (i in 2:6) {
           
           MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
           
         }
         
-        colnames(MRPP_result_pair_list_table)[5] <- "P value"
+        colnames(MRPP_result_pair_list_table)[c(5, 6)] <- c("P value", "Adjusted P value")
         
-        return(MRPP_result_pair_list_table)
+        return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
       }else{
         return(NULL)
       }
@@ -10891,7 +10901,7 @@ server <- function(session, input, output) {
         
         return(NULL)
       }else{
-        return("MRPP pair")
+        return("Pairwise MRPP")
       }
       
       
