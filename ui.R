@@ -1345,7 +1345,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_permanova_pair", 
-                                                                label = "Download permanova pair table")
+                                                                label = "Download pairwise PERMANOVA table")
                                           ),
                                           # h4("ANOSIM"),
                                           
@@ -1357,7 +1357,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_ANOSIM_pair", 
-                                                                label = "Download ANOSIM pair table")
+                                                                label = "Download pairwise ANOSIM table")
                                           ),
                                           # h4("MRPP"),
                                           
@@ -1369,7 +1369,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_MRPP_pair", 
-                                                                label = "Download MRPP pair table")
+                                                                label = "Download pairwise MRPP table")
                                           )
                                         ) %>% shinyjs::hidden(),
                                         
@@ -1575,7 +1575,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_permanova_pair_phylo", 
-                                                                label = "Download PerMANOVA pair table")
+                                                                label = "Download pairwise PERMANOVA table")
                                           ),
                                           # h4("ANOSIM"),
                                           
@@ -1587,7 +1587,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_ANOSIM_pair_phylo", 
-                                                                label = "Download ANOSIM pair table")
+                                                                label = "Download pairwise ANOSIM table")
                                           ),
                                           # h4("MRPP"),
                                           
@@ -1599,7 +1599,7 @@ shinyUI(
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color),
                                                  downloadButton(outputId = "download_MRPP_pair_phylo", 
-                                                                label = "Download MRPP pair table")
+                                                                label = "Download pairwise MRPP table")
                                           )
                                           
                                         ) %>% shinyjs::hidden(),
