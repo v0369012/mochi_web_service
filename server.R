@@ -6616,7 +6616,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
         sapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
@@ -6716,9 +6716,9 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -6735,8 +6735,8 @@ server <- function(session, input, output) {
       
       
       taxtable_data_Level_spread_prop_logtrf_list <- list()
-      taxtable_data_Level_spread_prop_logtrf_list <- sapply(colnames(Metadata_stats()), function(i){
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+      taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats()), function(i){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
         })
         
@@ -6745,6 +6745,8 @@ server <- function(session, input, output) {
       for (i in 1:length(names(names_list))) {
         names(taxtable_data_Level_spread_prop_logtrf_list[[i]]) <- unique(Metadata_stats()[,names(names_list)[i]]) %>% as.character()
       }
+      
+      names(taxtable_data_Level_spread_prop_logtrf_list) <- names(names_list)
       
       Heatmap_plotly <- function(heatmap_list, feature) {
         library('plotly')
@@ -6925,7 +6927,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
         sapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
@@ -7091,7 +7093,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
         sapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
@@ -7290,7 +7292,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+      names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
         sapply(1:length(unique(metadata[, i])), function(j){
           
@@ -7484,7 +7486,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+      names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
         sapply(1:length(unique(metadata[, i])), function(j){
           
@@ -7726,7 +7728,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
         sapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
@@ -7888,7 +7890,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
+      names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
         sapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
@@ -8091,7 +8093,7 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+      names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
         sapply(1:length(unique(metadata[, i])), function(j){
           
@@ -8279,9 +8281,9 @@ server <- function(session, input, output) {
         return(sample_names)
       }
       
-      names_list <- sapply(colnames(metadata)[1:ncol(metadata)], function(i){
+      names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
-        sapply(1:length(unique(metadata[, i])), function(j){
+        lapply(1:length(unique(metadata[, i])), function(j){
           
           update_rownames(i, metadata,j)
           
@@ -8703,7 +8705,7 @@ server <- function(session, input, output) {
       
       colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
       adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
-      adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
+      adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
       
       for (i in 3:7) {
         
@@ -10189,7 +10191,7 @@ server <- function(session, input, output) {
         
         colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
         adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
-        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
         
         for (i in 3:7) {
           
@@ -10265,7 +10267,7 @@ server <- function(session, input, output) {
         
         colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
         adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
-        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = adjusted_P)
+        adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
 
         
         for (i in 3:7) {

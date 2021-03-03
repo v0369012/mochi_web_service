@@ -200,7 +200,7 @@ shinyUI(
                               # ),
                               
                               actionButton(inputId = "load_parameter_demux",
-                                           label = strong("Demo", style = "margin: 5px;font-size: 18px"),
+                                           label = strong("Demo files", style = "margin: 5px;font-size: 18px"),
                                            icon = icon("chalkboard-teacher"),
                                            style = "color:#317EAC;background-color:white;") %>% div(),
                               
@@ -789,7 +789,7 @@ shinyUI(
                                       actionButton(inputId = "auto_load_db",
                                                    label = "Auto download database") %>% shinyjs::hidden(),
                                       actionButton(inputId = "load_parameter_taxa",
-                                                   label = strong("Demo", style = "margin: 5px;font-size: 18px"),
+                                                   label = strong("Demo files", style = "margin: 5px;font-size: 18px"),
                                                    icon = icon("chalkboard-teacher"),
                                                    style = "color:#317EAC;background-color:white;margin-top:10px") %>% div(),
                                       
@@ -1044,7 +1044,7 @@ shinyUI(
                    ),
                    actionButton("TA_reset", "reset", icon = icon("trash")),
                    actionButton("TA_demo",
-                                strong("Demo", style = "margin: 5px;font-size: 18px"),
+                                strong("Demo files", style = "margin: 5px;font-size: 18px"),
                                 icon = icon("chalkboard-teacher"),
                                 style = "color:#317EAC;background-color:white;margin-top:10px") %>% div(),
                    
@@ -1424,7 +1424,7 @@ shinyUI(
                                                        icon = icon("play-circle")
                                           ),
                                           actionButton("phylo_demo",
-                                                       strong("Demo", style = "margin: 5px;font-size: 18px"),
+                                                       strong("Demo files", style = "margin: 5px;font-size: 18px"),
                                                        icon = icon("chalkboard-teacher"),
                                                        style = "color:#317EAC;background-color:white;margin-top:10px") %>% div()
                                           , style = "margin-top: 10px;"
@@ -1720,7 +1720,7 @@ shinyUI(
                                 style = "margin-top:10px") %>% div(),
                    
                    actionButton("FA_demo",
-                                strong("Demo", style = "margin: 5px;font-size: 18px"),
+                                strong("Demo files", style = "margin: 5px;font-size: 18px"),
                                 icon = icon("chalkboard-teacher"),
                                 style = "color:#317EAC;background-color:white;margin-top:10px") %>% div(),
                    width = 3),
@@ -1911,7 +1911,57 @@ shinyUI(
                                     
                  )
                )
+               ),
+    
+    # Demo
+    tabPanel(title = span("Demo", style = tabPanel_title_style),
+             icon = icon("eye", class = "user_icon"),
+             tags$style(".user_icon {color: white}"),
+             
+             sidebarLayout(
+               fluid = T,
+               column(width = 4,
+                      # wellPanel(
+                      style = "position:relative;background-color: #317EAC; border: none; border-radius: 5px; color: white;font-size: 20px;width:500px;padding:10px",
+                      # strong("Inspect your results", style = "font-size:20px;color:white"),
+                      strong("Choose a step", style = "font-size:24px;color:white;top:20px"),
+                      selectInput(inputId = "select_step", 
+                                  label = "", 
+                                  choices = c("Sequence preprocessing", "Taxonomy analysis", "Function analysis") 
+                      )
+                      
+               ),
+               mainPanel(
+                 conditionalPanel(
+                   
+                   condition = "input.select_step == 'Sequence preprocessing'",
+                   
+                   column(width = 12,
+                          p("111")
+                   )
+                 ),
+                 conditionalPanel(
+                   
+                   condition = "input.select_step == 'Taxonomy analysis'",
+                   
+                   column(width = 12,
+                          p("222")
+                   )
+                 ),
+                 conditionalPanel(
+                   
+                   condition = "input.select_step == 'Function analysis'",
+                   
+                   column(width = 12,
+                          p("333")
+                   )
+                 )
+                 
+                 
+                 
                )
+             )
+    )
       
 
       
