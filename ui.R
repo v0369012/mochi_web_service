@@ -483,7 +483,7 @@ shinyUI(
                                     
                                     tabPanel(
                                       title = "Summary",
-                                      br(),br(),
+                                      # br(),br(),
                                       h4("Sample read count summary"),
                                       tableOutput("dada2_sample_summary_single"),
                                       h4("Sample table"),
@@ -560,7 +560,7 @@ shinyUI(
                                     
                                     tabPanel(
                                       title = "Summary",
-                                      br(),br(),
+                                      # br(),br(),
                                       h4("Sample read count summary"),
                                       tableOutput("dada2_sample_summary_paired"),
                                       h4("Sample table"),
@@ -1662,45 +1662,45 @@ shinyUI(
       
     ),
       # user results ----
-      tabPanel(title = span("User Results", style = tabPanel_title_style),
-               icon = icon("user", class = "user_icon"),
-               tags$style(".user_icon {color: white}"),
-               
-               sidebarLayout(
-                 fluid = T,
-                column(width = 4,
-                  # wellPanel(
-                   style = "position:relative;background-color: #317EAC; border: none; border-radius: 5px; color: white;font-size: 20px;width:500px;padding:10px",
-                   # strong("Inspect your results", style = "font-size:20px;color:white"),
-                   strong("Show the results", style = "font-size:24px;color:white;top:20px"),
-                   p("Your results will be deleted after two weeks."),
-                   textInput(inputId = "job_id",
-                             label = strong("Job ID", style = "font-size:20px;color:white"),
-                             placeholder = "Input your job id",
-                             width = "200px"),
-                   actionButton(inputId = "submit_id",
-                                label = "Submit",
-                                icon = icon("chevron-circle-up"))
-                 # )
-                 ),
-                 mainPanel(
-                   # width = 7,
-                   # style = "position: relative;",
-                   column(
-                     width = 12,
-                     # wellPanel(
-                       style = "background-color: white;",
-                       uiOutput(outputId = "users_results_download",inline = T) %>% shinyjs::hidden()
-                     # )
-                     
-                   )
-                   
-                     
-                       
-                                    
-                 )
-               )
-               ),
+      # tabPanel(title = span("User Results", style = tabPanel_title_style),
+      #          icon = icon("user", class = "user_icon"),
+      #          tags$style(".user_icon {color: white}"),
+      #          
+      #          sidebarLayout(
+      #            fluid = T,
+      #           column(width = 4,
+      #             # wellPanel(
+      #              style = "position:relative;background-color: #317EAC; border: none; border-radius: 5px; color: white;font-size: 20px;width:500px;padding:10px",
+      #              # strong("Inspect your results", style = "font-size:20px;color:white"),
+      #              strong("Show the results", style = "font-size:24px;color:white;top:20px"),
+      #              p("Your results will be deleted after two weeks."),
+      #              textInput(inputId = "job_id",
+      #                        label = strong("Job ID", style = "font-size:20px;color:white"),
+      #                        placeholder = "Input your job id",
+      #                        width = "200px"),
+      #              actionButton(inputId = "submit_id",
+      #                           label = "Submit",
+      #                           icon = icon("chevron-circle-up"))
+      #            # )
+      #            ),
+      #            mainPanel(
+      #              # width = 7,
+      #              # style = "position: relative;",
+      #              column(
+      #                width = 12,
+      #                # wellPanel(
+      #                  style = "background-color: white;",
+      #                  uiOutput(outputId = "users_results_download",inline = T) %>% shinyjs::hidden()
+      #                # )
+      #                
+      #              )
+      #              
+      #                
+      #                  
+      #                               
+      #            )
+      #          )
+      #          ),
     
     # Demo
     tabPanel(title = span("Demo", style = tabPanel_title_style),
