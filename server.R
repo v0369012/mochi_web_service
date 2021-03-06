@@ -267,14 +267,29 @@ server <- function(session, input, output) {
   # show dataModal ----
   observeEvent(input$change_job_id,{
     showModal(dataModal_1())
+    shinyjs::hide("demux_results_view_single")
+    shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("dada2_results_single")
+    shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("taxa_results_view")
   })
   
   observeEvent(input$change_job_id_denoise,{
     showModal(dataModal_2())
+    shinyjs::hide("demux_results_view_single")
+    shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("dada2_results_single")
+    shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("taxa_results_view")
   })
   
   observeEvent(input$change_job_id_taxa,{
     showModal(dataModal_3())
+    shinyjs::hide("demux_results_view_single")
+    shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("dada2_results_single")
+    shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("taxa_results_view")
   })
   
   # job id before OK
@@ -873,6 +888,7 @@ server <- function(session, input, output) {
     }
     
   })
+  
   
   # TA fileinput ----
   values_1 <- reactiveValues(
@@ -2672,7 +2688,27 @@ server <- function(session, input, output) {
   })
 
   
-  # Sequences preprocessing -----
+  # update all job id  -----
+  
+  observeEvent(input$ok_1,{
+    req(input$new_job_id_1)
+    updateTextInput(session, "input_job_id_denoise", value = input$new_job_id_1)
+    updateTextInput(session, "input_job_id_taxa", value = input$new_job_id_1)
+  })
+  
+  observeEvent(input$ok_2,{
+    req(input$new_job_id_2)
+    updateTextInput(session, "input_job_id_demux", value = input$new_job_id_2)
+    updateTextInput(session, "input_job_id_taxa", value = input$new_job_id_2)
+  })
+  
+  observeEvent(input$ok_3,{
+    req(input$new_job_id_3)
+    updateTextInput(session, "input_job_id_demux", value = input$new_job_id_3)
+    updateTextInput(session, "input_job_id_denoise", value = input$new_job_id_3)
+  })
+  
+  
   
   # Demultiplexed (single)-------------------------------------------------------------------------------------------------------
   
@@ -2849,7 +2885,7 @@ server <- function(session, input, output) {
           )
           
           system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
-                        " /home/imuser/home/imuser/web_version/users_files/",
+                        " /home/imuser/web_version/users_files/",
                         job_id(),
                         "/demux_single_end.qza", 
                         " --p-front ", primer_list[[input$primer_f]],
@@ -3063,7 +3099,7 @@ server <- function(session, input, output) {
     )
     
     system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
-                 " /home/imuser/home/imuser/web_version/users_files/",
+                 " /home/imuser/web_version/users_files/",
                  job_id(),
                  "/demux_single_end.qza", 
                  " --p-front ", primer_list[[input$primer_f]],
@@ -3220,6 +3256,243 @@ server <- function(session, input, output) {
     }
   )
   
+  
+  # demux R single----
+  observeEvent(input$demultiplexed_single_ends, {
+    
+    output$demux_table_single <- renderTable({
+      
+      demux_table <- read.table(paste0(
+                      "/home/imuser/web_version/users_files/", 
+                      input$input_job_id_demux,
+                      "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+                    ), 
+                    header = T, sep = "\t")
+      colnames(demux_table) <- c("SampleID", "Forward read count")
+      
+      summary_table <- data.frame(
+        Min = min(demux_table[,2]),
+        Mean = mean(demux_table[,2]) %>% round(4),
+        Median = median(demux_table[,2]),
+        Max = max(demux_table[,2]),
+        Total = sum(demux_table[,2]),
+        `Sample size` = length(demux_table[,2])
+      )
+      return(summary_table)
+      
+    })
+    
+    output$demux_table_boxplot_single <- renderPlotly({
+      demux_table <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", 
+        input$input_job_id_demux,
+        "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+      ), 
+      header = T, sep = "\t")
+      colnames(demux_table) <- c("SampleID", "Forward read count")
+      
+      demux_table_sort <- demux_table[order(demux_table[,2]),]
+      
+      demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+      
+      a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black")
+      )
+      ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+    })
+    
+    output$demux_Q_plot_single <- renderPlotly({
+      Q <- read.table(paste0("~/web_version/users_files/",
+                             input$input_job_id_demux,
+                             "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
+      Q_t <- t(Q) %>% as.data.frame()
+      colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+      Q_t <- Q_t[-1,]
+      Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+      
+      for (i in 1:ncol(Q_t_plot)) {
+        Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+      }
+      
+      
+      # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+      #   geom_boxplot(stat="identity") +  
+      #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+      f <- list(
+        family = "Courier New, monospace",
+        size = 18,
+        color = "#7f7f7f"
+      )
+      x <- list(
+        title = "Sequence Base",
+        titlefont = f
+      )
+      y <- list(
+        title = "Quality Score",
+        titlefont = f
+      )
+      
+      Q_ggplotly <- plot_ly(
+                    x = as.factor(1:nrow(Q_t_plot)),
+                    # y = as.list(1:152),
+                    type = "box", 
+                    lowerfence = as.list(Q_t_plot[,"2%"]),
+                    q1 = as.list(Q_t_plot[,"25%"]),
+                    median = as.list(Q_t_plot[,"50%"]),
+                    q3 = as.list(Q_t_plot[,"75%"]),
+                    upperfence = as.list(Q_t_plot[,"98%"]),
+                    
+                  ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+
+      
+      return(Q_ggplotly)
+    })
+    
+  })
+  
+  output$demux_table_single_dl <- downloadHandler(
+    filename = "per-sample-fastq-counts.tsv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"), file)
+    }
+  )
+  
+  output$demux_Q_table_single_dl <- downloadHandler(
+    filename = "forward-seven-number-summaries.tsv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), file)
+    }
+  )
+  
+  output$demux_parameter_table_single <- renderTable({
+    log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                 input$input_job_id_demux, 
+                                 "/parameter_demux_single.csv")
+    ) %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-c(1,2),])
+  })
+  
+  output$demux_parameter_table_single_dl <- downloadHandler(
+    filename = "parameter_summarize_single.csv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", 
+               input$input_job_id_denoise, 
+               "/parameter_demux_single.csv"), file
+      )
+    }
+  )
+  
+  # new id
+  
+  observe({
+    
+    if(file.exists(paste0(
+      "/home/imuser/web_version/users_files/", 
+      input$input_job_id_demux,
+      "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+    ))){
+    
+    output$demux_table_single <- renderTable({
+      
+      demux_table <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", 
+        input$input_job_id_demux,
+        "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+      ), 
+      header = T, sep = "\t")
+      colnames(demux_table) <- c("SampleID", "Forward read count")
+      
+      summary_table <- data.frame(
+        Min = min(demux_table[,2]),
+        Mean = mean(demux_table[,2]) %>% round(4),
+        Median = median(demux_table[,2]),
+        Max = max(demux_table[,2]),
+        Total = sum(demux_table[,2]),
+        `Sample size` = length(demux_table[,2])
+      )
+      return(summary_table)
+      
+    })
+    
+    output$demux_table_boxplot_single <- renderPlotly({
+      demux_table <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", 
+        input$input_job_id_demux,
+        "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+      ), 
+      header = T, sep = "\t")
+      colnames(demux_table) <- c("SampleID", "Forward read count")
+      
+      demux_table_sort <- demux_table[order(demux_table[,2]),]
+      
+      demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+      
+      a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line = element_line(colour = "black")
+      )
+      ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+    })
+    
+    output$demux_Q_plot_single <- renderPlotly({
+      Q <- read.table(paste0("~/web_version/users_files/",
+                             input$input_job_id_demux,
+                             "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
+      Q_t <- t(Q) %>% as.data.frame()
+      colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+      Q_t <- Q_t[-1,]
+      Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+      
+      for (i in 1:ncol(Q_t_plot)) {
+        Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+      }
+      
+      
+      # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+      #   geom_boxplot(stat="identity") +  
+      #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+      f <- list(
+        family = "Courier New, monospace",
+        size = 18,
+        color = "#7f7f7f"
+      )
+      x <- list(
+        title = "Sequence Base",
+        titlefont = f
+      )
+      y <- list(
+        title = "Quality Score",
+        titlefont = f
+      )
+      
+      Q_ggplotly <- plot_ly(
+        x = as.factor(1:nrow(Q_t_plot)),
+        # y = as.list(1:152),
+        type = "box", 
+        lowerfence = as.list(Q_t_plot[,"2%"]),
+        q1 = as.list(Q_t_plot[,"25%"]),
+        median = as.list(Q_t_plot[,"50%"]),
+        q3 = as.list(Q_t_plot[,"75%"]),
+        upperfence = as.list(Q_t_plot[,"98%"]),
+        
+      ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+      
+      
+      return(Q_ggplotly)
+    })
+    }
+  })
+  
+  
   # Demultiplexed (paired)-------------------------------------------------------------------------------------------------------
   
   observeEvent(input$demultiplexed_paired_ends, {
@@ -3320,7 +3593,7 @@ server <- function(session, input, output) {
           )
         }else{
           # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
-          system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+          system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
                         " --input-path", " /home/imuser/seqs_upload",
                         " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
                         ' --output-path /home/imuser/web_version/users_files/',
@@ -3347,10 +3620,11 @@ server <- function(session, input, output) {
           )
           
           system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
-                        " /home/imuser/home/imuser/web_version/users_files/",
+                        " /home/imuser/web_version/users_files/",
                         input$input_job_id_demux,
                         "/demux_paired_end.qza", 
-                        " --p-front ", primer_list[[input$primer_f]],
+                        " --p-front-f ", primer_list[[input$primer_f]],
+                        " --p-front-r ", primer_list[[input$primer_r]],
                         " --p-cores ", input$n_jobs_demux,
                         " --o-trimmed-sequences",
                         " /home/imuser/web_version/users_files/",
@@ -3522,7 +3796,7 @@ server <- function(session, input, output) {
       )
     }else{
       # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
-      system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+      system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
                     " --input-path", " /home/imuser/seqs_upload",
                     " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
                     ' --output-path /home/imuser/web_version/users_files/',
@@ -3549,10 +3823,11 @@ server <- function(session, input, output) {
       )
       
       system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
-                    " /home/imuser/home/imuser/web_version/users_files/",
+                    " /home/imuser/web_version/users_files/",
                     input$input_job_id_demux,
                     "/demux_paired_end.qza", 
-                    " --p-front ", primer_list[[input$primer_f]],
+                    " --p-front-f ", primer_list[[input$primer_f]],
+                    " --p-front-r ", primer_list[[input$primer_r]],
                     " --p-cores ", input$n_jobs_demux,
                     " --o-trimmed-sequences",
                     " /home/imuser/web_version/users_files/",
@@ -3705,7 +3980,525 @@ server <- function(session, input, output) {
       }
     )
     
-
+    
+    
+  # demux R paired----
+    observeEvent(input$demultiplexed_paired_ends, {
+      
+      output$demux_table_paired_f <- renderTable({
+        
+        demux_table <- read.table(paste0(
+          "/home/imuser/web_version/users_files/", 
+          input$input_job_id_demux,
+          "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+        ), 
+        header = T, sep = "\t")
+        colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+        
+        summary_table <- data.frame(
+          Min = min(demux_table[,2]),
+          Mean = mean(demux_table[,2]) %>% round(4),
+          Median = median(demux_table[,2]),
+          Max = max(demux_table[,2]),
+          Total = sum(demux_table[,2]),
+          `Sample size` = length(demux_table[,2])
+        )
+        return(summary_table)
+        
+      })
+      
+      output$demux_table_paired_r <- renderTable({
+        demux_table <- read.table(paste0(
+          "/home/imuser/web_version/users_files/", 
+          input$input_job_id_demux,
+          "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+        ), 
+        header = T, sep = "\t")
+        colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+        
+        summary_table <- data.frame(
+          Min = min(demux_table[,3]),
+          Mean = mean(demux_table[,3]) %>% round(4),
+          Median = median(demux_table[,3]),
+          Max = max(demux_table[,3]),
+          Total = sum(demux_table[,3]),
+          `Sample size` = length(demux_table[,3])
+        )
+        return(summary_table)
+        
+      })
+      
+      output$demux_table_boxplot_paired_f <- renderPlotly({
+        demux_table <- read.table(paste0(
+          "/home/imuser/web_version/users_files/", 
+          input$input_job_id_demux,
+          "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+        ), 
+        header = T, sep = "\t")
+        colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+        
+        demux_table_sort <- demux_table[order(demux_table[,2]),]
+        
+        demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+        
+        a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+          panel.border = element_blank(), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          axis.line = element_line(colour = "black")
+        )
+        ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+      })
+      
+      output$demux_table_boxplot_paired_r <- renderPlotly({
+        demux_table <- read.table(paste0(
+          "/home/imuser/web_version/users_files/", 
+          input$input_job_id_demux,
+          "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+        ), 
+        header = T, sep = "\t")
+        colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+        
+        demux_table_sort <- demux_table[order(demux_table[,3]),]
+        
+        demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+        
+        a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Reverse read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+          panel.border = element_blank(), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), 
+          axis.line = element_line(colour = "black")
+        )
+        ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+      })
+      
+      output$demux_Q_plot_paired_f <- renderPlotly({
+        Q <- read.table(paste0("~/web_version/users_files/",
+                               input$input_job_id_demux,
+                               "/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
+        Q_t <- t(Q) %>% as.data.frame()
+        colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+        Q_t <- Q_t[-1,]
+        Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+        
+        for (i in 1:ncol(Q_t_plot)) {
+          Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+        }
+        
+        
+        # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+        #   geom_boxplot(stat="identity") +  
+        #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+        f <- list(
+          family = "Courier New, monospace",
+          size = 18,
+          color = "#7f7f7f"
+        )
+        x <- list(
+          title = "Sequence Base",
+          titlefont = f
+        )
+        y <- list(
+          title = "Quality Score",
+          titlefont = f
+        )
+        
+        Q_ggplotly <- plot_ly(
+          x = as.factor(1:nrow(Q_t_plot)),
+          # y = as.list(1:152),
+          type = "box", 
+          lowerfence = as.list(Q_t_plot[,"2%"]),
+          q1 = as.list(Q_t_plot[,"25%"]),
+          median = as.list(Q_t_plot[,"50%"]),
+          q3 = as.list(Q_t_plot[,"75%"]),
+          upperfence = as.list(Q_t_plot[,"98%"]),
+          
+        ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y) 
+        
+        return(Q_ggplotly)
+      })
+      
+      output$demux_Q_plot_paired_r <- renderPlotly({
+        Q <- read.table(paste0("~/web_version/users_files/",
+                               input$input_job_id_demux,
+                               "/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv"), sep = "\t", header = T)
+        Q_t <- t(Q) %>% as.data.frame()
+        colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+        Q_t <- Q_t[-1,]
+        Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+        
+        for (i in 1:ncol(Q_t_plot)) {
+          Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+        }
+        
+        
+        # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+        #   geom_boxplot(stat="identity") +  
+        #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+        f <- list(
+          family = "Courier New, monospace",
+          size = 18,
+          color = "#7f7f7f"
+        )
+        x <- list(
+          title = "Sequence Base",
+          titlefont = f
+        )
+        y <- list(
+          title = "Quality Score",
+          titlefont = f
+        )
+        
+        Q_ggplotly <- plot_ly(
+          x = as.factor(1:nrow(Q_t_plot)),
+          # y = as.list(1:152),
+          type = "box", 
+          lowerfence = as.list(Q_t_plot[,"2%"]),
+          q1 = as.list(Q_t_plot[,"25%"]),
+          median = as.list(Q_t_plot[,"50%"]),
+          q3 = as.list(Q_t_plot[,"75%"]),
+          upperfence = as.list(Q_t_plot[,"98%"]),
+          
+        ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+        
+        
+        return(Q_ggplotly)
+      })
+      
+    })
+    
+    output$demux_table_paired_dl <- downloadHandler(
+      filename = "per-sample-fastq-counts.tsv",
+      content = function(file){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"), file)
+      }
+    )
+    
+    output$demux_Q_table_paired_dl_f <- downloadHandler(
+      filename = "forward-seven-number-summaries.tsv",
+      content = function(file){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), file)
+      }
+    )
+    
+    output$demux_Q_table_paired_dl_r <- downloadHandler(
+      filename = "reverse-seven-number-summaries.tsv",
+      content = function(file){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv"), file)
+      }
+    )
+    
+    output$demux_parameter_table_paired <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_demux, 
+                                   "/parameter_demux_paired.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    output$demux_parameter_table_paired_dl <- downloadHandler(
+      filename = "parameter_summarize_paired.csv",
+      content = function(file){
+        file.copy(
+          paste0("/home/imuser/web_version/users_files/", 
+                 input$input_job_id_denoise, 
+                 "/parameter_demux_paired.csv"), file
+        )
+      }
+    )
+  
+  # demux R new id ----
+    observe({
+      
+      if(file.exists(
+        paste0(
+          "/home/imuser/web_version/users_files/", 
+          input$input_job_id_demux,
+          "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+        )
+      )){
+      
+      if(input$seqs_type == "Paired end"){
+        
+        output$demux_table_paired_f <- renderTable({
+          
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+          
+          summary_table <- data.frame(
+            Min = min(demux_table[,2]),
+            Mean = mean(demux_table[,2]) %>% round(4),
+            Median = median(demux_table[,2]),
+            Max = max(demux_table[,2]),
+            Total = sum(demux_table[,2]),
+            `Sample size` = length(demux_table[,2])
+          )
+          return(summary_table)
+          
+        })
+        
+        output$demux_table_paired_r <- renderTable({
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+          
+          summary_table <- data.frame(
+            Min = min(demux_table[,3]),
+            Mean = mean(demux_table[,3]) %>% round(4),
+            Median = median(demux_table[,3]),
+            Max = max(demux_table[,3]),
+            Total = sum(demux_table[,3]),
+            `Sample size` = length(demux_table[,3])
+          )
+          return(summary_table)
+          
+        })
+        
+        output$demux_table_boxplot_paired_f <- renderPlotly({
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+          
+          demux_table_sort <- demux_table[order(demux_table[,2]),]
+          
+          demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+          
+          a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+            panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.line = element_line(colour = "black")
+          )
+          ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+        })
+        
+        output$demux_table_boxplot_paired_r <- renderPlotly({
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+          
+          demux_table_sort <- demux_table[order(demux_table[,3]),]
+          
+          demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+          
+          a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Reverse read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+            panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.line = element_line(colour = "black")
+          )
+          ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+        })
+        
+        output$demux_Q_plot_paired_f <- renderPlotly({
+          
+          Q <- read.table(paste0("~/web_version/users_files/",
+                                 input$input_job_id_demux,
+                                 "/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
+          Q_t <- t(Q) %>% as.data.frame()
+          colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+          Q_t <- Q_t[-1,]
+          Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+          
+          for (i in 1:ncol(Q_t_plot)) {
+            Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+          }
+          
+          
+          # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+          #   geom_boxplot(stat="identity") +  
+          #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+          f <- list(
+            family = "Courier New, monospace",
+            size = 18,
+            color = "#7f7f7f"
+          )
+          x <- list(
+            title = "Sequence Base",
+            titlefont = f
+          )
+          y <- list(
+            title = "Quality Score",
+            titlefont = f
+          )
+          
+          Q_ggplotly <- plot_ly(
+            x = as.factor(1:nrow(Q_t_plot)),
+            # y = as.list(1:152),
+            type = "box", 
+            lowerfence = as.list(Q_t_plot[,"2%"]),
+            q1 = as.list(Q_t_plot[,"25%"]),
+            median = as.list(Q_t_plot[,"50%"]),
+            q3 = as.list(Q_t_plot[,"75%"]),
+            upperfence = as.list(Q_t_plot[,"98%"]),
+            
+          ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+          
+          
+          return(Q_ggplotly)
+        })
+        
+        output$demux_Q_plot_paired_r <- renderPlotly({
+          Q <- read.table(paste0("~/web_version/users_files/",
+                                 input$input_job_id_demux,
+                                 "/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv"), sep = "\t", header = T)
+          Q_t <- t(Q) %>% as.data.frame()
+          colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+          Q_t <- Q_t[-1,]
+          Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+          
+          for (i in 1:ncol(Q_t_plot)) {
+            Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+          }
+          
+          
+          # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+          #   geom_boxplot(stat="identity") +  
+          #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+          f <- list(
+            family = "Courier New, monospace",
+            size = 18,
+            color = "#7f7f7f"
+          )
+          x <- list(
+            title = "Sequence Base",
+            titlefont = f
+          )
+          y <- list(
+            title = "Quality Score",
+            titlefont = f
+          )
+          
+          Q_ggplotly <- plot_ly(
+            x = as.factor(1:nrow(Q_t_plot)),
+            # y = as.list(1:152),
+            type = "box", 
+            lowerfence = as.list(Q_t_plot[,"2%"]),
+            q1 = as.list(Q_t_plot[,"25%"]),
+            median = as.list(Q_t_plot[,"50%"]),
+            q3 = as.list(Q_t_plot[,"75%"]),
+            upperfence = as.list(Q_t_plot[,"98%"]),
+            
+          ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+          
+          
+          return(Q_ggplotly)
+        })
+      }else{
+        output$demux_table_single <- renderTable({
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count")
+          
+          summary_table <- data.frame(
+            Min = min(demux_table[,2]),
+            Mean = mean(demux_table[,2]) %>% round(4),
+            Median = median(demux_table[,2]),
+            Max = max(demux_table[,2]),
+            Total = sum(demux_table[,2]),
+            `Sample size` = length(demux_table[,2])
+          )
+          return(summary_table)
+          
+        })
+        
+        output$demux_table_boxplot_single <- renderPlotly({
+          demux_table <- read.table(paste0(
+            "/home/imuser/web_version/users_files/", 
+            input$input_job_id_demux,
+            "/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+          ), 
+          header = T, sep = "\t")
+          colnames(demux_table) <- c("SampleID", "Forward read count")
+          
+          demux_table_sort <- demux_table[order(demux_table[,2]),]
+          
+          demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+          
+          a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+            panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.line = element_line(colour = "black")
+          )
+          ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+        })
+        
+        output$demux_Q_plot_single <- renderPlotly({
+          Q <- read.table(paste0("~/web_version/users_files/",
+                                 input$input_job_id_demux,
+                                 "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
+          Q_t <- t(Q) %>% as.data.frame()
+          colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+          Q_t <- Q_t[-1,]
+          Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+          
+          for (i in 1:ncol(Q_t_plot)) {
+            Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+          }
+          
+          
+          # Q_ggplot <- ggplot(Q_t_plot, aes(x = as.factor(position), ymin = `2%`, lower = `25%`, middle = `50%`, upper = `75%`, ymax = `98%`)) + 
+          #   geom_boxplot(stat="identity") +  
+          #   xlab("Sequence Base") + ylab("Qality Score") + ylim(0, 100)
+          f <- list(
+            family = "Courier New, monospace",
+            size = 18,
+            color = "#7f7f7f"
+          )
+          x <- list(
+            title = "Sequence Base",
+            titlefont = f
+          )
+          y <- list(
+            title = "Quality Score",
+            titlefont = f
+          )
+          
+          Q_ggplotly <- plot_ly(
+            x = as.factor(1:nrow(Q_t_plot)),
+            # y = as.list(1:152),
+            type = "box", 
+            lowerfence = as.list(Q_t_plot[,"2%"]),
+            q1 = as.list(Q_t_plot[,"25%"]),
+            median = as.list(Q_t_plot[,"50%"]),
+            q3 = as.list(Q_t_plot[,"75%"]),
+            upperfence = as.list(Q_t_plot[,"98%"]),
+            
+          ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+          
+          
+          return(Q_ggplotly)
+        })
+      }
+      
+      }
+      
+    })
     
   
   # Denoising_single -----------------------------------------------------------------------------------------------------------------------  
@@ -4281,6 +5074,474 @@ server <- function(session, input, output) {
   )
   
   
+  # dada2 R single ----
+  observeEvent(input$denoising_single, {
+    
+    # log table
+    output$dada2_log_table_single <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_single.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    output$dada2_sample_summary_single <- renderTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_single <- renderDataTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+        
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_single <- renderTable({
+      req(input$input_job_id_denoise)
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      asv_summary <- data.frame(
+        Min = min(asv_table[,2]),
+        Mean = mean(asv_table[,2]),
+        Median = median(asv_table[,2]),
+        Max = max(asv_table[,2]),
+        Total = sum(asv_table[,2]),
+        "Number of ASVs" = nrow(asv_table)
+      )
+    })
+    
+    output$dada2_asv_table_single <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_single <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_single_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_single_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_single <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/sequences.fasta")
+        )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_single <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
+  
+  
+  output$dada2_sample_table_single_dl <- downloadHandler(
+    filename = "sample_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_single_dl <- downloadHandler(
+    filename = "asv_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_single_dl <- downloadHandler(
+    filename = "filter_info_table.tsv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_stats/new_dirname/data/metadata.tsv"),
+        file
+      )
+    }
+  )
+  
+  output$dada2_seqs_table_single_dl <- downloadHandler(
+    filename = "sequences.fasta",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/sequences.fasta"),
+        file
+      )
+    }
+  )
+  
+  output$rarefaction_plot_single_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot.png",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_single_dl <- downloadHandler(
+    filename = "rarefaction_table.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_rarefaction/new_dirname/data/observed_features.csv"), 
+                file)
+    }
+  )
+  
+  output$dada2_log_table_single_dl <- downloadHandler(
+    filename = "parameter_denoise_single.csv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", 
+               input$input_job_id_denoise, 
+               "/parameter_denoise_single.csv"), file
+      )
+    }
+  )
+  
+  
+  observeEvent(input$ok_2, {
+    
+    # log table
+    output$dada2_log_table_single <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_single.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    
+    output$dada2_sample_summary_single <- renderTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_single <- renderDataTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_single <- renderTable({
+      req(input$input_job_id_denoise)
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      asv_summary <- data.frame(
+        Min = min(asv_table[,2]),
+        Mean = mean(asv_table[,2]),
+        Median = median(asv_table[,2]),
+        Max = max(asv_table[,2]),
+        Total = sum(asv_table[,2]),
+        "Number of ASVs" = nrow(asv_table)
+      )
+    })
+    
+    output$dada2_asv_table_single <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_single <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_single_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_single_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_single <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_seqs/new_dirname/data/sequences.fasta")
+      )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_single <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
+  
+  
   # Denoising_paired -----------------------------------------------------------------------------------------------------------------------  
   observeEvent(input$denoising_paired, {
     
@@ -4819,6 +6080,474 @@ server <- function(session, input, output) {
       fs::file_copy(path = paste0("/home/imuser/web_version/users_files/", input_job_id(), "/home/imuser/qiime_output/rarefaction-dada2_paired.zip"), new_path = file)
     }
   )
+  
+  
+  # dada2 R paired ----
+  observeEvent(input$denoising_paired, {
+    
+    # log table
+    output$dada2_log_table_paired <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_paired.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    output$dada2_sample_summary_paired <- renderTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_paired <- renderDataTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_paired <- renderTable({
+      req(input$input_job_id_denoise)
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      asv_summary <- data.frame(
+        Min = min(asv_table[,2]),
+        Mean = mean(asv_table[,2]),
+        Median = median(asv_table[,2]),
+        Max = max(asv_table[,2]),
+        Total = sum(asv_table[,2]),
+        "Number of ASVs" = nrow(asv_table)
+      )
+    })
+    
+    output$dada2_asv_table_paired <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_paired <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_paired_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_paired_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_paired <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/sequences.fasta")
+      )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_paired <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
+  
+  
+  output$dada2_sample_table_paired_dl <- downloadHandler(
+    filename = "sample_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_paired_dl <- downloadHandler(
+    filename = "asv_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_paired_dl <- downloadHandler(
+    filename = "filter_info_table.tsv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_stats/new_dirname/data/metadata.tsv"),
+        file
+      )
+    }
+  )
+  
+  output$dada2_seqs_table_paired_dl <- downloadHandler(
+    filename = "sequences.fasta",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/sequences.fasta"),
+        file
+      )
+    }
+  )
+  
+  output$rarefaction_plot_paired_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot.png",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_paired_dl <- downloadHandler(
+    filename = "rarefaction_table.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"), 
+                file)
+    }
+  )
+  
+  output$dada2_log_table_paired_dl <- downloadHandler(
+    filename = "parameter_denoise_paired.csv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", 
+               input$input_job_id_denoise, 
+               "/parameter_denoise_paired.csv"), file
+      )
+    }
+  )
+  
+  
+  observeEvent(input$ok_2, {
+    
+    # log table
+    output$dada2_log_table_paired <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_paired.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    
+    output$dada2_sample_summary_paired <- renderTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_paired <- renderDataTable({
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_paired <- renderTable({
+      req(input$input_job_id_denoise)
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      asv_summary <- data.frame(
+        Min = min(asv_table[,2]),
+        Mean = mean(asv_table[,2]),
+        Median = median(asv_table[,2]),
+        Max = max(asv_table[,2]),
+        Total = sum(asv_table[,2]),
+        "Number of ASVs" = nrow(asv_table)
+      )
+    })
+    
+    output$dada2_asv_table_paired <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_paired <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_paired_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_paired_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_paired <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_seqs/new_dirname/data/sequences.fasta")
+      )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_paired <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
   
   
   # Clustering -----------------------------------------------------------------------------------------------
@@ -5439,6 +7168,26 @@ server <- function(session, input, output) {
     # system(paste0("cp /home/imuser/qiime_output/table-dada2_single.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_single_", job_id(),".zip"))
     # system(paste0("cp /home/imuser/qiime_output/table-dada2_paired.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_paired_", job_id(),".zip"))
     
+    
+    output$taxonomy_classificatio_table <- renderDataTable({
+      req(input$input_job_id_taxa)
+      taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                  input$input_job_id_taxa,
+                                  "/taxonomy.qza"))[["data"]]
+      colnames(taxonomy)[1] <- "ASV"
+      return(taxonomy)
+    })
+    
+    output$taxacls_log_table <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                      input$input_job_id_taxa,
+                      "/parameter_taxonomy_classification.csv"), header = T) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
     # removeModal()
     remove_modal_spinner()
     
@@ -5591,10 +7340,36 @@ server <- function(session, input, output) {
                           input$input_job_id_taxa,
                           "/taxonomy.qzv"))){
       
-      shinyjs::show("taxa_results_view")
+      
+      output$taxonomy_classificatio_table <- renderDataTable({
+        req(input$input_job_id_taxa)
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy.qza"))[["data"]]
+        
+        colnames(taxonomy)[1] <- "ASV"
+        return(taxonomy)
+      })
+      
+      output$taxacls_log_table <- renderTable({
+        log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_taxa,
+                                     "/parameter_taxonomy_classification.csv"), header = T) %>% t() %>% as.data.frame()
+        
+        parameter_names <- rownames(log_table)
+        log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+        return(log_table_[-c(1,2),])
+      })
+      
+      # shinyjs::show("taxa_results_view")
       shinyjs::show("taxa_results_download")
+      
+      shinyjs::show("taxa_results_view")
     }
   })
+  
+  
+  
   
   
   

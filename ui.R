@@ -282,19 +282,7 @@ shinyUI(
                                 # div(
                                 column(width = 12,
                                   
-                                  # h2("1. Sequences summary (for single end)", 
-                                  #    style = "color: #317EAC;margin-top: 0px;"),
-                                  # h4("(1) Summarize the single-end sequences.", 
-                                  #    style = "color: #317EAC;",
-                                  #    span(
-                                  #      actionButton(inputId = "demultiplexed_single_ends", 
-                                  #                   label = strong("Start!"), 
-                                  #                   icon = icon("play-circle"),
-                                  #                   style = "margin: 10px; display: inline-block;")
-                                  #    ),
-                                  #    
-                                  #    
-                                  # ),
+                                  
                                   h1("1. Sequence summary (for single end)"),
                                   h4("(1) Summarize the single-end sequences.",style = "color: #317EAC;"),
                                   actionButton(inputId = "demultiplexed_single_ends", 
@@ -305,45 +293,53 @@ shinyUI(
                                   
                                   
                                   
-                                  
+                                 div(
+                                    id = "demux_results_view_single",
+                                    hr(),
+                                    tabsetPanel(
+                                      type = "tabs",
+                                      tabPanel(
+                                        title = span("Sequence counts summary",
+                                                     style = "color:#317EAC"),
+                                        h4("Forward reads"),
+                                        tableOutput("demux_table_single"),
+                                        plotlyOutput("demux_table_boxplot_single"),
+                                        downloadButton("demux_table_single_dl", 
+                                                       "Download the read couts table")
+                                      ),
+                                      
+                                      tabPanel(
+                                        title = span("Quality plot",
+                                                     style = "color:#317EAC"),
+                                        plotlyOutput("demux_Q_plot_single"),
+                                        downloadButton("demux_Q_table_single_dl", 
+                                                       "Download the quality score table")
+                                      ),
+                                      tabPanel(
+                                        title = "Log",
+                                        tableOutput("demux_parameter_table_single"),
+                                        downloadButton("demux_parameter_table_single_dl")
+                                      )
+                                    )
+                                    
+                                    
+                                  ) %>% shinyjs::hidden(),
+                                 
+                                 
                                   
                                   # br(),br(),
-                                  div(
-                                    id = "demux_results_view_single",
-                                    h4('(2) Inspect the result.'),
-                                    uiOutput("show_demux_single_bttn")
-                                    
-                                    # span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
-                                    #      style = "position: relative; top:5px;")
-                                  ) %>% shinyjs::hidden(),
-                                  
-                                  # span("Go to", strong('User results'), ", you can inspect the result by your user id."),
-                                  
-                                  
-                                  
-                                  # tags$a(href = 'https://140.113.239.95:8055', class = "btn", icon("download"), 'Download file.'),
-                                  
-                                  
-                                  
-                                  br(),br(),
-                                  # hr(),
-                                  h4('Example output for sequence summary'),
-                                  actionButton(inputId = "demux_example_single", 
-                                               label = "Example for single end", 
-                                               # icon = icon("link"),
-                                               style = "top:20px; margin: 10px; display: inline-block;",
-                                               onclick = paste0("window.open('http://", 
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/demux_single/data/index.html",
-                                                                "')")
-                                  ),
-                                  # tags$hr(class="A",
-                                  #         tags$style(
-                                  #           "hr.A{border: 3px solid #317EAC;}"
-                                  #         )
+                                  # 
+                                  # h4('Example output for sequence summary'),
+                                  # actionButton(inputId = "demux_example_single", 
+                                  #              label = "Example for single end", 
+                                  #              # icon = icon("link"),
+                                  #              style = "top:20px; margin: 10px; display: inline-block;",
+                                  #              onclick = paste0("window.open('http://", 
+                                  #                               "mochi.life.nctu.edu.tw",
+                                  #                               "/example_files/demux_single/data/index.html",
+                                  #                               "')")
                                   # ),
                                   
-                                # ), style = "border: none;"
                                 ),
                               ),
                               
@@ -378,34 +374,44 @@ shinyUI(
                                 
                                   div(
                                     id = "demux_results_view_paired",
-                                    h4('(2) Inspect the result.'),
-                                    uiOutput("show_demux_paired_bttn"),
-                                    
-                                    # span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
-                                    #      style = "position: relative; top:5px;")
-                                  ) %>% shinyjs::hidden(),
+                                    hr(),
+                                    tabsetPanel(
+                                      type = "tabs",
+                                      tabPanel(
+                                        title = span("Sequence counts summary",
+                                                     style = "color:#317EAC"),
+                                        h4("Forward reads"),
+                                        tableOutput("demux_table_paired_f"),
+                                        plotlyOutput("demux_table_boxplot_paired_f"),
+                                        h4("Reverse reads"),
+                                        tableOutput("demux_table_paired_r"),
+                                        plotlyOutput("demux_table_boxplot_paired_r"),
+                                        downloadButton("demux_table_paired_dl", 
+                                                       "Download the read couts table")
+                                      ),
+                                      
+                                      tabPanel(
+                                        title = span("Quality plot",
+                                                     style = "color:#317EAC"),
+                                        h4("Forward reads"),
+                                        plotlyOutput("demux_Q_plot_paired_f"),
+                                        downloadButton("demux_Q_table_paired_dl_f", 
+                                                       "Download the forward read couts table"),
+                                        h4("Reverse reads"),
+                                        plotlyOutput("demux_Q_plot_paired_r"),
+                                        downloadButton("demux_Q_table_paired_dl_r", 
+                                                       "Download the reverse read couts table")
+                                      ), 
+                                      tabPanel(
+                                        title = "Log",
+                                        tableOutput("demux_parameter_table_paired"),
+                                        downloadButton("demux_parameter_table_paired_dl")
+                                      )
+                                    )
+                                  ) %>% shinyjs::hidden()
                                   
-                                # span("Go to", strong('User results'), ", you can inspect the result by your user id."),
+                               
                                   
-
-                                  br(),br(),
-                                  # hr(),
-                                  h4('Example output for sequence summary'),
-                                  actionButton(inputId = "demux_example_paired", 
-                                               label = "Example for paired end", 
-                                               # icon = icon("link"),
-                                               style = "top:20px; margin: 10px; display: inline-block;", 
-                                               onclick = paste0("window.open('http://", 
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/demux_paired/data/index.html",
-                                                                "')")
-                                               ),
-                                  br(),br(),
-                                  # tags$hr(class="A",
-                                  #         tags$style(
-                                  #           "hr.A{border: 3px solid #317EAC;}"
-                                  #         )
-                                  # ),
                                   
                                  )
                                 
@@ -461,140 +467,67 @@ shinyUI(
                                 column(width = 12,
                                 
                                 h1('2. Sequence denoising (DADA2) for Single end'),
-                                # strong("Sequences", style = "font-size:20px;color: #317EAC;"),
-                                # splitLayout(cellWidths = "300px",
-                                #             
-                                #             textInput(inputId = "trim_left_single", 
-                                #                       label = "The starting position to trim the sequences",
-                                #                       placeholder = "Input number",
-                                #                       value = 0),
-                                #             textInput(inputId = "trunc_len_single", 
-                                #                       label = "The ending position to trim the sequences",
-                                #                       placeholder = "Input number",
-                                #                       value = 0)
-                                # )
-                                # ,
-                                # p("Reads that are shorter than the ending position will be discarded."),
-                                # p("If ending position is 0, no truncation or length filtering will be performed."),
-                                # 
-                                # strong("Quality score", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "qvalue_single", 
-                                #           label = "Reads are truncated at the position of a quality score less than or equal to this value.",
-                                #           placeholder = "Input number",
-                                #           value = 0,
-                                #           width = "600px"),
-                                # p("If the resulting read is then shorter than ending position, it is discarded."),
-                                # br(),br(),
-                                # 
-                                # strong("Chimeric reads filter", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "chimera_single", 
-                                #           label = "The minimum fold-change value", 
-                                #           value = 1),
-                                # actionButton(inputId = "word_chimera_single", 
-                                #              label = "What is this ?",
-                                #              icon = icon("question-circle")
-                                #              ),
-                                #              
-                                # 
-                                # 
-                                # 
-                                # # textOutput(outputId = "message_thread_single_position"),
-                                # br(),br(),
-                                # 
-                                # strong("Training error model", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "n_reads_single", 
-                                #           label = "The number of reads for training error model", 
-                                #           value = format(1000000, scientific = F)),
-                                # actionButton(inputId = "Q_learn_reads_single", 
-                                #              label = "What's this ?", 
-                                #              icon = icon("question-circle")
-                                # ),
-                                # # textOutput(outputId = "message_learn_single_position"),
-                                # br(),br(),
-                                # 
-                                # strong("Computing setting", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "threads_single", 
-                                #           label = "Input the number of threads", 
-                                #           value = suggested_cores),
-                                # # actionButton(inputId = "my_cores_single", 
-                                # #              label = "Show the threads of this server.") %>% div(),
-                                # # actionButton(inputId = "Q_cores_single", 
-                                # #              label = "What is thread ?", 
-                                # #              icon = icon("question-circle")
-                                # # ) %>% div(),
-                                # 
-                                # br(),br(),
-                                # 
-                                # strong("Integrating the metadata", style = "font-size:20px;color: #317EAC"),
-                                # fileInput(inputId = "sample_data_single",
-                                #           label = "Upload the metadata (1st column name must be '#SampleID'')",
-                                #           multiple = F,
-                                #           accept = ".tsv",
-                                #           width = "500px"),
-                                # div(
-                                #   span("This input is"),
-                                #   strong(" optional"),
-                                #   span(".If metadata is provided, the results would have metadata information."),
-                                # style = "margin-top:-15px"),
-                                
-                                # br(),br(),
+
                                 h4("(1) Start to denoise."),
                                 actionButton(inputId = "denoising_single", 
                                              label = denoise_btn_start_label,
                                              icon = icon("play-circle"),
                                              style = "margin: 10px; display: inline-block;"), 
-                                # br(),br(),
-                                # hr(),
-                                # strong('Results', style = "font-size: 20px;color: #317EAC"),
+                                
                                 div(
                                   id = "dada2_results_single",
-                                  h4('(2) Inspect the sequence denoising result.'),
-                                  uiOutput("dada2_single_results_bttn"),
-                                  style = "margin-top: 10px;margin-bottom: 25px"
-                                ) %>% shinyjs::hidden(),
-                                
-                                br(),br(),
-                                # hr(),
-                                # strong('Examples', style = "font-size: 20px;color: #317EAC"),
-                                h4('Example output for sequence denoising',
-                                   style = ""),
-                                div(
-                                    actionButton(inputId = "table_dada2_single_example",
-                                                 label = "Summary table",
-                                                 icon = NULL,
-                                                 onclick = paste0("window.open('http://",
-                                                                  "mochi.life.nctu.edu.tw",
-                                                                  "/example_files/denoising_table/data/index.html",
-                                                                  "')")
-                                                 ),
-
-                                    actionButton(inputId = "rep_dada2_single_example",
-                                                 label = "Seqs info",
-                                                 icon = NULL,
-                                                 onclick = paste0("window.open('http://",
-                                                                  "mochi.life.nctu.edu.tw",
-                                                                  "/example_files/denoising_rep_seqs/data/index.html",
-                                                                  "')")
-                                                 ),
-
-                                    actionButton(inputId = "stats_dada2_single_example",
-                                                 label = "Filter info",
-                                                 icon = NULL,
-                                                 onclick = paste0("window.open('http://",
-                                                                  "mochi.life.nctu.edu.tw",
-                                                                  "/example_files/denoising_stats/data/index.html",
-                                                                  "')")
-                                                 ),
-                                    actionButton(inputId = "rarefaction_single_example",
-                                                 label = "Alpha rarefaction",
-                                                 icon = NULL,
-                                                 onclick = paste0("window.open('http://",
-                                                                  "mochi.life.nctu.edu.tw",
-                                                                  "/example_files/alpha-rarefaction_example/data/index.html",
-                                                                  "')")
-                                                 ),
-                                    # textOutput(outputId = "word_denoising_single_position")
+                                  
+                                  hr(),
+                                  tabsetPanel(
+                                    type = "tabs",
+                                    
+                                    tabPanel(
+                                      title = "Summary",
+                                      br(),br(),
+                                      h4("Sample read count summary"),
+                                      tableOutput("dada2_sample_summary_single"),
+                                      h4("Sample table"),
+                                      dataTableOutput("dada2_sample_table_single"),
+                                      downloadButton("dada2_sample_table_single_dl"),
+                                      br(),br(),
+                                      h4("ASV read count summary"),
+                                      tableOutput("dada2_asv_summary_table_single"),
+                                      h4("ASV table"),
+                                      dataTableOutput("dada2_asv_table_single"),
+                                      downloadButton("dada2_asv_table_single_dl")
+                                    ),
+                                    tabPanel(
+                                      title = "Filter info",
+                                      br(),br(),
+                                      dataTableOutput("dada2_filter_table_single"),
+                                      downloadButton("dada2_filter_table_single_dl")
+                                    ),
+                                    tabPanel(
+                                      title = "Sequence info",
+                                      h4("Sequence Length Statistics"),
+                                      tableOutput("dada2_seqs_info_single_1"),
+                                      h4("Seven-Number Summary of Sequence Lengths"),
+                                      tableOutput("dada2_seqs_info_single_2"),
+                                      h4("Sequence table"),
+                                      dataTableOutput("dada2_seqs_table_single"),
+                                      downloadButton("dada2_seqs_table_single_dl", "Download the sequences as a FASTA file")
+                                      ),
+                                    tabPanel(
+                                      title = "Rarefaction plot",
+                                      br(),br(),
+                                      plotOutput("rarefaction_plot_single"),
+                                      downloadButton("rarefaction_plot_single_dl", "Download the rarefaction plot"),
+                                      downloadButton("rarefaction_table_single_dl", "Download the rarefaction table")
+                                    ),
+                                    tabPanel(
+                                      title = "Log",
+                                      tableOutput("dada2_log_table_single"),
+                                      downloadButton("dada2_log_table_single_dl")
                                     )
+                                  )
+                                ) %>% shinyjs::hidden()
+                                
+                                
                                   )
                               ),
                               
@@ -609,92 +542,6 @@ shinyUI(
                                 uiOutput(outputId = "show_job_id_denoise_paired"),
                                 h1('2. Sequence denoising (DADA2) for Paired end'),
                                 
-                                # strong("Forward sequences", style = "font-size:20px;color: #317EAC"),
-                                # splitLayout(cellWidths = "300px",
-                                #             
-                                #             textInput(inputId = "trim_left_f_paired", 
-                                #                       label = "The starting position to trim",
-                                #                       placeholder = "Input number",
-                                #                       value = 0
-                                #             ),
-                                #             textInput(inputId = "trunc_len_f_paired", 
-                                #                       label = "The ending position to trim",
-                                #                       placeholder = "Input number",
-                                #                       value = 0
-                                #             )
-                                # ),
-                                # 
-                                # strong("Reverse sequences", style = "font-size:20px;color: #317EAC"),
-                                # splitLayout(cellWidths = "300px",
-                                #             
-                                #             textInput(inputId = "trim_left_r_paired", 
-                                #                       label = "The starting position to trim",
-                                #                       placeholder = "Input number",
-                                #                       value = 0),
-                                #             textInput(inputId = "trunc_len_r_paired", 
-                                #                       label = "The ending position to trim",
-                                #                       placeholder = "Input number",
-                                #                       value = 0)
-                                # ),
-                                # p("Reads that are shorter than the ending position will be discarded."),
-                                # p("If ending position is 0, no truncation or length filtering will be performed."),
-                                # 
-                                # strong("Quality score", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "qvalue_paired", 
-                                #           label = "Reads are truncated at the position of a quality score less than or equal to this value.",
-                                #           placeholder = "Input number",
-                                #           value = 0,
-                                #           width = "600px"),
-                                # p("If the resulting read is then shorter than ending position, it is discarded."),
-                                # 
-                                # br(),br(),
-                                # 
-                                # strong("Chimeric reads filter", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "chimera_paired", 
-                                #           label = "The minimum fold-change value", 
-                                #           value = 1),
-                                # actionButton(inputId = "word_chimera_paired", 
-                                #              label = "What is this ?",
-                                #              icon = icon("question-circle")
-                                # ),
-                                # 
-                                # br(),br(),
-                                # 
-                                # strong("Training error model", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "n_reads_paired", 
-                                #           label = "The number of reads for training error model", 
-                                #           value = format(1000000, scientific = F)),
-                                # actionButton(inputId = "Q_learn_reads_paired", 
-                                #              label = "What's this ?", 
-                                #              icon = icon("question-circle")
-                                # ),
-                                # # textOutput(outputId = "message_learn_paired"),
-                                # 
-                                # br(),br(),
-                                # 
-                                # strong("Computing setting", style = "font-size:20px;color: #317EAC"),
-                                # textInput(inputId = "threads_paired", 
-                                #           label = "Input the number of threads", 
-                                #           value = suggested_cores),
-                                # # actionButton(inputId = "my_cores_paired", 
-                                # #              label = "Show the threads of this server.") %>% div(),
-                                # # actionButton(inputId = "Q_cores_paired", 
-                                # #              label = "What is thread ?", 
-                                # #              icon = icon("question-circle")) %>% div(),
-                                # br(),br(),
-                                # 
-                                # strong("Integrating the metadata", style = "font-size:20px;color: #317EAC"),
-                                # fileInput(inputId = "sample_data_paired",
-                                #           label = "Upload the metadata (1st column name must be '#SampleID')",
-                                #           multiple = F,
-                                #           accept = ".tsv",
-                                #           width = "500px"),
-                                # 
-                                # div(
-                                #   span("This input is"),
-                                #   strong(" optional"),
-                                #   span(".If metadata is provided, the results would have metadata information."),
-                                #   style = "margin-top:-15px"),
                                 
                                 # br(),br(),
                                 h4("(1) Start to denoise."),
@@ -707,52 +554,57 @@ shinyUI(
                                 # strong('Results', style = "font-size: 20px;color: #317EAC"),
                                 div(
                                   id = "dada2_results_paired",
-                                  h4('(2) Inspect the sequence denoising result.'),
-                                  uiOutput("dada2_paired_results_bttn"),
-                                  style = "margin-top: 10px;margin-bottom: 25px"
-                                  ) %>% shinyjs::hidden(),
+                                  hr(),
+                                  tabsetPanel(
+                                    type = "tabs",
+                                    
+                                    tabPanel(
+                                      title = "Summary",
+                                      br(),br(),
+                                      h4("Sample read count summary"),
+                                      tableOutput("dada2_sample_summary_paired"),
+                                      h4("Sample table"),
+                                      dataTableOutput("dada2_sample_table_paired"),
+                                      downloadButton("dada2_sample_table_paired_dl"),
+                                      br(),br(),
+                                      h4("ASV read count summary"),
+                                      tableOutput("dada2_asv_summary_table_paired"),
+                                      h4("ASV table"),
+                                      dataTableOutput("dada2_asv_table_paired"),
+                                      downloadButton("dada2_asv_table_paired_dl")
+                                    ),
+                                    tabPanel(
+                                      title = "Filter info",
+                                      br(),br(),
+                                      dataTableOutput("dada2_filter_table_paired"),
+                                      downloadButton("dada2_filter_table_paired_dl")
+                                    ),
+                                    tabPanel(
+                                      title = "Sequence info",
+                                      h4("Sequence Length Statistics"),
+                                      tableOutput("dada2_seqs_info_paired_1"),
+                                      h4("Seven-Number Summary of Sequence Lengths"),
+                                      tableOutput("dada2_seqs_info_paired_2"),
+                                      h4("Sequence table"),
+                                      dataTableOutput("dada2_seqs_table_paired"),
+                                      downloadButton("dada2_seqs_table_paired_dl", "Download the sequences as a FASTA file")
+                                    ),
+                                    tabPanel(
+                                      title = "Rarefaction plot",
+                                      br(),br(),
+                                      plotOutput("rarefaction_plot_paired"),
+                                      downloadButton("rarefaction_plot_paired_dl", "Download the rarefaction plot"),
+                                      downloadButton("rarefaction_table_paired_dl", "Download the rarefaction table")
+                                    ),
+                                    tabPanel(
+                                      title = "Log",
+                                      tableOutput("dada2_log_table_paired"),
+                                      downloadButton("dada2_log_table_paired_dl")
+                                    )
+                                  )
+                                  ) %>% shinyjs::hidden()
 
-                                br(),br(),
-                                # hr(),
-                                # strong('Examples', style = "font-size: 20px;color: #317EAC"),
-                                h4('Example output for sequence denoising'),
-                                div(
-                                  actionButton(inputId = "table_dada2_paired_example",
-                                               label = "Summary table",
-                                               icon = NULL,
-                                               onclick = paste0("window.open('http://",
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/denoising_table/data/index.html",
-                                                                "')")
-                                               ),
-                                  actionButton(inputId = "rep_dada2_paired_example",
-                                               label = "Seqs info",
-                                               icon = NULL,
-                                               onclick = paste0("window.open('http://",
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/denoising_rep_seqs/data/index.html",
-                                                                "')")
-                                               ),
-
-                                  actionButton(inputId = "stats_dada2_paired_example",
-                                               label = "Filter info",
-                                               icon = NULL,
-                                               onclick = paste0("window.open('http://",
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/denoising_stats/data/index.html",
-                                                                "')")
-                                               ),
-                                  actionButton(inputId = "rarefaction_paired_example",
-                                               label = "Alpha rarefaction",
-                                               icon = NULL,
-                                               onclick = paste0("window.open('http://",
-                                                                "mochi.life.nctu.edu.tw",
-                                                                "/example_files/alpha-rarefaction_example/data/index.html",
-                                                                "')")
-                                               ),
-
-                                  # textOutput(outputId = "word_denoising_paired_position")
-                                )
+                                
                               )
                               )
                               
@@ -793,48 +645,14 @@ shinyUI(
                                                    icon = icon("chalkboard-teacher"),
                                                    style = "color:#317EAC;background-color:white;margin-top:10px") %>% div(),
                                       
-                                      # p('If the database have been updated, you need to download the latest data by yourself.'),
-                                      # actionButton(inputId = "database_tutorial", 
-                                      #              label = "How to download the data", 
-                                      #              icon = icon("question")
-                                      # ),
                                       
-                                      # hr(),
-                                      # p("After the database is selected, we need primer to extract the target region of sequences."),
-                                      # selectInput(inputId = "primer_f",
-                                      #             label = "Choose the forward primer sequences",
-                                      #             choice = c("8F", "27F", "CC [F]", "357F", "515F", "533F", "16S.1100.F16", "1237F", "other"),
-                                      #             width = "300px"
-                                      # ),
-                                      # selectInput(inputId = "primer_r",
-                                      #             label = "Choose the reverse primer sequences",
-                                      #             choice = c("519R", "CD [R]", "907R", "1100R", "1391R", "1492R (l)", "1492R (s)", "other"),
-                                      #             width = "300px"
-                                      # ),
-                                      # actionButton(inputId = "show_primer",
-                                      #              label = "Show the primer table",
-                                      #              icon = icon("table")
-                                      # ),
-                                      # br(), br(),
-                                      # p('If your primers could not be found in the selections, you also can  manually input your primer sequences by choosing',
-                                      #   strong(' other.'),
-                                      #   style = "font-size: 14px"),
-                                      # 
-                                      # uiOutput(outputId = "out_f"),
-                                      # uiOutput(outputId = "out_r"),
                                       
                                       hr(),
-                                      # textInput(inputId = "trunc_length", 
-                                      #           label = "Give the trunc length you want",
-                                      #           placeholder = "Input number",
-                                      #           width = "300px"),
+                                      
                                       strong("Reference sequence filtering", style = "font-size:24px;color:white"),
                                       br(),br(),
                                       strong("1. Check primers", style = "color: white;font-size: 20px;"),
                                       p("If incorrect, go to 'Step 1.Sequence summary' to select the correct primer.", style = "font-size:18px;"),
-                                      # p(HTML("<b>1. Check your primers</b>"), span(shiny::icon("info-circle"), id = "info_check")
-                                      #   , style = "font-size:20px;font-weight:700; margin-top:15px"),
-                                      # tippy::tippy_this(elementId = "info_check", tooltip = "If incorrect, go to Sequences summary to change", placement = "right"),
                                       
                                       uiOutput(outputId = "check_primer"),
                                       # uiOutput(outputId = "check_r_primer"),
@@ -874,53 +692,7 @@ shinyUI(
                                                 value = suggested_cores,
                                                 placeholder = "Input number",
                                                 width = "300px")
-                                      # br(),br(),
-                                      # actionButton(inputId = "start_training", 
-                                      #              label = strong("Start!"),
-                                      #              icon = icon("play-circle")
-                                      #              ),
-                                      # textOutput(outputId = "word_training"),
                                       
-                                      # strong("Result", style = "font-size: 20px"),
-                                      # div(actionButton(inputId = "view_taxa",
-                                      #              label = "Taxonomy classification result",
-                                      #              onclick = paste0("window.open('http://", 
-                                      #                               my_qiime_ip, my_qiime_port,
-                                      #                               "/taxonomy_unzip/new_dirname/data/index.html",
-                                      #                               "')"),
-                                      #              icon = icon("eye")),
-                                      #     style = "margin-top: 10px;margin-bottom: 10px"
-                                      #     ),
-                                      
-                                      # div(downloadButton(outputId = "taxatable_download", 
-                                      #                    label = "Download the taxonomic table for next step.",
-                                      #                    style = "margin-bottom: 10px")
-                                      #     ),
-                                      # div(downloadButton(outputId = "table_dada2_download", 
-                                      #                    label = "Download the ASVs table for next step.",
-                                      #                    style = "margin-bottom: 10px")
-                                      # ),
-                                      # 
-                                      # tippy::tippy_this(elementId = "table_dada2_download",
-                                      #                   tooltip = "<p style='text-align: left;margin:2px'>amplicon sequence variant (ASV) table, a higher-resolution analogue of the traditional OTU table</p>",
-                                      #                   allowHTML = TRUE,
-                                      #                   placement = "right"),
-                                      # 
-                                      # div(downloadButton(outputId = "rep_seq_dada2_download", 
-                                      #                    label = "Download the seqs data for next step.",
-                                      #                    style = "margin-bottom: 10px")
-                                      #     ),
-                                      # p("amplicon sequence variant (ASV) table, a higher-resolution analogue of the traditional OTU table.",
-                                      #   style = "font-size: 14px;"),
-                                      # div(strong('Example', style = "font-size: 20px")),
-                                      # actionButton(inputId = "view_taxonomy_example",
-                                      #              label = "How does the taxonomy result look?",
-                                      #              style = "margin-bottom: 10px;margin-top: 10px",
-                                      #              onclick = paste0("window.open('http://",
-                                      #                               my_qiime_ip, my_qiime_port,
-                                      #                               "/example_files/taxonomy_analysis/data/index.html",
-                                      #                               "')")
-                                      #              )
                                       
                             ) # wellPanel
                             ), # collumn
@@ -938,18 +710,35 @@ shinyUI(
                               
                               div(
                                 id = "taxa_results_view",
+                                # h4("(2) Inspect the taxonomy classification result.", 
+                                #    style = "margin-top: 25px"),
+                                # uiOutput(outputId = "taxa_view_bttn"),
+                                hr(),
                                 h4("(2) Inspect the taxonomy classification result.", 
-                                   style = "margin-top: 25px"),
-                                uiOutput(outputId = "taxa_view_bttn"),
-                                # span("On the", strong('View'), "webpage, you can download the result by right click" ,strong('Save as ...'),
-                                #      style = "position: relative; top:5px;"),
-                                  style = "margin-top: 10px;"
+                                      style = "margin-top: 25px"),
+                                tabsetPanel(
+                                  type = "tabs",
+                                  tabPanel(
+                                    title = "Taxonomy result",
+                                    br(),br(),
+                                    dataTableOutput("taxonomy_classificatio_table")
+                                    
+                                  ),
+                                  tabPanel(
+                                    title = "Log",
+                                    tableOutput("taxacls_log_table"),
+                                    downloadButton("log_file_taxonomy_classification")
+                                  )
+                                )
+                                
+                                  # style = "margin-top: 10px;"
                               ) %>% shinyjs::hidden(),
-                              # span("Go to", strong('User results'), ", you can inspect the result by your user id."),
+                             
                               
                               
                               div(
                                 id = "taxa_results_download",
+                                hr(),
                                 h4("(3) Download the files for the next step.",
                                    style = "margin-top: 25px"),
                                 downloadButton(outputId = "taxatable_download",
@@ -970,16 +759,16 @@ shinyUI(
                               ) %>% shinyjs::hidden(),
                               
                               # br(),br(),
-                              hr(),
-                              h4('Example output for taxonomy classification'),
-                              actionButton(inputId = "view_taxonomy_example",
-                                           label = "Taxonomy result",
-                                           style = "margin-left: 10px",
-                                           onclick = paste0("window.open('http://",
-                                                            "mochi.life.nctu.edu.tw",
-                                                            "/example_files/taxonomy_analysis/data/index.html",
-                                                            "')")
-                              ),
+                              # hr(),
+                              # h4('Example output for taxonomy classification'),
+                              # actionButton(inputId = "view_taxonomy_example",
+                              #              label = "Taxonomy result",
+                              #              style = "margin-left: 10px",
+                              #              onclick = paste0("window.open('http://",
+                              #                               "mochi.life.nctu.edu.tw",
+                              #                               "/example_files/taxonomy_analysis/data/index.html",
+                              #                               "')")
+                              # ),
                               
 
                               # uiOutput(outputId = "mk_taxa"), 
@@ -1915,8 +1704,8 @@ shinyUI(
     
     # Demo
     tabPanel(title = span("Demo", style = tabPanel_title_style),
-             icon = icon("eye", class = "user_icon"),
-             tags$style(".user_icon {color: white}"),
+             icon = icon("arrow-alt-circle-right", class = "arrow-alt-circle-right_icon"),
+             tags$style(".arrow-alt-circle-right_icon {color: white}"),
              
              sidebarLayout(
                fluid = T,
