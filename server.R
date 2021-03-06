@@ -5536,6 +5536,7 @@ server <- function(session, input, output) {
                   " dada2 denoise-paired --i-demultiplexed-seqs",
                   " /home/imuser/web_version/users_files/",
                   input$input_job_id_denoise,
+                  "/demux_single_trimmed.qza",
                  " --p-trim-left-f ", input$trim_left_f_paired,
                  " --p-trim-left-r ", input$trim_left_r_paired,
                  " --p-trunc-len-f ", input$trunc_len_f_paired,
