@@ -615,57 +615,29 @@ server <- function(session, input, output) {
           
           # textOutput(outputId = "message_thread_single_position"),
           br(),br(),
+         
           
-          # strong("Error model training", style = "font-size:24px;color: white"),
-          # textInput(inputId = "n_reads_single", 
-          #           label = span("Number of reads used for training the error model",
-          #                        style = p_style), 
-          #           value = format(1000000, scientific = F),
-          #           width = "350px"),
-          # actionButton(inputId = "Q_learn_reads_single", 
-          #              label = "learn more", 
-          #              icon = icon("question-circle")
+          # strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
+          # fileInput(inputId = "sample_data_single",
+          #           label = span("Upload the metadata (1st column name must be", 
+          #                        strong("SampleID"),
+          #                        span(")"),
+          #                        style = p_style),
+          #           multiple = F,
+          #           accept = ".tsv",
+          #           width = "600px"),
+          # actionButton("metadata_info",
+          #              "learn more",
+          #              icon = icon("question-circle"),
+          #              style = "position:relative;"
           # ),
           # 
-          # br(),br(),
-          
-          strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
-          fileInput(inputId = "sample_data_single",
-                    label = span("Upload the metadata (1st column name must be", 
-                                 strong("SampleID"),
-                                 span(")"),
-                                 style = p_style),
-                    multiple = F,
-                    accept = ".tsv",
-                    width = "600px"),
-          actionButton("metadata_info",
-                       "learn more",
-                       icon = icon("question-circle"),
-                       style = "position:relative;"
-          ),
-          
-          actionButton("reset_metadata_single",
-
-                       label = "reset", icon = icon("trash")),
+          # actionButton("reset_metadata_single",
+          # 
+          #              label = "reset", icon = icon("trash")),
 
                       
 
-          # downloadButton(outputId = "metadata_demo_download_paired", 
-          #                label = "Demo metadata",
-          #                style = "position:relative;left:5px;color:#317EAC"
-          # ),
-          # tippy::tippy_this(elementId = "metadata_demo_download_single", 
-          #                   tooltip = "Click to download the demo metadata", 
-          #                   placement = "top",
-          #                   arrow = TRUE),
-          
-          # div(
-          #   span("This input is"),
-          #   strong(" optional"),
-          #   span(".If metadata is provided, the results would have metadata information."),
-          #   style = "margin-top:-15px;color: white;font-size:16px"
-          # ),
-          
           hr(),
           strong("Computing setting", style = "font-size:24px;color: white"),
           textInput(inputId = "threads_single", 
@@ -761,52 +733,29 @@ server <- function(session, input, output) {
           
           br(),br(),
           
-         #  strong("Error model training", 
-         #         style = "font-size:24px;color: white"),
-         #  textInput(inputId = "n_reads_paired", 
-         #            label = span("Number of reads used for training the error model",
-         #                         style = p_style), 
-         #            value = format(1000000, scientific = F),
-         #            width = "350px"),
-         #  actionButton(inputId = "Q_learn_reads_paired", 
-         #               label = "learn more", 
-         #               icon = icon("question-circle")
-         #  ),
-         # br(),br(),
+         
           
-          strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
-          fileInput(inputId = "sample_data_paired",
-                    label = span("Upload the metadata (1st column name must be", 
-                                 strong("SampleID"),
-                                 span(")"),
-                                 style = p_style),
-                    multiple = F,
-                    accept = ".tsv",
-                    width = "600px"),
-         
-         actionButton("metadata_info",
-                      "learn more",
-                      icon = icon("question-circle"),
-                      style = "position:relative;"
-         ),
-         
-         actionButton("reset_metadata_paired",
-
-                      label = "reset", icon = icon("trash")),
-
-
-         
-         # downloadButton(outputId = "metadata_demo_download_paired", 
-         #              label = " Demo metadata",
-         #              style = "position:relative;left:5px;color:#317EAC"
+         #  strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
+         #  fileInput(inputId = "sample_data_paired",
+         #            label = span("Upload the metadata (1st column name must be", 
+         #                         strong("SampleID"),
+         #                         span(")"),
+         #                         style = p_style),
+         #            multiple = F,
+         #            accept = ".tsv",
+         #            width = "600px"),
+         # 
+         # actionButton("metadata_info",
+         #              "learn more",
+         #              icon = icon("question-circle"),
+         #              style = "position:relative;"
          # ),
-         # tippy::tippy_this(elementId = "metadata_demo_download_paired", 
-         #                   tooltip = "Click to download the demo metadata", 
-         #                   placement = "top",
-         #                   arrow = TRUE),
-         
-          
-          
+         # 
+         # actionButton("reset_metadata_paired",
+         # 
+         #              label = "reset", icon = icon("trash")),
+
+
           hr(),
           strong("Computing setting", style = "font-size:24px;color: white"),
           textInput(inputId = "threads_paired", 
