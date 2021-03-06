@@ -7276,13 +7276,27 @@ server <- function(session, input, output) {
     filename = "rep_seqs_forPhylo.qza",
     
     content = function(file){
-      # if(input$seqs_type == "Single end"){
-      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_single.qza", file)
-      # }else{
-      #   file.copy("/home/imuser/qiime_output/rep-seqs-dada2_paired.qza", file)
-      # }
+      
       lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^rep-seqs-dada2_ | grep qza$"), intern = T)[1]
       file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/", lastest_file), file)
+      
+    }
+  )
+  
+  
+  output$taxonomy_classificatio_table_dl <- downloadHandler(
+    filename = "taxonomy_classificatio_table.csv",
+    
+    content = function(file){
+      
+      req(input$input_job_id_taxa)
+      taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                  input$input_job_id_taxa,
+                                  "/taxonomy.qza"))[["data"]]
+      colnames(taxonomy)[1] <- "ASV"
+      
+      
+      write.csv(taxonomy, file)
       
     }
   )
