@@ -3254,7 +3254,7 @@ server <- function(session, input, output) {
     })
     
     output$demux_Q_plot_single <- renderPlotly({
-      Q <- read.table(paste0("~/web_version/users_files/",
+      Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                              input$input_job_id_demux,
                              "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
       Q_t <- t(Q) %>% as.data.frame()
@@ -3393,7 +3393,7 @@ server <- function(session, input, output) {
     })
     
     output$demux_Q_plot_single <- renderPlotly({
-      Q <- read.table(paste0("~/web_version/users_files/",
+      Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                              input$input_job_id_demux,
                              "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
       Q_t <- t(Q) %>% as.data.frame()
@@ -4022,7 +4022,7 @@ server <- function(session, input, output) {
       })
       
       output$demux_Q_plot_paired_f <- renderPlotly({
-        Q <- read.table(paste0("~/web_version/users_files/",
+        Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                                input$input_job_id_demux,
                                "/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
         Q_t <- t(Q) %>% as.data.frame()
@@ -4068,7 +4068,7 @@ server <- function(session, input, output) {
       })
       
       output$demux_Q_plot_paired_r <- renderPlotly({
-        Q <- read.table(paste0("~/web_version/users_files/",
+        Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                                input$input_job_id_demux,
                                "/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv"), sep = "\t", header = T)
         Q_t <- t(Q) %>% as.data.frame()
@@ -4261,7 +4261,7 @@ server <- function(session, input, output) {
         
         output$demux_Q_plot_paired_f <- renderPlotly({
           
-          Q <- read.table(paste0("~/web_version/users_files/",
+          Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                                  input$input_job_id_demux,
                                  "/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
           Q_t <- t(Q) %>% as.data.frame()
@@ -4308,7 +4308,7 @@ server <- function(session, input, output) {
         })
         
         output$demux_Q_plot_paired_r <- renderPlotly({
-          Q <- read.table(paste0("~/web_version/users_files/",
+          Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                                  input$input_job_id_demux,
                                  "/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv"), sep = "\t", header = T)
           Q_t <- t(Q) %>% as.data.frame()
@@ -4398,7 +4398,7 @@ server <- function(session, input, output) {
         })
         
         output$demux_Q_plot_single <- renderPlotly({
-          Q <- read.table(paste0("~/web_version/users_files/",
+          Q <- read.table(paste0("/home/imuser/web_version/users_files/",
                                  input$input_job_id_demux,
                                  "/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv"), sep = "\t", header = T)
           Q_t <- t(Q) %>% as.data.frame()
