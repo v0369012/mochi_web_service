@@ -165,15 +165,7 @@ shinyUI(
                               strong("Sequence files", 
                                      
                                      style = "font-size:24px;color:white;top:20px"),
-                              # h4("Please choose the directory containing sequences data",
-                              # h4("Please upload the sequences data",
-                              #    style = "color: white; left:5px"),
-                              # shinyFiles::shinyDirButton(id = 'dirs', 
-                              #                            label = 'Select the directory', 
-                              #                            title = 'Please select a directory',
-                              #                            style = "margin: 2px;", 
-                              #                            icon = icon("folder")
-                              #                            ),
+                              
                               
                               fileInput(inputId = "seqs_data_upload",
                                         label = span("Please select and upload the sequence files (*.fastq.gz or *.fq.gz)",
@@ -182,22 +174,7 @@ shinyUI(
                                         # accept = ".fastq.gz"
                                         ) %>% div(),
                               
-                              # HTML('<div class="file-loading" style = "font-size: 20px; font-weight: 300; color: white;background-color: #317EAC;">
-                              #       <input id="seqs_data_upload_1" style = "font-size: 20px; font-weight: 300; color: #317EAC;background-color: white;" multiple type="file" class="file" data-allowed-file-extensions="["gz"]">
-                              #       </div>'),
-                              
-                              
-                              
-                              
-                              
-                              # p("Download the demo sequences", 
-                              #   style= "font-size: 20px; font-weight: 300; color: white; margin: 5px;"),
-                              # downloadButton(outputId = "seqs_demo_download",
-                              #                label = "Download"),
-                              # downloadButton(outputId = "seqs_demo_download",
-                              #                label = span("Demo seqs", style ="font-weight: 800"),
-                              #                style = "color:#317EAC;background-color:white;"
-                              # ),
+                             
                               
                               actionButton(inputId = "load_parameter_demux",
                                            label = strong("Demo files", style = "margin: 5px;font-size: 18px"),
@@ -211,11 +188,12 @@ shinyUI(
                               pickerInput(inputId = "seqs_type",
                                           label = span("Choose the sequence type", 
                                                        style= "font-size: 20px; font-weight: 300; color: white; margin: 0px;"),
-                                          choices = c("Single end", "Paired end"),
+                                          choices = c("Single end", "Paired end", "Pacbio long read"),
                                           width = "300px"
                               ),
                               
-                             
+                             div(
+                               id = "primer_seqs_bttn",
                               hr(),
                               # p("After the database is selected, we need primer to extract the target region of sequences."),
                               strong("Primer sequences", style = "font-size:24px;color:white"),
@@ -251,6 +229,7 @@ shinyUI(
                                 uiOutput(outputId = "out_f"),
                                 uiOutput(outputId = "out_r"),
                              
+                              ) %>% shinyjs::hidden(),
                               
                               hr(),
                               strong("Computing setting", style = "font-size:24px;color:white"),
@@ -311,6 +290,8 @@ shinyUI(
                                       tabPanel(
                                         title = span("Quality plot",
                                                      style = "color:#317EAC"),
+                                        h4("Sequence length summary"),
+                                        tableOutput("demux_Q_seven_table_single"),
                                         plotlyOutput("demux_Q_plot_single"),
                                         downloadButton("demux_Q_table_single_dl", 
                                                        "Download the quality score table")
@@ -327,18 +308,7 @@ shinyUI(
                                  
                                  
                                   
-                                  # br(),br(),
-                                  # 
-                                  # h4('Example output for sequence summary'),
-                                  # actionButton(inputId = "demux_example_single", 
-                                  #              label = "Example for single end", 
-                                  #              # icon = icon("link"),
-                                  #              style = "top:20px; margin: 10px; display: inline-block;",
-                                  #              onclick = paste0("window.open('http://", 
-                                  #                               "mochi.life.nctu.edu.tw",
-                                  #                               "/example_files/demux_single/data/index.html",
-                                  #                               "')")
-                                  # ),
+                                 
                                   
                                 ),
                               ),
@@ -348,21 +318,7 @@ shinyUI(
                                 condition = "input.seqs_type == 'Paired end'",
                                 
                                 column(width = 12,
-                                # div(
-                                  # h2("1. Sequences summary (for paired end)", 
-                                  #    style = "color: #317EAC;margin-top: 0px;"),
-                                  # h4("(1) Summarize the paired-end sequences.",
-                                  #    style = "color: #317EAC;",
-                                  #    span(
-                                  #      actionButton(inputId = "demultiplexed_paired_ends", 
-                                  #                   label = strong("Start!"), 
-                                  #                   icon = icon("play-circle"),
-                                  #                   style = "margin: 10px; display: inline-block;"
-                                  #      )
-                                  #      
-                                  #    ),
-                                  #    
-                                  # ),
+                               
                                 h1("1. Sequence summary (for paired end)"),
                                 h4("(1) Summarize the paired-end sequences.",style = "color: #317EAC;"),
                                 actionButton(inputId = "demultiplexed_paired_ends", 
@@ -394,10 +350,14 @@ shinyUI(
                                         title = span("Quality plot",
                                                      style = "color:#317EAC"),
                                         h4("Forward reads"),
+                                        h4("Sequence length summary"),
+                                        tableOutput("demux_Q_seven_table_paired_f"),
                                         plotlyOutput("demux_Q_plot_paired_f"),
                                         downloadButton("demux_Q_table_paired_dl_f", 
                                                        "Download the forward read couts table"),
                                         h4("Reverse reads"),
+                                        h4("Sequence length summary"),
+                                        tableOutput("demux_Q_seven_table_paired_r"),
                                         plotlyOutput("demux_Q_plot_paired_r"),
                                         downloadButton("demux_Q_table_paired_dl_r", 
                                                        "Download the reverse read couts table")
@@ -416,6 +376,52 @@ shinyUI(
                                  )
                                 
                                 
+                              ),
+                              
+                              conditionalPanel(
+                                condition = "input.seqs_type == 'Pacbio long read'",
+                                column(width = 12,
+                                       h1("1. Sequence summary (for Pacbio long read)"),
+                                       h4("(1) Summarize the long reads.",style = "color: #317EAC;"),
+                                       actionButton(inputId = "demultiplexed_Pacbio", 
+                                                    label = strong("Start!"), 
+                                                    icon = icon("play-circle"),
+                                                    style = "margin: 10px; display: inline-block;"
+                                       ),
+                                       div(
+                                         id = "demux_results_view_Pacbio",
+                                         hr(),
+                                         tabsetPanel(
+                                           type = "tabs",
+                                           tabPanel(
+                                             title = span("Sequence counts summary",
+                                                          style = "color:#317EAC"),
+                                             h4("Forward reads"),
+                                             tableOutput("demux_table_Pacbio"),
+                                             plotlyOutput("demux_table_boxplot_Pacbio"),
+                                             downloadButton("demux_table_Pacbio_dl", 
+                                                            "Download the read couts table")
+                                           ),
+                                           
+                                           tabPanel(
+                                             title = span("Quality plot",
+                                                          style = "color:#317EAC"),
+                                             h4("Sequence length summary"),
+                                             tableOutput("demux_Q_seven_table_Pacbio"),
+                                             plotlyOutput("demux_Q_plot_Pacbio"),
+                                             downloadButton("demux_Q_table_Pacbio_dl", 
+                                                            "Download the quality score table")
+                                           ),
+                                           tabPanel(
+                                             title = "Log",
+                                             tableOutput("demux_parameter_table_Pacbio"),
+                                             downloadButton("demux_parameter_table_Pacbio_dl")
+                                           )
+                                         )
+                                         
+                                         
+                                       ) %>% shinyjs::hidden()
+                                )
                               ),
                               
                               div(
