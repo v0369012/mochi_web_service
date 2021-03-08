@@ -608,10 +608,94 @@ shinyUI(
                                     )
                                   )
                                   ) %>% shinyjs::hidden()
+                                
+                                
 
                                 
                               )
-                              )
+                              ),
+                              
+                              conditionalPanel(
+                                
+                                condition = "input.seqs_type == 'Pacbio long read'",
+                                
+                                column(width = 12,
+                                       
+                                       h1('2. Sequence denoising (DADA2) for Pacbio long read'),
+                                       
+                                       h4("(1) Start to denoise."),
+                                       actionButton(inputId = "denoising_Pacbio", 
+                                                    label = denoise_btn_start_label,
+                                                    icon = icon("play-circle"),
+                                                    style = "margin: 10px; display: inline-block;"),
+                                       
+                                       div(
+                                         id = "dada2_results_Pacbio",
+                                         
+                                         hr(),
+                                         tabsetPanel(
+                                           type = "tabs",
+                                           
+                                           tabPanel(
+                                             title = "Summary",
+                                             # br(),br(),
+                                             h4("Sample read count summary"),
+                                             tableOutput("dada2_sample_summary_Pacbio"),
+                                             h4("Sample table"),
+                                             dataTableOutput("dada2_sample_table_Pacbio"),
+                                             downloadButton("dada2_sample_table_Pacbio_dl"),
+                                             br(),br(),
+                                             h4("ASV read count summary"),
+                                             tableOutput("dada2_asv_summary_table_Pacbio"),
+                                             h4("ASV table"),
+                                             dataTableOutput("dada2_asv_table_Pacbio"),
+                                             downloadButton("dada2_asv_table_Pacbio_dl")
+                                           ),
+                                           tabPanel(
+                                             title = "Filter info",
+                                             br(),br(),
+                                             dataTableOutput("dada2_filter_table_Pacbio"),
+                                             downloadButton("dada2_filter_table_Pacbio_dl")
+                                           ),
+                                           tabPanel(
+                                             title = "Sequence info",
+                                             h4("Sequence Length Statistics"),
+                                             tableOutput("dada2_seqs_info_Pacbio_1"),
+                                             h4("Seven-Number Summary of Sequence Lengths"),
+                                             tableOutput("dada2_seqs_info_Pacbio_2"),
+                                             h4("Sequence table"),
+                                             dataTableOutput("dada2_seqs_table_Pacbio"),
+                                             downloadButton("dada2_seqs_table_Pacbio_dl", "Download the sequences as a FASTA file")
+                                           ),
+                                           tabPanel(
+                                             title = "Rarefaction plot",
+                                             br(),br(),
+                                             plotOutput("rarefaction_plot_Pacbio"),
+                                             downloadButton("rarefaction_plot_Pacbio_dl", "Download the rarefaction plot"),
+                                             downloadButton("rarefaction_table_Pacbio_dl", "Download the rarefaction table")
+                                           ),
+                                           tabPanel(
+                                             title = "Log",
+                                             tableOutput("dada2_log_table_Pacbio"),
+                                             downloadButton("dada2_log_table_Pacbio_dl")
+                                           )
+                                         )
+                                       ) %>% shinyjs::hidden()
+                                )
+                              ),
+                              
+                              div(
+                                id = "primer_table_hide_Pacbio",
+                                hr(),
+                                h2("Primer sequences table"),
+                                # p('If your primers could not be found from the table, you can manually input your primer sequences by choosing',
+                                p("Select",strong("other")," and enter your primer sequences if you can't  find your primer sequence in this table."),
+                                # strong(' other'), span("."),
+                                style = "font-size: 16px; font-weight: 300; margin-top: 5px;",
+                                dataTableOutput(outputId = "primer_seqs_table_Pacbio"),
+                                
+                                # style = "left:15px;top: 25px;position: relative"
+                              ) %>% shinyjs::hidden()
                               
                               
                               

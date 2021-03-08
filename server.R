@@ -542,6 +542,7 @@ server <- function(session, input, output) {
   observe({
     
     if(input$seqs_type == "Single end"){
+      
       output$dada2_parameter <- renderUI({
         
         p_style <- "color: white;font-size: 20px;font-weight:200;"
@@ -611,33 +612,9 @@ server <- function(session, input, output) {
           ),
           
           
-          
-          
-          # textOutput(outputId = "message_thread_single_position"),
           br(),br(),
          
           
-          # strong("Metadata Integrating (optional)", style = "font-size:24px;color: white"),
-          # fileInput(inputId = "sample_data_single",
-          #           label = span("Upload the metadata (1st column name must be", 
-          #                        strong("SampleID"),
-          #                        span(")"),
-          #                        style = p_style),
-          #           multiple = F,
-          #           accept = ".tsv",
-          #           width = "600px"),
-          # actionButton("metadata_info",
-          #              "learn more",
-          #              icon = icon("question-circle"),
-          #              style = "position:relative;"
-          # ),
-          # 
-          # actionButton("reset_metadata_single",
-          # 
-          #              label = "reset", icon = icon("trash")),
-
-                      
-
           hr(),
           strong("Computing setting", style = "font-size:24px;color: white"),
           textInput(inputId = "threads_single", 
@@ -650,7 +627,9 @@ server <- function(session, input, output) {
           
         )
       })
+      
     }else if(input$seqs_type == "Paired end"){
+      
       output$dada2_parameter <- renderUI({
         p_style <- "color: white;font-size: 20px;font-weight:200;"
         tagList(
@@ -773,7 +752,140 @@ server <- function(session, input, output) {
           
         )
       })
+      
+    }else if(input$seqs_type == "Pacbio long read"){
+      
+      output$dada2_parameter <- renderUI({
+        
+        p_style <- "color: white;font-size: 20px;font-weight:200;"
+        
+        tagList(
+         
+          strong("Sequence filtering", style = "font-size:24px;color: white;"),
+          
+          textInput(inputId = "min_length_filter_Pacbio", 
+                    label = span("The minimum sequence length",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 1000,
+                    width = "250px"),
+          textInput(inputId = "max_length_filter_Pacbio", 
+                    label = span("The maximum sequence length",
+                                 style = p_style),
+                    placeholder = "Input number",
+                    value = 1600,
+                    width = "250px"),
+          
+          hr(),
+          strong("Primer sequences", style = "font-size:24px;color: white"),
+          selectInput(inputId = "primer_f_Pacbio", 
+                      label = span("Choose the forward primer sequence", style = "font-size: 20px; font-weight: 300; color: white; margin-top: 5px;"), 
+                      choice = c("27F", "other"),
+                      width = "400px"
+          ),
+          
+          selectInput(inputId = "primer_r_Pacbio", 
+                      label = span("Choose the reverse primer sequence", style = "font-size: 20px; font-weight: 300; color: white; margin-top: 5px;"), 
+                      choice = c("1492R (l)", "1492R (s)", "other"),
+                      width = "400px"
+          ),
+          
+          actionButton(inputId = "show_primer_Pacbio", 
+                       label = "Show primer sequences", 
+                       icon = icon("table"),
+                       style = "margin-bottom:10px"
+          ),
+          
+          
+          uiOutput(outputId = "out_f_Pacbio"),
+          uiOutput(outputId = "out_r_Pacbio"),
+          
+          hr(),
+          strong("Computing setting", style = "font-size:24px;color: white"),
+          textInput(inputId = "threads_Pacbio", 
+                    label = span("Number of threads MOCHI can use",
+                                 style = p_style), 
+                    value = suggested_cores,
+                    width = "350px")
+          
+          
+          
+        )
+      })
+      
     }
+  })
+  
+  
+  output$out_f_Pacbio <- renderUI({
+    
+    if (input$primer_f_Pacbio == "other"){
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- textInput(inputId = "primer_f_manu_Pacbio", 
+                                    label = span("Give the forward primer sequences", style = "font-size: 18px; font-weight: 300; color: white; margin-top: 5px;")
+        )
+        return(text_list)
+      })
+    }else{
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- p("")
+        return(text_list)
+      })
+    }
+    
+    
+  })
+  
+  output$out_r_Pacbio <- renderUI({
+    
+    # req(input$primer_r)
+    
+    if (input$primer_r_Pacbio == "other"){
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- textInput(inputId = "primer_r_manu_Pacbio", 
+                                    label = span("Give the reverse primer sequences", style = "font-size: 18px; font-weight: 300; color: white; margin-top: 5px;")
+        )
+        return(text_list)
+      })
+    }else{
+      isolate({
+        text_list <- list()
+        text_list[[1]] <- p("")
+        return(text_list)
+      })
+    }
+    
+    
+  })
+  
+  # show primer table Pacbio
+  observeEvent(input$show_primer_Pacbio, {
+    # output$mk_taxa <- renderUI({
+    shinyjs::toggle("primer_table_hide_Pacbio")
+    
+    output$primer_seqs_table_Pacbio <- renderDataTable({
+      
+      
+      primer_table <- data.frame(`Primer name`=c("8F", "27F", "CC [F]", "341F","357F", "515F", "533F", "16S.1100.F16", "1237F", 
+                                                 "519R", "CD [R]", "806R","907R", "1100R", "1391R", "1492R (l)", "1492R (s)"), 
+                                 `Primer sequence`=c("AGAGTTTGATCCTGGCTCAG", "AGAGTTTGATCMTGGCTCAG", "CCAGACTCCTACGGGAGGCAGC", "CTCCTACGGGAGGCAGCAG", "CCTACGGGNGGCWGCAG",
+                                                     "GTGCCAGCMGCCGCGGTAA", "GTGCCAGCAGCCGCGGTAA", "CAACGAGCGCAACCCT", "GGGCTACACACGYGCWAC",
+                                                     "GWATTACCGCGGCKGCTG", "CTTGTGCGGGCCCCCGTCAATTC", "GGACTACHVGGGTWTCTAAT","CCGTCAATTCMTTTRAGTTT", "AGGGTTGCGCTCGTTG",
+                                                     "GACGGGCGGTGTGTRCA", "GGTTACCTTGTTACGACTT", "ACCTTGTTACGACTT"),
+                                 # Target_Group=c(rep("Universal", 11), "Bacterial", rep("Universal", 3)),
+                                 Reference=c("Turner et al. 1999", "Lane et al. 1991", "Rudi et al. 1997", "Herlemann et al. 2011","Turner et al. 1999", "Turner et al. 1999",
+                                             "Weisburg et al. 1991", "Turner et al. 1999", "Turner et al. 1999", "Turner et al. 1999", "Rudi et al. 1997", "Liu Z et al. 2007",
+                                             "Lane et al. 1991", "Turner et al. 1999", "Turner et al. 1999", "Turner et al. 1999", "Lane et al. 1991"))
+      colnames(primer_table)[2] <- "Primer sequence (5'-3')"
+      # colnames(primer_table)[3] <- "Target group"
+      
+      return(primer_table[c(2, 16, 17),])
+      
+    })
+    
   })
   
  observeEvent(input$trim_info, {
@@ -2541,11 +2653,10 @@ server <- function(session, input, output) {
     updateTextInput(session, inputId = "trunc_len_single", value = 120)
     updateTextInput(session, inputId = "qvalue_single", value = 2)
     updateTextInput(session, inputId = "threads_single", value = suggested_cores)
-    # updateSelectInput(session, inputId = "select_database", selected = "Greengenes_16S_85")
-    # updateTextInput(session, inputId = "min_length", value = 100)
-    # updateTextInput(session, inputId = "max_length", value = 400)
-    # updateTextInput(session, inputId = "n_jobs", value = my_cores-2)
+    
   })
+  
+ 
   
   observeEvent(input$load_parameter_taxa, {
     showModal(modalDialog(title = strong("Message"),
@@ -5187,17 +5298,10 @@ server <- function(session, input, output) {
                             "/demux_single_trimmed.qza"))){
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-                              "Please finish sequence summary.", 
+                              "Please finish sequence summary first.", 
                               footer = NULL, easyClose = T, size = "l"))
         
-      # }else if(!is.null(input$sample_data_single)){
-      #   if(colnames(read.table(input$sample_data_single$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
-      #     showModal(modalDialog(title = strong("Error!", style = "color: red"),
-      #                           "The first column name of metadata must be 'SampleID'.",
-      #                           footer = NULL, easyClose = T, size = "l"))
-      #   }
       
-
       }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_denoise)>0){
         
         start_time <- Sys.time()
@@ -5297,7 +5401,7 @@ server <- function(session, input, output) {
                "/stats-dada2_single.qzv /home/imuser/web_version/users_files/",
                input$input_job_id_denoise,
                "/stats-dada2_single.zip"))
-        # system(paste0("cp /home/imuser/qiime_output/stats-dada2_single.zip", " /home/imuser/web_version/users_files/", job_id(),"/stats-dada2_single_", job_id(),".zip"))
+        
         
         # unzip dada2 table
         system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_single_position_table"))
@@ -5469,6 +5573,26 @@ server <- function(session, input, output) {
             max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
                                             input$input_job_id_taxa,
                                             "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[4,2]
+            updateTextInput(session, inputId = "min_length", value = min_length)
+            updateTextInput(session, inputId = "max_length", value = max_length)
+          }else{
+            updateTextInput(session, inputId = "min_length", value = 0)
+            updateTextInput(session, inputId = "max_length", value = 0)
+          }
+        }else if(input$seqs_type == "Pacbio long read"){
+          if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                input$input_job_id_taxa,
+                                "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                     sep = "\t", 
+                                     stringsAsFactors = F)[3,2]
+            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_taxa,
+                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
                                      sep = "\t", 
                                      stringsAsFactors = F)[4,2]
             updateTextInput(session, inputId = "min_length", value = min_length)
@@ -6531,6 +6655,26 @@ server <- function(session, input, output) {
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
+    }else if(input$seqs_type == "Pacbio long read"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
     }
     
     # removeModal()
@@ -7233,6 +7377,930 @@ server <- function(session, input, output) {
     output$rarefaction_plot_paired <- renderPlot({
       rarefaction_table <- read.csv(
         paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
+  
+  
+  # Denoising_Pacbio ----
+  observeEvent(input$denoising_Pacbio,{
+    if(!file.exists(paste0("/home/imuser/web_version/users_files/",
+                           input$input_job_id_denoise,
+                           "/demux_Pacbio_trimmed.qza"))){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please finish sequence summary first.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+      
+    }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_denoise)>0){
+      
+      start_time <- Sys.time()
+      # showModal(modalDialog(title = "Running denoising for single end ...", "Waiting for a moment", footer = NULL))
+      show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+      
+      qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime'
+      
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_Pacbio.qza"))
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_Pacbio.qza"))
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/rep-seqs-dada2_Pacbio.qzv"))
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qzv"))
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/stats-dada2_Pacbio.qzv"))
+      
+      system("/home/imuser/miniconda3/envs/qiime2-2020.8/bin/qiime dev refresh-cache")
+      
+      
+      primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                          "27F"="AGAGTTTGATCMTGGCTCAG",
+                          "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                          "341F"="CTCCTACGGGAGGCAGCAG",
+                          "357F"="CTCCTACGGGAGGCAGCAG",
+                          "515F"="GTGCCAGCMGCCGCGGTAA",
+                          "533F"="GTGCCAGCAGCCGCGGTAA",
+                          "16S.1100.F16"="CAACGAGCGCAACCCT",
+                          "1237F"="GGGCTACACACGYGCWAC",
+                          "519R"="GWATTACCGCGGCKGCTG",
+                          "806R"="GGACTACHVGGGTWTCTAAT",
+                          "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                          "907R"="CCGTCAATTCMTTTRAGTTT",
+                          "1100R"="AGGGTTGCGCTCGTTG",
+                          "1391R"="GACGGGCGGTGTGTRCA",
+                          "1492R (l)"="GGTTACCTTGTTACGACTT",
+                          "1492R (s)"="ACCTTGTTACGACTT" 
+      )
+      
+      
+      if(input$primer_f_Pacbio != "other" & input$primer_r_Pacbio != "other"){
+        system(paste0(
+          qiime_cmd,
+          " dada2 denoise-ccs --i-demultiplexed-seqs",
+          " /home/imuser/web_version/users_files/", input$input_job_id_denoise, "/demux_Pacbio_trimmed.qza",
+          " --p-trunc-len 0 --p-min-len ", input$min_length_filter_Pacbio,
+          " --p-max-len ", input$max_length_filter_Pacbio,
+          " --p-n-threads ", input$threads_Pacbio,
+          " --p-front ", primer_list[[input$primer_f_Pacbio]],
+          " --p-adapter ", primer_list[[input$primer_r_Pacbio]],
+          " --o-representative-sequences /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/rep-seqs-dada2_Pacbio.qza",
+          " --o-table /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/table-dada2_Pacbio.qza", 
+          " --o-denoising-stats /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/stats-dada2_Pacbio.qza"
+          
+        ))
+      }
+      
+      if(input$primer_f_Pacbio == "other" & input$primer_r_Pacbio != "other"){
+        system(paste0(
+          qiime_cmd,
+          " dada2 denoise-ccs --i-demultiplexed-seqs",
+          " /home/imuser/web_version/users_files/", input$input_job_id_denoise, "/demux_Pacbio_trimmed.qza",
+          " --p-trunc-len 0 --p-min-len ", input$min_length_filter_Pacbio,
+          " --p-max-len ", input$max_length_filter_Pacbio,
+          " --p-n-threads ", input$threads_Pacbio,
+          " --p-front ", input$primer_f_manu_Pacbio,
+          " --p-adapter ", primer_list[[input$primer_r_Pacbio]],
+          " --o-representative-sequences /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/rep-seqs-dada2_Pacbio.qza",
+          " --o-table /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/table-dada2_Pacbio.qza", 
+          " --o-denoising-stats /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/stats-dada2_Pacbio.qza"
+          
+        ))
+      }
+      
+      if(input$primer_f_Pacbio != "other" & input$primer_r_Pacbio == "other"){
+        system(paste0(
+          qiime_cmd,
+          " dada2 denoise-ccs --i-demultiplexed-seqs",
+          " /home/imuser/web_version/users_files/", input$input_job_id_denoise, "/demux_Pacbio_trimmed.qza",
+          " --p-trunc-len 0 --p-min-len ", input$min_length_filter_Pacbio,
+          " --p-max-len ", input$max_length_filter_Pacbio,
+          " --p-n-threads ", input$threads_Pacbio,
+          " --p-front ", primer_list[[input$primer_f_Pacbio]],
+          " --p-adapter ", input$primer_r_manu_Pacbio,
+          " --o-representative-sequences /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/rep-seqs-dada2_Pacbio.qza",
+          " --o-table /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/table-dada2_Pacbio.qza", 
+          " --o-denoising-stats /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/stats-dada2_Pacbio.qza"
+          
+        ))
+      }
+      
+      if(input$primer_f_Pacbio == "other" & input$primer_r_Pacbio == "other"){
+        system(paste0(
+          qiime_cmd,
+          " dada2 denoise-ccs --i-demultiplexed-seqs",
+          " /home/imuser/web_version/users_files/", input$input_job_id_denoise, "/demux_Pacbio_trimmed.qza",
+          " --p-trunc-len 0 --p-min-len ", input$min_length_filter_Pacbio,
+          " --p-max-len ", input$max_length_filter_Pacbio,
+          " --p-n-threads ", input$threads_Pacbio,
+          " --p-front ", input$primer_f_manu_Pacbio,
+          " --p-adapter ", input$primer_r_manu_Pacbio,
+          " --o-representative-sequences /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/rep-seqs-dada2_Pacbio.qza",
+          " --o-table /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/table-dada2_Pacbio.qza", 
+          " --o-denoising-stats /home/imuser/web_version/users_files/",input$input_job_id_denoise,"/stats-dada2_Pacbio.qza"
+          
+        ))
+      }
+      
+      
+      
+      
+      # transform to qzv
+      system(paste0(qiime_cmd, ' metadata tabulate --m-input-file',
+                    ' /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/stats-dada2_Pacbio.qza',
+                    ' --o-visualization /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/stats-dada2_Pacbio.qzv'))
+      
+      system(paste0(qiime_cmd, ' feature-table summarize --i-table /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/table-dada2_Pacbio.qza ',
+                    # add_metadata_table,
+                    ' --o-visualization /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/table-dada2_Pacbio.qzv'
+      )
+      )
+      system(paste0(qiime_cmd, ' feature-table tabulate-seqs --i-data /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/rep-seqs-dada2_Pacbio.qza',
+                    ' --o-visualization /home/imuser/web_version/users_files/',
+                    input$input_job_id_denoise,
+                    '/rep-seqs-dada2_Pacbio.qzv'))
+      
+      
+      system(paste0("sudo mkdir /srv/shiny-server/www/users_files/", input$input_job_id_denoise))
+      
+      # unzip stats
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_stats"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_stats /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/stats-dada2_Pacbio.qzv"))
+      
+      unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                input$input_job_id_denoise,
+                                                "/denoise_Pacbio_stats"), 
+                                         full.names = T)
+      system(paste0("mv ", unzip_dirnames_stats,
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_stats/new_dirname"))
+      
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_stats/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_denoise))
+      
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/stats-dada2_Pacbio.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/stats-dada2_Pacbio.zip"))
+      
+      
+      # unzip dada2 table
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_Pacbio_position_table"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_position_table /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/table-dada2_Pacbio.qzv"))
+      
+      unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                input$input_job_id_denoise,
+                                                "/denoise_Pacbio_position_table"), 
+                                         full.names = T)
+      system(paste0("mv ", unzip_dirnames_stats,
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_position_table/new_dirname"))
+      
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_position_table/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_denoise))
+      
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/table-dada2_Pacbio.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/table-dada2_Pacbio.zip"))
+      
+      # unzip dada2 rep-seqs
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_Pacbio_seqs"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_seqs /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rep-seqs-dada2_Pacbio.qzv"))
+      
+      unzip_dirnames_stats <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                                input$input_job_id_denoise,
+                                                "/denoise_Pacbio_seqs"), 
+                                         full.names = T)
+      system(paste0("mv ", unzip_dirnames_stats,
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_seqs/new_dirname"))
+      
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_seqs/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_denoise))
+      
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rep-seqs-dada2_Pacbio.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rep-seqs-dada2_Pacbio.zip"))
+      
+      # alpha-rarefaction
+      max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                   input$input_job_id_denoise,
+                                   "/table-dada2_Pacbio.qza")
+      )[["data"]] %>% colSums() %>% median() %>% ceiling()
+      if(max_depth == 0){
+        max_depth <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_denoise,
+                                     "/table-dada2_Pacbio.qza")
+        )[["data"]] %>% colSums() %>% max()
+        
+        if(max_depth == 0){
+          max_depth <- 100
+        }
+      }
+      
+      system(paste0(qiime_cmd, 
+                    " phylogeny align-to-tree-mafft-fasttree --i-sequences /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rep-seqs-dada2_Pacbio.qza", 
+                    " --p-n-threads ", input$threads_Pacbio,
+                    " --o-alignment /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/aligned-rep-seqs-dada2_Pacbio.qza",
+                    " --o-masked-alignment /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/masked-aligned-rep-seqs-dada2_Pacbio.qza",
+                    " --o-tree /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/unrooted-tree_Pacbio.qza",
+                    " --o-rooted-tree /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rooted-tree_Pacbio.qza"))
+      
+      system(paste0(qiime_cmd, 
+                    " diversity alpha-rarefaction --i-table /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/table-dada2_Pacbio.qza",
+                    " --p-max-depth ", max_depth,
+                    " --i-phylogeny /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rooted-tree_Pacbio.qza ",
+                    add_metadata_rarefaction,
+                    " --o-visualization /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rarefaction-dada2_Pacbio.qzv"))
+      
+      # unzip alpha rarefaction
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_denoise, "/denoise_Pacbio_rarefaction"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_rarefaction",
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rarefaction-dada2_Pacbio.qzv"))
+      
+      unzip_dirnames_seqs <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                               input$input_job_id_denoise,
+                                               "/denoise_Pacbio_rarefaction"), full.names = T)
+      system(paste0("mv ", unzip_dirnames_seqs, 
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_rarefaction/new_dirname"))
+      
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/denoise_Pacbio_rarefaction/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_denoise))
+      
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rarefaction-dada2_Pacbio.qzv",
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_denoise,
+                    "/rarefaction-dada2_Pacbio.zip"))
+      
+      shinyjs::show("dada2_results_Pacbio")
+      
+      # update reference seqs filter length
+      if(input$seqs_type == "Single end"){
+        if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                              input$input_job_id_taxa,
+                              "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[3,2]
+          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[4,2]
+          updateTextInput(session, inputId = "min_length", value = min_length)
+          updateTextInput(session, inputId = "max_length", value = max_length)
+        }else{
+          updateTextInput(session, inputId = "min_length", value = 0)
+          updateTextInput(session, inputId = "max_length", value = 0)
+        }
+      }else if(input$seqs_type == "Paired end"){
+        if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                              input$input_job_id_taxa,
+                              "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[3,2]
+          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[4,2]
+          updateTextInput(session, inputId = "min_length", value = min_length)
+          updateTextInput(session, inputId = "max_length", value = max_length)
+        }else{
+          updateTextInput(session, inputId = "min_length", value = 0)
+          updateTextInput(session, inputId = "max_length", value = 0)
+        }
+      }else if(input$seqs_type == "Pacbio long read"){
+        if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                              input$input_job_id_taxa,
+                              "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[3,2]
+          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                          input$input_job_id_taxa,
+                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                   sep = "\t", 
+                                   stringsAsFactors = F)[4,2]
+          updateTextInput(session, inputId = "min_length", value = min_length)
+          updateTextInput(session, inputId = "max_length", value = max_length)
+        }else{
+          updateTextInput(session, inputId = "min_length", value = 0)
+          updateTextInput(session, inputId = "max_length", value = 0)
+        }
+      }
+      
+      # removeModal()
+      remove_modal_spinner()
+      end_time <- Sys.time()
+      spent_time <- format(round(end_time-start_time, digits = 2))
+      
+      parameter_table <- data.frame(
+        "JobID" = input$input_job_id_denoise,
+        "Step" = "Denoising",
+        "time" = Sys.time(),
+        "duration" = spent_time,
+        "sequence_type" = input$seqs_type,
+        "min_length" = input$min_length_filter_Pacbio,
+        "max_length" = input$max_length_filter_Pacbio,
+        # "start_position_trim" = input$trim_left_Pacbio,
+        # "end_position_trim" = input$trunc_len_Pacbio,
+        # "quality_score_truncate" = input$qvalue_Pacbio,
+        # "chimeric_reads_min_fold_change" = input$chimera_Pacbio,
+        # "reads_error_model" = input$n_reads_Pacbio,
+        # "metadata_upload" = is.null(input$sample_data_Pacbio),
+        "computing_setting" = input$threads_Pacbio
+      )
+      write.csv(parameter_table,
+                paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/parameter_denoise_Pacbio.csv"), 
+                quote = F, 
+                row.names = F)
+      
+      stats_dada2_Pacbio.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_denoise,
+                                            "/stats-dada2_Pacbio.qzv")
+      table_dada2_Pacbio.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                            input$input_job_id_denoise,
+                                            "/table-dada2_Pacbio.qzv")
+      rep_seqs_dada2_Pacbio.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                               input$input_job_id_denoise,
+                                               "/rep-seqs-dada2_Pacbio.qzv")
+      rarefaction_dada2_Pacbio.qzv_path <- paste0("/home/imuser/web_version/users_files/",
+                                                  input$input_job_id_denoise,
+                                                  "/rarefaction-dada2_Pacbio.qzv")
+      if(sum(file.exists(c(stats_dada2_Pacbio.qzv_path, 
+                           table_dada2_Pacbio.qzv_path, 
+                           rep_seqs_dada2_Pacbio.qzv_path,
+                           rarefaction_dada2_Pacbio.qzv_path)
+      )
+      )==4){
+        
+        showModal(modalDialog(title = strong("Denoising succecessfully!"), 
+                              HTML(
+                                paste0(
+                                  "This analysis took ", spent_time, ". ",
+                                  "You can inspect the results!")
+                              ), 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "Please check your files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+      
+    }else{
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "The job id is not found.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }
+    
+
+  })
+  
+  # dada2 R Pacbio ----
+  observeEvent(input$denoising_Pacbio, {
+    
+    # log table
+    output$dada2_log_table_Pacbio <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_Pacbio.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    output$dada2_sample_summary_Pacbio <- renderTable({
+      req(input$input_job_id_denoise)
+      # sample_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv")
+      #   , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = colSums(sample_qiime2),
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_Pacbio <- renderDataTable({
+      req(input$input_job_id_denoise)
+      # sample_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv")
+      #   , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = colSums(sample_qiime2),
+        "Number of ASVs observed in" = sample_found_number
+      ) %>% as_tibble()
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_Pacbio <- renderTable({
+      req(input$input_job_id_denoise)
+      # asv_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv")
+      #   , header = F)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      
+      asv_read_count <- rowSums(asv_qiime2)
+      
+      asv_summary <- data.frame(
+        Min = min(asv_read_count),
+        Mean = mean(asv_read_count),
+        Median = median(asv_read_count),
+        Max = max(asv_read_count),
+        Total = sum(asv_read_count),
+        "Number of ASVs" = length(asv_read_count)
+      )
+    })
+    
+    output$dada2_asv_table_Pacbio <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      # asv_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv")
+      #   , header = F)
+      
+      asv_smr_table <- cbind("ASV" = rownames(asv_qiime2), "Read count" = rowSums(asv_qiime2), "Number of samples observed in" = asv_found_number) %>% as_tibble()
+      
+      # colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_Pacbio <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_Pacbio_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_Pacbio_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_Pacbio <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/sequences.fasta")
+      )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_Pacbio <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+  })
+  
+  
+  output$dada2_sample_table_Pacbio_dl <- downloadHandler(
+    filename = "sample_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      sample_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv")
+        , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_Pacbio_dl <- downloadHandler(
+    filename = "asv_table.csv",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv")
+        , header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_Pacbio_dl <- downloadHandler(
+    filename = "filter_info_table.tsv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_stats/new_dirname/data/metadata.tsv"),
+        file
+      )
+    }
+  )
+  
+  output$dada2_seqs_table_Pacbio_dl <- downloadHandler(
+    filename = "sequences.fasta",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/sequences.fasta"),
+        file
+      )
+    }
+  )
+  
+  output$rarefaction_plot_Pacbio_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot.png",
+    content = function(file){
+      req(input$input_job_id_denoise)
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv"))
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_Pacbio_dl <- downloadHandler(
+    filename = "rarefaction_table.csv",
+    content = function(file){
+      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv"), 
+                file)
+    }
+  )
+  
+  output$dada2_log_table_Pacbio_dl <- downloadHandler(
+    filename = "parameter_denoise_Pacbio.csv",
+    content = function(file){
+      file.copy(
+        paste0("/home/imuser/web_version/users_files/", 
+               input$input_job_id_denoise, 
+               "/parameter_denoise_Pacbio.csv"), file
+      )
+    }
+  )
+  
+  
+  observeEvent(input$ok_2, {
+    
+    # log table
+    output$dada2_log_table_Pacbio <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/", 
+                                   input$input_job_id_denoise, 
+                                   "/parameter_denoise_Pacbio.csv")
+      ) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-c(1,2),])
+    })
+    
+    # summary table
+    
+    output$dada2_sample_summary_Pacbio <- renderTable({
+      req(input$input_job_id_denoise)
+      # sample_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv")
+      #   , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = colSums(sample_qiime2),
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      sample_summary_table_ <- data.frame(
+        Min = min(sample_summary_table[,2]),
+        Mean = mean(sample_summary_table[,2]),
+        Median = median(sample_summary_table[,2]),
+        Max = max(sample_summary_table[,2]),
+        Toatal = sum(sample_summary_table[,2]),
+        "Sample size" = nrow(sample_summary_table)
+      )
+    })
+    
+    output$dada2_sample_table_Pacbio <- renderDataTable({
+      req(input$input_job_id_denoise)
+      # sample_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv")
+      #   , header = F)
+      
+      sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = colSums(sample_qiime2),
+        "Number of ASVs observed in" = sample_found_number
+      ) %>% as_tibble()
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      return(sample_summary_table)
+    })
+    
+    output$dada2_asv_summary_table_Pacbio <- renderTable({
+      req(input$input_job_id_denoise)
+      # asv_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv")
+      #   , header = F)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      
+      asv_read_count <- rowSums(asv_qiime2)
+      
+      asv_summary <- data.frame(
+        Min = min(asv_read_count),
+        Mean = mean(asv_read_count),
+        Median = median(asv_read_count),
+        Max = max(asv_read_count),
+        Total = sum(asv_read_count),
+        "Number of ASVs" = length(asv_read_count)
+      )
+    })
+    
+    output$dada2_asv_table_Pacbio <- renderDataTable({
+      req(input$input_job_id_denoise)
+      asv_qiime2 <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza"))[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      # asv_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv")
+      #   , header = F)
+      
+      asv_smr_table <- cbind("ASV" = rownames(asv_qiime2), "Read count" = rowSums(asv_qiime2), "Number of samples observed in" = asv_found_number) %>% as_tibble()
+      
+      # colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      
+      return(asv_smr_table)
+    })
+    
+    # filter info 
+    output$dada2_filter_table_Pacbio <- renderDataTable({
+      read.table(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_stats/new_dirname/data/metadata.tsv"), header = T, sep = "\t")
+      
+    })
+    
+    # seqs info 
+    output$dada2_seqs_info_Pacbio_1 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_1 <- data.frame(
+        "Sequence count" = seqs_info_qiime2[1,2],
+        "Min length" = seqs_info_qiime2[2,2],
+        "Mean length" = seqs_info_qiime2[4,2],
+        "Max length" = seqs_info_qiime2[3,2],
+        "Range" = seqs_info_qiime2[5,2],
+        "Standard deviation" = seqs_info_qiime2[6,2]
+      )
+    })
+    
+    output$dada2_seqs_info_Pacbio_2 <- renderTable({
+      seqs_info_qiime2 <- read.table(paste0(
+        "/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/seven_number_summary.tsv"
+      ), sep = "\t", header = T)
+      seqs_info_table_2 <- data.frame(
+        "Percentile:" = "Length (nts):",
+        "2th" = seqs_info_qiime2[1,2],
+        "9th" = seqs_info_qiime2[2,2],
+        "25th" = seqs_info_qiime2[3,2],
+        "50th" = seqs_info_qiime2[4,2],
+        "75th" = seqs_info_qiime2[5,2],
+        "91th" = seqs_info_qiime2[6,2],
+        "98th" = seqs_info_qiime2[7,2]
+      )
+      colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      return(seqs_info_table_2)
+    })
+    
+    output$dada2_seqs_table_Pacbio <- renderDataTable({
+      seqs <- readLines(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_seqs/new_dirname/data/sequences.fasta")
+      )
+      seqs_table <- data.frame(
+        ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+        "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+        Sequence = seqs[seq(2,length(seqs), 2)]
+      )
+    })
+    
+    # rarefaction
+    output$rarefaction_plot_Pacbio <- renderPlot({
+      rarefaction_table <- read.csv(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv"))
       depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
       rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
         table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
