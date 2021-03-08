@@ -292,7 +292,7 @@ shinyUI(
                                                      style = "color:#317EAC"),
                                         h4("Sequence length summary"),
                                         tableOutput("demux_Q_seven_table_single"),
-                                        plotlyOutput("demux_Q_plot_single"),
+                                        plotlyOutput("demux_Q_plot_single") %>% withSpinner(type = 2, color.background = "white"),
                                         downloadButton("demux_Q_table_single_dl", 
                                                        "Download the quality score table")
                                       ),
@@ -349,16 +349,15 @@ shinyUI(
                                       tabPanel(
                                         title = span("Quality plot",
                                                      style = "color:#317EAC"),
-                                        h4("Forward reads"),
-                                        h4("Sequence length summary"),
+                                        h4("Forward sequence length summary"),
                                         tableOutput("demux_Q_seven_table_paired_f"),
-                                        plotlyOutput("demux_Q_plot_paired_f"),
+                                        plotlyOutput("demux_Q_plot_paired_f") %>% withSpinner(type = 2, color.background = "white"),
                                         downloadButton("demux_Q_table_paired_dl_f", 
                                                        "Download the forward read couts table"),
-                                        h4("Reverse reads"),
-                                        h4("Sequence length summary"),
+                                        
+                                        h4("Reverse sequence length summary"),
                                         tableOutput("demux_Q_seven_table_paired_r"),
-                                        plotlyOutput("demux_Q_plot_paired_r"),
+                                        plotlyOutput("demux_Q_plot_paired_r") %>% withSpinner(type = 2, color.background = "white"),
                                         downloadButton("demux_Q_table_paired_dl_r", 
                                                        "Download the reverse read couts table")
                                       ), 
@@ -408,7 +407,7 @@ shinyUI(
                                                           style = "color:#317EAC"),
                                              h4("Sequence length summary"),
                                              tableOutput("demux_Q_seven_table_Pacbio"),
-                                             plotlyOutput("demux_Q_plot_Pacbio"),
+                                             plotlyOutput("demux_Q_plot_Pacbio") %>% withSpinner(type = 2, color.background = "white"),
                                              downloadButton("demux_Q_table_Pacbio_dl", 
                                                             "Download the quality score table")
                                            ),
