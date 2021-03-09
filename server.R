@@ -3508,12 +3508,12 @@ server <- function(session, input, output) {
     })
     
     output$demux_Q_seven_table_single <- renderTable({
-      demux_Pacbio_qp <- readLines(
+      demux_single_qp <- readLines(
         paste0("/home/imuser/web_version/users_files/",
                input$input_job_id_demux,
                "/demux_single_unzip/new_dirname/data/quality-plot.html"))
-      nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-      nts_value <- demux_Pacbio_qp[nts_position]
+      nts_position <- which(str_detect(demux_single_qp, "nts") == T)
+      nts_value <- demux_single_qp[nts_position]
       nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
       q_seven_table <- data.frame(
         "Total sequences sampled" = 10000,
@@ -3671,12 +3671,12 @@ server <- function(session, input, output) {
     })
     
     output$demux_Q_seven_table_single <- renderTable({
-      demux_Pacbio_qp <- readLines(
+      demux_single_qp <- readLines(
         paste0("/home/imuser/web_version/users_files/",
                input$input_job_id_demux,
                "/demux_single_unzip/new_dirname/data/quality-plot.html"))
-      nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-      nts_value <- demux_Pacbio_qp[nts_position]
+      nts_position <- which(str_detect(demux_single_qp, "nts") == T)
+      nts_value <- demux_single_qp[nts_position]
       nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
       q_seven_table <- data.frame(
         "Total sequences sampled" = 10000,
@@ -4323,12 +4323,12 @@ server <- function(session, input, output) {
       })
       
       output$demux_Q_seven_table_paired_f <- renderTable({
-        demux_Pacbio_qp <- readLines(
+        demux_paired_qp <- readLines(
           paste0("/home/imuser/web_version/users_files/",
                  input$input_job_id_demux,
                  "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
-        nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-        nts_value <- demux_Pacbio_qp[nts_position]
+        nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+        nts_value <- demux_paired_qp[nts_position]
         nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
         q_seven_table <- data.frame(
           "Total sequences sampled" = 10000,
@@ -4346,12 +4346,12 @@ server <- function(session, input, output) {
       })
       
       output$demux_Q_seven_table_paired_r <- renderTable({
-        demux_Pacbio_qp <- readLines(
+        demux_paired_qp <- readLines(
           paste0("/home/imuser/web_version/users_files/",
                  input$input_job_id_demux,
                  "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
-        nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-        nts_value <- demux_Pacbio_qp[nts_position]
+        nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+        nts_value <- demux_paired_qp[nts_position]
         nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
         q_seven_table <- data.frame(
           "Total sequences sampled" = 10000,
@@ -4607,12 +4607,12 @@ server <- function(session, input, output) {
         })
         
         output$demux_Q_seven_table_paired_f <- renderTable({
-          demux_Pacbio_qp <- readLines(
+          demux_paired_qp <- readLines(
             paste0("/home/imuser/web_version/users_files/",
                    input$input_job_id_demux,
                    "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
-          nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-          nts_value <- demux_Pacbio_qp[nts_position]
+          nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+          nts_value <- demux_paired_qp[nts_position]
           nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
           q_seven_table <- data.frame(
             "Total sequences sampled" = 10000,
@@ -4630,12 +4630,12 @@ server <- function(session, input, output) {
         })
         
         output$demux_Q_seven_table_paired_r <- renderTable({
-          demux_Pacbio_qp <- readLines(
+          demux_paired_qp <- readLines(
             paste0("/home/imuser/web_version/users_files/",
                    input$input_job_id_demux,
                    "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
-          nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
-          nts_value <- demux_Pacbio_qp[nts_position]
+          nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+          nts_value <- demux_paired_qp[nts_position]
           nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
           q_seven_table <- data.frame(
             "Total sequences sampled" = 10000,
@@ -5436,7 +5436,36 @@ server <- function(session, input, output) {
     })
     
   # Denoising_single -----------------------------------------------------------------------------------------------------------------------  
+    
+    demux_single_seqs_Q <- reactive({
+      demux_single_qp <- readLines(
+        paste0("/home/imuser/web_version/users_files/",
+               input$input_job_id_denoise,
+               "/demux_single_unzip/new_dirname/data/quality-plot.html"))
+      nts_position <- which(str_detect(demux_single_qp, "nts") == T)
+      nts_value <- demux_single_qp[nts_position]
+      nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+      q_seven_table <- data.frame(
+        "Total sequences sampled" = 10000,
+        "2%" = nts[1],
+        "9%" = nts[2],
+        "25%" = nts[3],
+        "50%" = nts[4],
+        "75%" = nts[5],
+        "91%" = nts[6],
+        "98%" = nts[7]
+      )
+      colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+      q_seven_table[1,] <- as.character(q_seven_table[1,])
+      return(as.numeric(q_seven_table[1,]))
+    })
+    
+    single_input_position <- reactive({
+      as.numeric(c(input$trim_left_single, input$trunc_len_single))
+    })
+    
   observeEvent(input$denoising_single, {
+    
     
       if(!file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_denoise,
@@ -5444,6 +5473,12 @@ server <- function(session, input, output) {
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Please finish sequence summary first.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+      }else if(sum(single_input_position() > demux_single_seqs_Q()[7]) > 0){
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Your position to trim can not be large than the sequence length.", 
                               footer = NULL, easyClose = T, size = "l"))
         
       
@@ -6502,7 +6537,65 @@ server <- function(session, input, output) {
   
   
   # Denoising_paired -----------------------------------------------------------------------------------------------------------------------  
+  
+  demux_paired_seqs_Q_f <- reactive({
+    demux_paired_qp <- readLines(
+      paste0("/home/imuser/web_version/users_files/",
+             input$input_job_id_denoise,
+             "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
+    nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+    nts_value <- demux_paired_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[1],
+      "9%" = nts[2],
+      "25%" = nts[3],
+      "50%" = nts[4],
+      "75%" = nts[5],
+      "91%" = nts[6],
+      "98%" = nts[7]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(as.numeric(q_seven_table))
+  })
+  
+  
+  demux_paired_seqs_Q_f <- reactive({
+    demux_paired_qp <- readLines(
+      paste0("/home/imuser/web_version/users_files/",
+             input$input_job_id_demux,
+             "/demux_paired_unzip/new_dirname/data/quality-plot.html"))
+    nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+    nts_value <- demux_paired_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[8],
+      "9%" = nts[9],
+      "25%" = nts[10],
+      "50%" = nts[11],
+      "75%" = nts[12],
+      "91%" = nts[13],
+      "98%" = nts[14]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(as.numeric(q_seven_table))
+  })
+  
+  
+  paired_input_position_f <- reactive({
+    c(input$trim_left_f_paired, input$trunc_len_f_paired)
+  })
+  
+  paired_input_position_r <- reactive({
+    c(input$trim_left_r_paired, input$trunc_len_r_paired)
+  })
+  
   observeEvent(input$denoising_paired, {
+
     
     if(!file.exists(paste0("/home/imuser/web_version/users_files/",
                            input$input_job_id_denoise,
@@ -6512,12 +6605,18 @@ server <- function(session, input, output) {
                             "Please finish sequence summary first.", 
                             footer = NULL, easyClose = T, size = "l"))
       
-    # }else if(is.data.frame(try(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"), silent = T))){
-    #   if(colnames(read.table(input$sample_data_paired$datapath, header = T, na.strings = "", sep = "\t"))[1]!="SampleID"){
-    #     showModal(modalDialog(title = strong("Error!", style = "color: red"),
-    #                           "The first column name of metadata must be 'SampleID'.",
-    #                           footer = NULL, easyClose = T, size = "l"))
-    #   }
+    }else if(sum(paired_input_position_f() > demux_paired_seqs_Q_f()[7])>0){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Your position to trim can not be large than the sequence length.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(sum(paired_input_position_r() > demux_paired_seqs_Q_r()[7])>0){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Your position to trim can not be large than the sequence length.", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
       
     }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input$input_job_id_denoise)>0){
     
@@ -7545,6 +7644,7 @@ server <- function(session, input, output) {
   
   
   # Denoising_Pacbio ----
+  
   observeEvent(input$denoising_Pacbio,{
     if(!file.exists(paste0("/home/imuser/web_version/users_files/",
                            input$input_job_id_denoise,
