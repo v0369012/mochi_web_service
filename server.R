@@ -364,27 +364,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_single_end.qzv"))){
-        shinyjs::show("demux_results_view_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("demux_results_view_single")
+        }else{
+          shinyjs::hide("demux_results_view_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_paired_end.qzv"))){
-        shinyjs::show("demux_results_view_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("demux_results_view_paired")
+        }else{
+          shinyjs::hide("demux_results_view_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_Pacbio_end.qzv"))){
-        shinyjs::show("demux_results_view_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("demux_results_view_Pacbio")
+        }else{
+          shinyjs::hide("demux_results_view_Pacbio")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_single.qzv"))){
-        shinyjs::show("dada2_results_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("dada2_results_single")
+        }else{
+          shinyjs::hide("dada2_results_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_paired.qzv"))){
-        shinyjs::show("dada2_results_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("dada2_results_paired")
+        }else{
+          shinyjs::hide("dada2_results_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_Pacbio.qzv"))){
-        shinyjs::show("dada2_results_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("dada2_results_Pacbio")
+        }else{
+          shinyjs::hide("dada2_results_Pacbio")
+        }
       }
       
       
@@ -450,27 +476,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_single_end.qzv"))){
-        shinyjs::show("demux_results_view_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("demux_results_view_single")
+        }else{
+          shinyjs::hide("demux_results_view_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_paired_end.qzv"))){
-        shinyjs::show("demux_results_view_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("demux_results_view_paired")
+        }else{
+          shinyjs::hide("demux_results_view_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_Pacbio_end.qzv"))){
-        shinyjs::show("demux_results_view_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("demux_results_view_Pacbio")
+        }else{
+          shinyjs::hide("demux_results_view_Pacbio")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_single.qzv"))){
-        shinyjs::show("dada2_results_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("dada2_results_single")
+        }else{
+          shinyjs::hide("dada2_results_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_paired.qzv"))){
-        shinyjs::show("dada2_results_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("dada2_results_paired")
+        }else{
+          shinyjs::hide("dada2_results_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_Pacbio.qzv"))){
-        shinyjs::show("dada2_results_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("dada2_results_Pacbio")
+        }else{
+          shinyjs::hide("dada2_results_Pacbio")
+        }
       }
       
       removeModal()
@@ -536,27 +588,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_single_end.qzv"))){
-        shinyjs::show("demux_results_view_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("demux_results_view_single")
+        }else{
+          shinyjs::hide("demux_results_view_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_paired_end.qzv"))){
-        shinyjs::show("demux_results_view_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("demux_results_view_paired")
+        }else{
+          shinyjs::hide("demux_results_view_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_Pacbio_end.qzv"))){
-        shinyjs::show("demux_results_view_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("demux_results_view_Pacbio")
+        }else{
+          shinyjs::hide("demux_results_view_Pacbio")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_single.qzv"))){
-        shinyjs::show("dada2_results_single")
+        if(input$seqs_type == "Single end"){
+          shinyjs::show("dada2_results_single")
+        }else{
+          shinyjs::hide("dada2_results_single")
+        }
+        
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_paired.qzv"))){
-        shinyjs::show("dada2_results_paired")
+        if(input$seqs_type == "Paired end"){
+          shinyjs::show("dada2_results_paired")
+        }else{
+          shinyjs::hide("dada2_results_paired")
+        }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_Pacbio.qzv"))){
-        shinyjs::show("dada2_results_Pacbio")
+        if(input$seqs_type == "Pacbio long read"){
+          shinyjs::show("dada2_results_Pacbio")
+        }else{
+          shinyjs::hide("dada2_results_Pacbio")
+        }
       }
       
       removeModal()
@@ -1998,6 +2076,26 @@ server <- function(session, input, output) {
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
+    }else if(input$seqs_type == "Pacbio long read"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[3,2]
+        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+                                        input$input_job_id_taxa,
+                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+                                 sep = "\t", 
+                                 stringsAsFactors = F)[4,2]
+        updateTextInput(session, inputId = "min_length", value = min_length)
+        updateTextInput(session, inputId = "max_length", value = max_length)
+      }else{
+        updateTextInput(session, inputId = "min_length", value = 0)
+        updateTextInput(session, inputId = "max_length", value = 0)
+      }
     }
         
   })
@@ -2007,540 +2105,540 @@ server <- function(session, input, output) {
   
   # submit job id
   
-  observeEvent(input$submit_id,{
-    if(input_job_id()==""){
-      
-      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-                            "Please input job id.", 
-                            footer = NULL, easyClose = T, size = "l"))
-      shinyjs::hide("users_results_download")
-      
-    }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input_job_id())>0){
-      
-      
-      output$users_results_download <- renderUI({
-        
-        lastest_file_table <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^table-dada2 | grep qza$"), intern = T)[1]
-        lastest_file_seqs <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^rep-seqs-dada2 | grep qza$"), intern = T)[1]
-        
-        tagList(
-          
-          h1("1. Sequence summary", 
-             style = "margin-top: 0px;"),
-          useShinyjs(),
-          
-          
-          span(
-            id = "user_demux_single",
-            h4("Single end"),
-            
-            
-            if(file.exists(paste0("/home/imuser/web_version/users_files/", 
-                                  input_job_id(),
-                                  "/demux_single_unzip/new_dirname/data/index.html")))
-              {
-             
-                actionButton(inputId = "user_show_demux_single",
-                             label = "View!",
-                             icon = icon("eye"),
-                             # style = "margin: 10px; display: inline-block;",
-                             onclick = paste0("window.open('http://",
-                                              # my_qiime_ip, my_qiime_port,
-                                              "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                              "/demux_single_unzip/new_dirname/data/index.html#",
-                                              "', '_blank')")
-                            )
-               
-              
-            }else{
-              actionButton(inputId = "user_show_demux_single",
-                           label = "View!",
-                           style = "color:grey;"
-                           )
-              
-              
-                                    },
-            
-            if(file.exists(
-              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_single.zip")
-            )){
-              downloadButton(outputId = "demux_single_download", label = "Download")
-            }else{
-              actionButton(inputId = "demux_single_download_not",
-                           label = "Download",
-                           style = "color:grey;"
-              )
-            },
-            
-            if(file.exists(
-              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_single.csv")
-            )){
-              downloadButton("log_demux_single", "log file")
-            }else{
-              actionButton(inputId = "log_demux_single_not",
-                           label = "log file",
-                           style = "color:grey;"
-              )
-            },
-           
-            
-          ),
-          
-          span(
-            id = "user_demux_paired",
-            h4("Paired end"),
-            # downloadButton(outputId = "demux_paired_download", label = "Download") %>% shinyjs::disabled(),
-            
-            if(file.exists(paste0("/home/imuser/web_version/users_files/", 
-                                  input_job_id(),
-                                  "/demux_paired_unzip/new_dirname/data/index.html")))
-              {
-                 actionButton(inputId = "user_show_demux_paired",
-                               label = "View!",
-                               icon = icon("eye"),
-                               # style = "margin: 10px; display: inline-block;",
-                               onclick = paste0("window.open('http://",
-                                                # my_qiime_ip, my_qiime_port,
-                                                "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                                "/demux_paired_unzip/new_dirname/data/index.html#",
-                                                "', '_blank')")
-                              )
-
-              }else{
-
-                actionButton(inputId = "user_show_demux_paired",
-                             label = "View!",
-                             style = "color:grey;")
-                
-                 },
-            
-            if(file.exists(
-              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_paired.zip")
-            )){
-              downloadButton(outputId = "demux_paired_download", label = "Download")
-            }else{
-              actionButton(inputId = "demux_paired_download_not",
-                           label = "Download",
-                           style = "color:grey;"
-              )
-            },
-            
-            if(file.exists(
-              paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_paired.csv")
-            )){
-              downloadButton("log_demux_paired", "log file")
-            }else{
-              actionButton(inputId = "log_demux_paired_not",
-                           label = "log file",
-                           style = "color:grey;"
-              )
-            },
-            
-            
-           hr()
-            
-          ),
-          
-         # denoising
-          h1("2. Sequence denoising"),
-          h4("Single end"),
-          
-         # summary table
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_single_position_table/new_dirname/data/index.html"))){
-            actionButton(inputId = "user_show_dada2_single_table",
-                         label = "Show summary table",
-                         onclick = paste0("window.open('http://",
-                                          # my_qiime_ip, my_qiime_port,
-                                          "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                          "/denoise_single_position_table/new_dirname/data/index.html",
-                                          "')"),
-                         icon = icon("eye"),
-                         style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "user_show_dada2_single_table",
-                         label = "Show summary table",
-                         style = "color: grey;margin-bottom:5px")
-          },
-          
-          if(file.exists(
-            paste0("/home/imuser/web_version/users_files/",
-                   input_job_id(),
-                   "/table-dada2_single.zip")
-          )){
-            downloadButton("summary_table_single", "Download", style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "summary_table_single_not",
-                         label = "Download",
-                         style = "color: grey;margin-bottom:5px")
-          },
-          br(),
-          
-         # rep-seqs
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_single_seqs/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_single_seqs",
-                       label = "Show seqs info",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_single_seqs/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"),
-                       style = "margin-bottom:5px")
-            }else{
-              actionButton(inputId = "user_show_dada2_single_seqs",
-                           label = "Show seqs info",
-                           style ="color: grey;margin-bottom:5px")
-            },
-          
-          if(file.exists(
-            paste0("/home/imuser/web_version/users_files/",
-                   input_job_id(),
-                   "/rep-seqs-dada2_single.zip")
-          )){
-            downloadButton("seqs_info_single", "Download", style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "seqs_info_single_not",
-                         label = "Download",
-                         style = "color: grey;margin-bottom:5px")
-          },
-          br(),
-          
-         # filter info
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_single_stats/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_single_stats",
-                       label = "Show filter info",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_single_stats/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"),
-                       style = "margin-bottom:5px")
-            }else{
-              actionButton(inputId = "user_show_dada2_single_stats",
-                           label = "Show filter info",
-                           style = "color: grey;margin-bottom:5px")
-            },
-          
-          if(file.exists(
-            paste0("/home/imuser/web_version/users_files/",
-                   input_job_id(),
-                   "/stats-dada2_single.zip")
-          )){
-            downloadButton("filter_info_single", "Download", style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "filter_info_single_not",
-                         label = "Download",
-                         style = "color: grey;margin-bottom:5px")
-          },
-          br(),
-          
-         # rarefaction
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_single_rarefaction/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_single_rarefaction",
-                       label = "Show alpha rarefaction",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_single_rarefaction/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"),
-                       style = "margin-bottom:5px"
-          )
-            }else{
-              actionButton(inputId = "user_show_dada2_single_rarefaction",
-                           label = "Show alpha rarefaction",
-                           style = "color: grey;margin-bottom:5px"
-              )
-            },
-          
-          if(file.exists(
-            paste0("/home/imuser/web_version/users_files/",
-                   input_job_id(),
-                   "/rarefaction-dada2_single.zip")
-          )){
-            downloadButton("alpha_rarefaction_single", "Download", style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "alpha_rarefaction_single_not",
-                         label = "Download",
-                         style = "color: grey;margin-bottom:5px")
-          },
-          br(),
-          
-         # log
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/parameter_denoise_single.csv"))){
-            downloadButton("log_file_denoise_single", "log file")
-          }else{
-            actionButton(inputId = "log_file_denoise_single_no",
-                         label = "log file",
-                         style = "color: grey"
-            )
-          },
-          # downloadButton(outputId = "summary_table_single", label = "Download summary table"),
-          # downloadButton(outputId = "seqs_info_single", label = "Download seqs info"),
-          # downloadButton(outputId = "filter_info_single", label = "Download filter info"),
-          # downloadButton(outputId = "alpha_rarefaction_single", label = "Download alpha rarefaction"),
-          br(),br(),
-          h4("Paired end"),
-          
-         # summary table
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_paired_position_table/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_paired_table",
-                       label = "Show summary table",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_paired_position_table/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"), style = "margin-bottom:5px")
-            }else{
-              actionButton(inputId = "user_show_dada2_paired_table",
-                           label = "Show summary table",
-                           style = "color: grey")
-            },
-         
-         if(file.exists(
-           paste0("/home/imuser/web_version/users_files/",
-                  input_job_id(),
-                  "/table-dada2_paired.zip")
-         )){
-           downloadButton("summary_table_paired", "Download", style = "margin-bottom:5px")
-         }else{
-           actionButton(inputId = "summary_table_paired_not",
-                        label = "Download",
-                        style = "color: grey;margin-bottom:5px")
-         },
-         br(),
-          
-         # rep-seqs
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_paired_seqs/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_paired_seqs",
-                       label = "Show seqs info",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_paired_seqs/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"), style = "margin-bottom:5px")
-            }else{
-              actionButton(inputId = "user_show_dada2_paired_seqs",
-                           label = "Show seqs info",
-                           style = "color: grey")
-            },
-         
-         if(file.exists(
-           paste0("/home/imuser/web_version/users_files/",
-                  input_job_id(),
-                  "/rep-seqs-dada2_paired.zip")
-         )){
-           downloadButton("seqs_info_paired", "Download", style = "margin-bottom:5px")
-         }else{
-           actionButton(inputId = "seqs_info_paired_not",
-                        label = "Download",
-                        style = "color: grey;margin-bottom:5px")
-         },
-         br(),
-          
-         # filter info
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_paired_stats/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_paired_stats",
-                       label = "Show filter info",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_paired_stats/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"), style = "margin-bottom:5px")
-            }else{
-              actionButton(inputId = "user_show_dada2_paired_stats",
-                           label = "Show filter info",
-                           style = "color: grey")
-            },
-         
-         if(file.exists(
-           paste0("/home/imuser/web_version/users_files/",
-                  input_job_id(),
-                  "/stats-dada2_paired.zip")
-         )){
-           downloadButton("filter_info_paired", "Download", style = "margin-bottom:5px")
-         }else{
-           actionButton(inputId = "filter_info_paired_not",
-                        label = "Download",
-                        style = "color: grey;margin-bottom:5px")
-         },
-         br(),
-         
-         # rarefaction 
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/denoise_paired_rarefaction/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_show_dada2_paired_rarefaction",
-                       label = "Show alpha rarefaction",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/denoise_paired_rarefaction/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"), style = "margin-bottom:5px"
-          )
-            }else{
-              actionButton(inputId = "user_show_dada2_paired_rarefaction",
-                           label = "Show alpha rarefaction",
-                           style = "color: grey;margin-bottom:5px"
-              )
-            },
-         
-         if(file.exists(
-           paste0("/home/imuser/web_version/users_files/",
-                  input_job_id(),
-                  "/rarefaction-dada2_paired.zip")
-         )){
-           downloadButton("alpha_rarefaction_paired", "Download", style = "margin-bottom:5px")
-         }else{
-           actionButton(inputId = "alpha_rarefaction_paired_not",
-                        label = "Download",
-                        style = "color: grey;margin-bottom:5px")
-         },
-         br(),
-         
-         # log
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/parameter_denoise_paired.csv"))){
-            downloadButton("log_file_denoise_paired", "log file")
-          }else{
-            actionButton(inputId = "log_file_denoise_paired_no",
-                         label = "log file",
-                         style = "color: grey"
-            )
-          },
-          # downloadButton(outputId = "summary_table_paired", label = "Download summary table"),
-          # downloadButton(outputId = "seqs_info_paired", label = "Download seqs info"),
-          # downloadButton(outputId = "filter_info_paired", label = "Download filter info"),
-          # downloadButton(outputId = "alpha_rarefaction_paired", label = "Download alpha rarefaction"),
-          hr(),
-          h1("3. Taxonomy classification"),
-          
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input_job_id(),
-                                "/taxonomy_unzip/new_dirname/data/index.html"))){
-          actionButton(inputId = "user_view_taxa",
-                       label = "View!",
-                       onclick = paste0("window.open('http://",
-                                        # my_qiime_ip, my_qiime_port,
-                                        "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
-                                        "/taxonomy_unzip/new_dirname/data/index.html",
-                                        "')"),
-                       icon = icon("eye"), style = "margin-bottom:5px"
-          )
-            }else{
-              actionButton(inputId = "user_view_taxa",
-                           label = "View!",
-                           style = "color: grey;margin-bottom:5px"
-              )
-            },
-          
-         if(file.exists(
-           paste0("/home/imuser/web_version/users_files/",
-                  input_job_id(),
-                  "/taxonomy.zip")
-         )){
-           downloadButton(outputId = "taxa_download_user", label = "Download", style = "margin-bottom:5px")
-         }else{
-           actionButton(inputId = "taxa_download_user_not",
-                        label = "Download",
-                        style = "color: grey;margin-bottom:5px"
-           )
-         },
-         br(),
-          
-          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxatable7.qza"))){
-            downloadButton(outputId = "taxatable_download_user", label = "Download the taxonomic table", style = "margin-bottom:5px")
-          }else{
-            # HTML('<button type="submit" style="color: grey; background-color: white">Download the taxonomic table</button>')
-            actionButton(inputId = "user_taxatable_download_bttn",
-                         label = "Download the taxonomic table",
-                         style = "color: grey;margin-bottom:5px"
-            )
-          },
-          
-          
-          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/", lastest_file_table))){
-          downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table", style = "margin-bottom:5px")
-            }else{
-              # HTML('<button type="submit style="color: grey; background-color: white">Download the ASVs table</button>')
-              actionButton(inputId = "user_table_dada2_download_bttn",
-                           label = "Download the ASVs table",
-                           style = "color: grey;margin-bottom:5px"
-              )
-            },
-          
-          
-          if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file_seqs))){
-            downloadButton(outputId = "rep_seq_dada2_download_user", label = "Download the seqs data", style = "margin-bottom:5px")
-          }else{
-            # HTML('<button type="submit style="color: grey; background-color: white">Download the seqs data</button>')
-            actionButton(inputId = "user_rep_seq_dada2_download_bttn",
-                         label = "Download the seqs data",
-                         style = "color: grey;margin-bottom:5px"
-            )
-          },
-          
-         br(),
-          if(file.exists(paste0(
-            "/home/imuser/web_version/users_files/", input_job_id(),"/parameter_taxonomy_classification.csv"
-          ))){
-            downloadButton(outputId = "log_file_taxonomy_classification", label = "log file", style = "margin-bottom:5px")
-          }else{
-            actionButton(inputId = "log_file_taxonomy_classification_no",
-                         label = "log file",
-                         style = "color: grey;margin-bottom:5px"
-            )
-          }
-          
-        )
-        
-        # observe({
-        #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
-        #                         "/demux_single_unzip/new_dirname/data/index.html"))){
-        #     shinyjs::enable('user_show_demux_single')
-        #   }
-        # })
-        # observe({
-        #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
-        #                          "/demux_paired_unzip/new_dirname/data/index.html"))){
-        #     shinyjs::enable('test')
-        #   }
-        # })
-        
-      })
-      
-      shinyjs::show("users_results_download")
-      
-
-    }else{
-      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-                            "The job id is not found.", 
-                            footer = NULL, easyClose = T, size = "l"))
-      shinyjs::hide("users_results_download")
-    }
-  })
+  # observeEvent(input$submit_id,{
+  #   if(input_job_id()==""){
+  #     
+  #     showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+  #                           "Please input job id.", 
+  #                           footer = NULL, easyClose = T, size = "l"))
+  #     shinyjs::hide("users_results_download")
+  #     
+  #   }else if(sum(list.files("/home/imuser/web_version/users_files/") %in% input_job_id())>0){
+  #     
+  #     
+  #     output$users_results_download <- renderUI({
+  #       
+  #       lastest_file_table <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^table-dada2 | grep qza$"), intern = T)[1]
+  #       lastest_file_seqs <- system(paste0("ls -t /home/imuser/web_version/users_files/", input_job_id(), " | grep ^rep-seqs-dada2 | grep qza$"), intern = T)[1]
+  #       
+  #       tagList(
+  #         
+  #         h1("1. Sequence summary", 
+  #            style = "margin-top: 0px;"),
+  #         useShinyjs(),
+  #         
+  #         
+  #         span(
+  #           id = "user_demux_single",
+  #           h4("Single end"),
+  #           
+  #           
+  #           if(file.exists(paste0("/home/imuser/web_version/users_files/", 
+  #                                 input_job_id(),
+  #                                 "/demux_single_unzip/new_dirname/data/index.html")))
+  #             {
+  #            
+  #               actionButton(inputId = "user_show_demux_single",
+  #                            label = "View!",
+  #                            icon = icon("eye"),
+  #                            # style = "margin: 10px; display: inline-block;",
+  #                            onclick = paste0("window.open('http://",
+  #                                             # my_qiime_ip, my_qiime_port,
+  #                                             "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                             "/demux_single_unzip/new_dirname/data/index.html#",
+  #                                             "', '_blank')")
+  #                           )
+  #              
+  #             
+  #           }else{
+  #             actionButton(inputId = "user_show_demux_single",
+  #                          label = "View!",
+  #                          style = "color:grey;"
+  #                          )
+  #             
+  #             
+  #                                   },
+  #           
+  #           if(file.exists(
+  #             paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_single.zip")
+  #           )){
+  #             downloadButton(outputId = "demux_single_download", label = "Download")
+  #           }else{
+  #             actionButton(inputId = "demux_single_download_not",
+  #                          label = "Download",
+  #                          style = "color:grey;"
+  #             )
+  #           },
+  #           
+  #           if(file.exists(
+  #             paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_single.csv")
+  #           )){
+  #             downloadButton("log_demux_single", "log file")
+  #           }else{
+  #             actionButton(inputId = "log_demux_single_not",
+  #                          label = "log file",
+  #                          style = "color:grey;"
+  #             )
+  #           },
+  #          
+  #           
+  #         ),
+  #         
+  #         span(
+  #           id = "user_demux_paired",
+  #           h4("Paired end"),
+  #           # downloadButton(outputId = "demux_paired_download", label = "Download") %>% shinyjs::disabled(),
+  #           
+  #           if(file.exists(paste0("/home/imuser/web_version/users_files/", 
+  #                                 input_job_id(),
+  #                                 "/demux_paired_unzip/new_dirname/data/index.html")))
+  #             {
+  #                actionButton(inputId = "user_show_demux_paired",
+  #                              label = "View!",
+  #                              icon = icon("eye"),
+  #                              # style = "margin: 10px; display: inline-block;",
+  #                              onclick = paste0("window.open('http://",
+  #                                               # my_qiime_ip, my_qiime_port,
+  #                                               "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                               "/demux_paired_unzip/new_dirname/data/index.html#",
+  #                                               "', '_blank')")
+  #                             )
+  # 
+  #             }else{
+  # 
+  #               actionButton(inputId = "user_show_demux_paired",
+  #                            label = "View!",
+  #                            style = "color:grey;")
+  #               
+  #                },
+  #           
+  #           if(file.exists(
+  #             paste0("/home/imuser/web_version/users_files/", input_job_id(), "/demux_paired.zip")
+  #           )){
+  #             downloadButton(outputId = "demux_paired_download", label = "Download")
+  #           }else{
+  #             actionButton(inputId = "demux_paired_download_not",
+  #                          label = "Download",
+  #                          style = "color:grey;"
+  #             )
+  #           },
+  #           
+  #           if(file.exists(
+  #             paste0("/home/imuser/web_version/users_files/", input_job_id(), "/parameter_demux_paired.csv")
+  #           )){
+  #             downloadButton("log_demux_paired", "log file")
+  #           }else{
+  #             actionButton(inputId = "log_demux_paired_not",
+  #                          label = "log file",
+  #                          style = "color:grey;"
+  #             )
+  #           },
+  #           
+  #           
+  #          hr()
+  #           
+  #         ),
+  #         
+  #        # denoising
+  #         h1("2. Sequence denoising"),
+  #         h4("Single end"),
+  #         
+  #        # summary table
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_single_position_table/new_dirname/data/index.html"))){
+  #           actionButton(inputId = "user_show_dada2_single_table",
+  #                        label = "Show summary table",
+  #                        onclick = paste0("window.open('http://",
+  #                                         # my_qiime_ip, my_qiime_port,
+  #                                         "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                         "/denoise_single_position_table/new_dirname/data/index.html",
+  #                                         "')"),
+  #                        icon = icon("eye"),
+  #                        style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "user_show_dada2_single_table",
+  #                        label = "Show summary table",
+  #                        style = "color: grey;margin-bottom:5px")
+  #         },
+  #         
+  #         if(file.exists(
+  #           paste0("/home/imuser/web_version/users_files/",
+  #                  input_job_id(),
+  #                  "/table-dada2_single.zip")
+  #         )){
+  #           downloadButton("summary_table_single", "Download", style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "summary_table_single_not",
+  #                        label = "Download",
+  #                        style = "color: grey;margin-bottom:5px")
+  #         },
+  #         br(),
+  #         
+  #        # rep-seqs
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_single_seqs/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_single_seqs",
+  #                      label = "Show seqs info",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_single_seqs/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"),
+  #                      style = "margin-bottom:5px")
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_single_seqs",
+  #                          label = "Show seqs info",
+  #                          style ="color: grey;margin-bottom:5px")
+  #           },
+  #         
+  #         if(file.exists(
+  #           paste0("/home/imuser/web_version/users_files/",
+  #                  input_job_id(),
+  #                  "/rep-seqs-dada2_single.zip")
+  #         )){
+  #           downloadButton("seqs_info_single", "Download", style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "seqs_info_single_not",
+  #                        label = "Download",
+  #                        style = "color: grey;margin-bottom:5px")
+  #         },
+  #         br(),
+  #         
+  #        # filter info
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_single_stats/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_single_stats",
+  #                      label = "Show filter info",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_single_stats/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"),
+  #                      style = "margin-bottom:5px")
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_single_stats",
+  #                          label = "Show filter info",
+  #                          style = "color: grey;margin-bottom:5px")
+  #           },
+  #         
+  #         if(file.exists(
+  #           paste0("/home/imuser/web_version/users_files/",
+  #                  input_job_id(),
+  #                  "/stats-dada2_single.zip")
+  #         )){
+  #           downloadButton("filter_info_single", "Download", style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "filter_info_single_not",
+  #                        label = "Download",
+  #                        style = "color: grey;margin-bottom:5px")
+  #         },
+  #         br(),
+  #         
+  #        # rarefaction
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_single_rarefaction/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_single_rarefaction",
+  #                      label = "Show alpha rarefaction",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_single_rarefaction/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"),
+  #                      style = "margin-bottom:5px"
+  #         )
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_single_rarefaction",
+  #                          label = "Show alpha rarefaction",
+  #                          style = "color: grey;margin-bottom:5px"
+  #             )
+  #           },
+  #         
+  #         if(file.exists(
+  #           paste0("/home/imuser/web_version/users_files/",
+  #                  input_job_id(),
+  #                  "/rarefaction-dada2_single.zip")
+  #         )){
+  #           downloadButton("alpha_rarefaction_single", "Download", style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "alpha_rarefaction_single_not",
+  #                        label = "Download",
+  #                        style = "color: grey;margin-bottom:5px")
+  #         },
+  #         br(),
+  #         
+  #        # log
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/parameter_denoise_single.csv"))){
+  #           downloadButton("log_file_denoise_single", "log file")
+  #         }else{
+  #           actionButton(inputId = "log_file_denoise_single_no",
+  #                        label = "log file",
+  #                        style = "color: grey"
+  #           )
+  #         },
+  #         # downloadButton(outputId = "summary_table_single", label = "Download summary table"),
+  #         # downloadButton(outputId = "seqs_info_single", label = "Download seqs info"),
+  #         # downloadButton(outputId = "filter_info_single", label = "Download filter info"),
+  #         # downloadButton(outputId = "alpha_rarefaction_single", label = "Download alpha rarefaction"),
+  #         br(),br(),
+  #         h4("Paired end"),
+  #         
+  #        # summary table
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_paired_position_table/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_paired_table",
+  #                      label = "Show summary table",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_paired_position_table/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"), style = "margin-bottom:5px")
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_paired_table",
+  #                          label = "Show summary table",
+  #                          style = "color: grey")
+  #           },
+  #        
+  #        if(file.exists(
+  #          paste0("/home/imuser/web_version/users_files/",
+  #                 input_job_id(),
+  #                 "/table-dada2_paired.zip")
+  #        )){
+  #          downloadButton("summary_table_paired", "Download", style = "margin-bottom:5px")
+  #        }else{
+  #          actionButton(inputId = "summary_table_paired_not",
+  #                       label = "Download",
+  #                       style = "color: grey;margin-bottom:5px")
+  #        },
+  #        br(),
+  #         
+  #        # rep-seqs
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_paired_seqs/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_paired_seqs",
+  #                      label = "Show seqs info",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_paired_seqs/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"), style = "margin-bottom:5px")
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_paired_seqs",
+  #                          label = "Show seqs info",
+  #                          style = "color: grey")
+  #           },
+  #        
+  #        if(file.exists(
+  #          paste0("/home/imuser/web_version/users_files/",
+  #                 input_job_id(),
+  #                 "/rep-seqs-dada2_paired.zip")
+  #        )){
+  #          downloadButton("seqs_info_paired", "Download", style = "margin-bottom:5px")
+  #        }else{
+  #          actionButton(inputId = "seqs_info_paired_not",
+  #                       label = "Download",
+  #                       style = "color: grey;margin-bottom:5px")
+  #        },
+  #        br(),
+  #         
+  #        # filter info
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_paired_stats/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_paired_stats",
+  #                      label = "Show filter info",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_paired_stats/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"), style = "margin-bottom:5px")
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_paired_stats",
+  #                          label = "Show filter info",
+  #                          style = "color: grey")
+  #           },
+  #        
+  #        if(file.exists(
+  #          paste0("/home/imuser/web_version/users_files/",
+  #                 input_job_id(),
+  #                 "/stats-dada2_paired.zip")
+  #        )){
+  #          downloadButton("filter_info_paired", "Download", style = "margin-bottom:5px")
+  #        }else{
+  #          actionButton(inputId = "filter_info_paired_not",
+  #                       label = "Download",
+  #                       style = "color: grey;margin-bottom:5px")
+  #        },
+  #        br(),
+  #        
+  #        # rarefaction 
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/denoise_paired_rarefaction/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_show_dada2_paired_rarefaction",
+  #                      label = "Show alpha rarefaction",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/denoise_paired_rarefaction/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"), style = "margin-bottom:5px"
+  #         )
+  #           }else{
+  #             actionButton(inputId = "user_show_dada2_paired_rarefaction",
+  #                          label = "Show alpha rarefaction",
+  #                          style = "color: grey;margin-bottom:5px"
+  #             )
+  #           },
+  #        
+  #        if(file.exists(
+  #          paste0("/home/imuser/web_version/users_files/",
+  #                 input_job_id(),
+  #                 "/rarefaction-dada2_paired.zip")
+  #        )){
+  #          downloadButton("alpha_rarefaction_paired", "Download", style = "margin-bottom:5px")
+  #        }else{
+  #          actionButton(inputId = "alpha_rarefaction_paired_not",
+  #                       label = "Download",
+  #                       style = "color: grey;margin-bottom:5px")
+  #        },
+  #        br(),
+  #        
+  #        # log
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/parameter_denoise_paired.csv"))){
+  #           downloadButton("log_file_denoise_paired", "log file")
+  #         }else{
+  #           actionButton(inputId = "log_file_denoise_paired_no",
+  #                        label = "log file",
+  #                        style = "color: grey"
+  #           )
+  #         },
+  #         # downloadButton(outputId = "summary_table_paired", label = "Download summary table"),
+  #         # downloadButton(outputId = "seqs_info_paired", label = "Download seqs info"),
+  #         # downloadButton(outputId = "filter_info_paired", label = "Download filter info"),
+  #         # downloadButton(outputId = "alpha_rarefaction_paired", label = "Download alpha rarefaction"),
+  #         hr(),
+  #         h1("3. Taxonomy classification"),
+  #         
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                               input_job_id(),
+  #                               "/taxonomy_unzip/new_dirname/data/index.html"))){
+  #         actionButton(inputId = "user_view_taxa",
+  #                      label = "View!",
+  #                      onclick = paste0("window.open('http://",
+  #                                       # my_qiime_ip, my_qiime_port,
+  #                                       "mochi.life.nctu.edu.tw/users_files/", input_job_id(),
+  #                                       "/taxonomy_unzip/new_dirname/data/index.html",
+  #                                       "')"),
+  #                      icon = icon("eye"), style = "margin-bottom:5px"
+  #         )
+  #           }else{
+  #             actionButton(inputId = "user_view_taxa",
+  #                          label = "View!",
+  #                          style = "color: grey;margin-bottom:5px"
+  #             )
+  #           },
+  #         
+  #        if(file.exists(
+  #          paste0("/home/imuser/web_version/users_files/",
+  #                 input_job_id(),
+  #                 "/taxonomy.zip")
+  #        )){
+  #          downloadButton(outputId = "taxa_download_user", label = "Download", style = "margin-bottom:5px")
+  #        }else{
+  #          actionButton(inputId = "taxa_download_user_not",
+  #                       label = "Download",
+  #                       style = "color: grey;margin-bottom:5px"
+  #          )
+  #        },
+  #        br(),
+  #         
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/taxatable7.qza"))){
+  #           downloadButton(outputId = "taxatable_download_user", label = "Download the taxonomic table", style = "margin-bottom:5px")
+  #         }else{
+  #           # HTML('<button type="submit" style="color: grey; background-color: white">Download the taxonomic table</button>')
+  #           actionButton(inputId = "user_taxatable_download_bttn",
+  #                        label = "Download the taxonomic table",
+  #                        style = "color: grey;margin-bottom:5px"
+  #           )
+  #         },
+  #         
+  #         
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/", lastest_file_table))){
+  #         downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table", style = "margin-bottom:5px")
+  #           }else{
+  #             # HTML('<button type="submit style="color: grey; background-color: white">Download the ASVs table</button>')
+  #             actionButton(inputId = "user_table_dada2_download_bttn",
+  #                          label = "Download the ASVs table",
+  #                          style = "color: grey;margin-bottom:5px"
+  #             )
+  #           },
+  #         
+  #         
+  #         if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),"/", lastest_file_seqs))){
+  #           downloadButton(outputId = "rep_seq_dada2_download_user", label = "Download the seqs data", style = "margin-bottom:5px")
+  #         }else{
+  #           # HTML('<button type="submit style="color: grey; background-color: white">Download the seqs data</button>')
+  #           actionButton(inputId = "user_rep_seq_dada2_download_bttn",
+  #                        label = "Download the seqs data",
+  #                        style = "color: grey;margin-bottom:5px"
+  #           )
+  #         },
+  #         
+  #        br(),
+  #         if(file.exists(paste0(
+  #           "/home/imuser/web_version/users_files/", input_job_id(),"/parameter_taxonomy_classification.csv"
+  #         ))){
+  #           downloadButton(outputId = "log_file_taxonomy_classification", label = "log file", style = "margin-bottom:5px")
+  #         }else{
+  #           actionButton(inputId = "log_file_taxonomy_classification_no",
+  #                        label = "log file",
+  #                        style = "color: grey;margin-bottom:5px"
+  #           )
+  #         }
+  #         
+  #       )
+  #       
+  #       # observe({
+  #       #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
+  #       #                         "/demux_single_unzip/new_dirname/data/index.html"))){
+  #       #     shinyjs::enable('user_show_demux_single')
+  #       #   }
+  #       # })
+  #       # observe({
+  #       #   if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(),
+  #       #                          "/demux_paired_unzip/new_dirname/data/index.html"))){
+  #       #     shinyjs::enable('test')
+  #       #   }
+  #       # })
+  #       
+  #     })
+  #     
+  #     shinyjs::show("users_results_download")
+  #     
+  # 
+  #   }else{
+  #     showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+  #                           "The job id is not found.", 
+  #                           footer = NULL, easyClose = T, size = "l"))
+  #     shinyjs::hide("users_results_download")
+  #   }
+  # })
   
   # log file download ----
   output$log_demux_single <- downloadHandler(
@@ -2582,9 +2680,20 @@ server <- function(session, input, output) {
   output$log_file_taxonomy_classification <- downloadHandler(
     filename = "taxonomy_classification_log.csv",
     content = function(file){
-      file.copy(paste0("/home/imuser/web_version/users_files/",
-                       input_job_id(),
-                       "/parameter_taxonomy_classification.csv"), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_single.csv"), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_paired.csv"), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_Pacbio.csv"), file)
+      }
+      
     }
   )
   
@@ -3508,6 +3617,8 @@ server <- function(session, input, output) {
   
   # demux R new id single----
   observe({
+    
+    req(input$seqs_type == "Single end")
     
     if(file.exists(paste0(
       "/home/imuser/web_version/users_files/", 
@@ -6207,7 +6318,9 @@ server <- function(session, input, output) {
   )
   
   
-  observeEvent(input$ok_2, {
+  observe({
+    
+    req(input$seqs_type == "Single end")
     
     # log table
     output$dada2_log_table_single <- renderTable({
@@ -7248,7 +7361,9 @@ server <- function(session, input, output) {
   )
   
   
-  observeEvent(input$ok_2, {
+  observe({
+    
+    req(input$seqs_type == "Paired end")
     
     # log table
     output$dada2_log_table_paired <- renderTable({
@@ -8172,7 +8287,9 @@ server <- function(session, input, output) {
   )
   
   
-  observeEvent(input$ok_2, {
+  observe({
+    
+    req(input$seqs_type == "Pacbio long read")
     
     # log table
     output$dada2_log_table_Pacbio <- renderTable({
@@ -8596,25 +8713,35 @@ server <- function(session, input, output) {
   
   # check primer
   observe({
-    req(input$primer_f, input$primer_r)
+    # req(input$primer_f, input$primer_r)
     
-    output$check_primer <- renderUI(
-      tagList(
-        p("Your forward primer is ",  strong(input$primer_f),  " now.",
-          style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;"),
-        p("Your reverse primer is ",  strong(input$primer_r),  " now.",
-          style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;")
-        # paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;'>Your forward primer is ", strong(input$primer_f), " now.</p>") %>% HTML(),
-        # paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;>Your reverse primer is ", strong(input$primer_r), " now.</p>") %>% HTML()
+    if(input$seqs_type == "Pacbio long read"){
+      output$check_primer <- renderUI(
+        tagList(
+          p("Your forward primer is ",  strong(input$primer_f_Pacbio),  " now.",
+            style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;"),
+          p("Your reverse primer is ",  strong(input$primer_r_Pacbio),  " now.",
+            style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;")
+          
+        )
+        
       )
-       
-       )
+    }else{
+      output$check_primer <- renderUI(
+        tagList(
+          p("Your forward primer is ",  strong(input$primer_f),  " now.",
+            style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;"),
+          p("Your reverse primer is ",  strong(input$primer_r),  " now.",
+            style = "color: #317EAC;background-color:white;font-size: 18px;position:relative;padding: 5px 10px;width:300px;border-radius: 5px;")
+          
+        )
+        
+      )
+    }
     
-    # output$check_r_primer <- renderUI(
-    #   paste0("<p style='color: #317EAC;background-color:white;font-size: 16px;position:relative;padding: 5px;width:300px;border-radius: 5px;>Your reverse primer is ", strong(input$primer_r), " now.</p>") %>% HTML()
-    # )
     
-  })
+    
+    })
   
   
   output$out_f <- renderUI({
@@ -8719,6 +8846,15 @@ server <- function(session, input, output) {
         "/home/imuser/web_version/users_files/",
         input$input_job_id_taxa,
         "/rep-seqs-dada2_paired.qza"
+      ))==F){
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please check the sequence type.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+      }else if(input$seqs_type == "Pacbio long read" & file.exists(paste0(
+        "/home/imuser/web_version/users_files/",
+        input$input_job_id_taxa,
+        "/rep-seqs-dada2_Pacbio.qza"
       ))==F){
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Please check the sequence type.", 
@@ -8866,9 +9002,9 @@ server <- function(session, input, output) {
                   input$input_job_id_taxa,
                   "/classifier.qza"))
     
-    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.qza"))
+    
     if(input$seqs_type == "Single end"){
-      
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_single.qza"))
         system(paste0(qiime_cmd, 
                       " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
@@ -8879,9 +9015,10 @@ server <- function(session, input, output) {
                       " --p-n-jobs ", input$n_jobs,
                       " --o-classification /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
-                      "/taxonomy.qza"))
+                      "/taxonomy_single.qza"))
       
     }else if(input$seqs_type == "Paired end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_paired.qza"))
       system(paste0(qiime_cmd, 
                     " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
@@ -8892,104 +9029,254 @@ server <- function(session, input, output) {
                     " --p-n-jobs ", input$n_jobs,
                     " --o-classification /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
-                    "/taxonomy.qza"))
+                    "/taxonomy_paired.qza"))
+      
+    }else if(input$seqs_type == "Pacbio long read"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.qza"))
+      system(paste0(qiime_cmd, 
+                    " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/classifier.qza",
+                    " --i-reads /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/rep-seqs-dada2_Pacbio.qza", 
+                    " --p-n-jobs ", input$n_jobs,
+                    " --o-classification /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.qza"))
     }
     
-    # system(paste(qiime_cmd, "feature-classifier classify-sklearn --i-classifier /home/imuser/qiime_output/classifier.qza --i-reads /home/imuser/qiime_output/rep-seqs-dada2.qza", 
-    #              "--p-n-jobs", input$n_jobs,
-    #              "--o-classification /home/imuser/qiime_output/taxonomy.qza"))
     
-    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.qzv"))
-    system(paste0(qiime_cmd, 
-                 " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
-                 input$input_job_id_taxa,
-                 "/taxonomy.qza",
-                 " --o-visualization /home/imuser/web_version/users_files/",
-                 input$input_job_id_taxa,
-                 "/taxonomy.qzv"))
-    
-    
-    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7.qza"))
     if(input$seqs_type == "Single end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_single.qzv"))
+      system(paste0(qiime_cmd, 
+                    " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single.qza",
+                    " --o-visualization /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single.qzv"))
+    }else if(input$seqs_type == "Paired end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_paired.qzv"))
+      system(paste0(qiime_cmd, 
+                    " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired.qza",
+                    " --o-visualization /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired.qzv"))
+    }else if(input$seqs_type == "Pacbio long read"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.qzv"))
+      system(paste0(qiime_cmd, 
+                    " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.qza",
+                    " --o-visualization /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.qzv"))
+    }
+    
+    
+    
+    
+    if(input$seqs_type == "Single end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7_single.qza"))
       system(paste0(qiime_cmd, 
                     " taxa collapse --i-table /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
                     "/table-dada2_single.qza",
                    " --i-taxonomy /home/imuser/web_version/users_files/",
                    input$input_job_id_taxa,
-                   "/taxonomy.qza",
+                   "/taxonomy_single.qza",
                    " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
                    input$input_job_id_taxa,
-                   "/taxatable7.qza"))
+                   "/taxatable7_single.qza"))
     }else if(input$seqs_type == "Paired end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7_paired.qza"))
       system(paste0(qiime_cmd, 
                     " taxa collapse --i-table /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
                     "/table-dada2_paired.qza",
                    " --i-taxonomy /home/imuser/web_version/users_files/",
                    input$input_job_id_taxa,
-                   "/taxonomy.qza",
+                   "/taxonomy_paired.qza",
                    " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
                    input$input_job_id_taxa,
-                   "/taxatable7.qza"))
+                   "/taxatable7_single.qza"))
+    }else if(input$seqs_type == "Pacbio long read"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7_Pacbio.qza"))
+      system(paste0(qiime_cmd, 
+                    " taxa collapse --i-table /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/table-dada2_Pacbio.qza",
+                    " --i-taxonomy /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.qza",
+                    " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxatable7_Pacbio.qza"))
     }
     
     
-    # system("rm -r /home/imuser/qiime_output/taxonomy_unzip/new_dirname")
-    system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_unzip"))
-    system(paste0("unzip -d /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,
-                  "/taxonomy_unzip /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,"/taxonomy.qzv"))
-    
-    unzip_dirnames_taxa <- list.files(paste0("/home/imuser/web_version/users_files/",
-                                             input$input_job_id_taxa,
-                                             "/taxonomy_unzip"), 
-                                      full.names = T)
-    system(paste0("mv ", 
-                  unzip_dirnames_taxa, 
-                  " /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,
-                  "/taxonomy_unzip/new_dirname"))
-    
-    # system("sudo rm -rf /srv/shiny-server/www/taxonomy_unzip/")
-    system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,
-                  "/taxonomy_unzip/",
-                  " /srv/shiny-server/www/users_files/",
-                  input$input_job_id_taxa))
-
-    file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy.zip"))
-    system(paste0("cp /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,
-                  "/taxonomy.qzv /home/imuser/web_version/users_files/",
-                  input$input_job_id_taxa,
-                  "/taxonomy.zip"))
-    # system(paste0("cp /home/imuser/qiime_output/taxonomy.zip", " /home/imuser/web_version/users_files/", job_id(),"/taxonomy_", job_id(),".zip"))
-    
-    # system(paste0("cp /home/imuser/qiime_output/taxatable7.qza", " /home/imuser/web_version/users_files/", job_id(),"/taxatable7_", job_id(),".qza"))
-    # system(paste0("cp /home/imuser/qiime_output/table-dada2_single.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_single_", job_id(),".zip"))
-    # system(paste0("cp /home/imuser/qiime_output/table-dada2_paired.qza", " /home/imuser/web_version/users_files/", job_id(),"/table-dada2_paired_", job_id(),".zip"))
-    
-    
-    output$taxonomy_classificatio_table <- renderDataTable({
-      req(input$input_job_id_taxa)
-      taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
-                                  input$input_job_id_taxa,
-                                  "/taxonomy.qza"))[["data"]]
-      colnames(taxonomy)[1] <- "ASV"
-      return(taxonomy)
-    })
-    
-    output$taxacls_log_table <- renderTable({
-      log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
-                      input$input_job_id_taxa,
-                      "/parameter_taxonomy_classification.csv"), header = T) %>% t() %>% as.data.frame()
+    if(input$seqs_type == "Single end"){
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_single_unzip"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single_unzip /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,"/taxonomy_single.qzv"))
       
-      parameter_names <- rownames(log_table)
-      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
-      return(log_table_[-c(1,2),])
-    })
+      unzip_dirnames_taxa <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                               input$input_job_id_taxa,
+                                               "/taxonomy_single_unzip"), 
+                                        full.names = T)
+      system(paste0("mv ", 
+                    unzip_dirnames_taxa, 
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single_unzip/new_dirname"))
+      
+      # system("sudo rm -rf /srv/shiny-server/www/taxonomy_unzip/")
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single_unzip/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_taxa))
+    }else if(input$seqs_type == "Paired end"){
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_paired_unzip"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired_unzip /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,"/taxonomy_paired.qzv"))
+      
+      unzip_dirnames_taxa <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                               input$input_job_id_taxa,
+                                               "/taxonomy_paired_unzip"), 
+                                        full.names = T)
+      system(paste0("mv ", 
+                    unzip_dirnames_taxa, 
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired_unzip/new_dirname"))
+      
+      # system("sudo rm -rf /srv/shiny-server/www/taxonomy_unzip/")
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired_unzip/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_taxa))
+    }else if(input$seqs_type == "Pacbio long read"){
+      system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_Pacbio_unzip"))
+      system(paste0("unzip -d /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio_unzip /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,"/taxonomy_Pacbio.qzv"))
+      
+      unzip_dirnames_taxa <- list.files(paste0("/home/imuser/web_version/users_files/",
+                                               input$input_job_id_taxa,
+                                               "/taxonomy_Pacbio_unzip"), 
+                                        full.names = T)
+      system(paste0("mv ", 
+                    unzip_dirnames_taxa, 
+                    " /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio_unzip/new_dirname"))
+      
+      # system("sudo rm -rf /srv/shiny-server/www/taxonomy_unzip/")
+      system(paste0("sudo cp -r /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio_unzip/",
+                    " /srv/shiny-server/www/users_files/",
+                    input$input_job_id_taxa))
+    }
+    
+    
+    # trans qzv to zip
+    if(input$seqs_type == "Single end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_single.zip"))
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_single.zip"))
+    }else if(input$seqs_type == "Paired end"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_paired.zip"))
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_paired.zip"))
+    }else if(input$seqs_type == "Pacbio long read"){
+      file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.zip"))
+      system(paste0("cp /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.qzv /home/imuser/web_version/users_files/",
+                    input$input_job_id_taxa,
+                    "/taxonomy_Pacbio.zip"))
+    }
+    
+    
+    # ui output
+    if(input$seqs_type == "Single end"){
+      
+      output$taxonomy_classificatio_table <- renderDataTable({
+        req(input$input_job_id_taxa)
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_single.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        return(taxonomy)
+      })
+      
+      output$taxacls_log_table <- renderTable({
+        log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_taxa,
+                                     "/parameter_taxonomy_classification_single.csv"), header = T) %>% t() %>% as.data.frame()
+        
+        parameter_names <- rownames(log_table)
+        log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+        return(log_table_[-c(1,2),])
+      })
+      
+    }else if(input$seqs_type == "Paired end"){
+      output$taxonomy_classificatio_table <- renderDataTable({
+        req(input$input_job_id_taxa)
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_paired.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        return(taxonomy)
+      })
+      
+      output$taxacls_log_table <- renderTable({
+        log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_taxa,
+                                     "/parameter_taxonomy_classification_paired.csv"), header = T) %>% t() %>% as.data.frame()
+        
+        parameter_names <- rownames(log_table)
+        log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+        return(log_table_[-c(1,2),])
+      })
+    }else if(input$seqs_type == "Pacbio long read"){
+      output$taxonomy_classificatio_table <- renderDataTable({
+        req(input$input_job_id_taxa)
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_Pacbio.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        return(taxonomy)
+      })
+      
+      output$taxacls_log_table <- renderTable({
+        log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                     input$input_job_id_taxa,
+                                     "/parameter_taxonomy_classification_Pacbio.csv"), header = T) %>% t() %>% as.data.frame()
+        
+        parameter_names <- rownames(log_table)
+        log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+        return(log_table_[-c(1,2),])
+      })
+    }
+    
     
     # removeModal()
     remove_modal_spinner()
@@ -8997,27 +9284,68 @@ server <- function(session, input, output) {
     end_time <- Sys.time()
     spent_time <- format(round(end_time-start_time, digits = 2))
     
-    parameter_table <- data.frame(
-      "JobID" = input$input_job_id_taxa,
-      "Step" = "Taxonomy classification",
-      "time" = Sys.time(),
-      "duration" = spent_time,
-      "sequence_type" = input$seqs_type,
-      "database" = input$select_database,
-      "forward_primer" = paste(input$primer_f, input$primer_f_manu),
-      "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
-      "min_length" = input$min_length,
-      "max_length" = input$max_length,
-      "computing_setting" = input$n_jobs
-    )
-    write.csv(parameter_table,
-              paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification.csv"), 
-              quote = F, 
-              row.names = F)
+    # write parameter record
+    if(input$seqs_type == "Single end"){
+      parameter_table <- data.frame(
+        "JobID" = input$input_job_id_taxa,
+        "Step" = "Taxonomy classification",
+        "time" = Sys.time(),
+        "duration" = spent_time,
+        "sequence_type" = input$seqs_type,
+        "database" = input$select_database,
+        "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+        "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+        "min_length" = input$min_length,
+        "max_length" = input$max_length,
+        "computing_setting" = input$n_jobs
+      )
+      write.csv(parameter_table,
+                paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification_single.csv"), 
+                quote = F, 
+                row.names = F)
+    }else if(input$seqs_type == "Paired end"){
+      parameter_table <- data.frame(
+        "JobID" = input$input_job_id_taxa,
+        "Step" = "Taxonomy classification",
+        "time" = Sys.time(),
+        "duration" = spent_time,
+        "sequence_type" = input$seqs_type,
+        "database" = input$select_database,
+        "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+        "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+        "min_length" = input$min_length,
+        "max_length" = input$max_length,
+        "computing_setting" = input$n_jobs
+      )
+      write.csv(parameter_table,
+                paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification_paired.csv"), 
+                quote = F, 
+                row.names = F)
+    }else if(input$seqs_type == "Pacbio long read"){
+      parameter_table <- data.frame(
+        "JobID" = input$input_job_id_taxa,
+        "Step" = "Taxonomy classification",
+        "time" = Sys.time(),
+        "duration" = spent_time,
+        "sequence_type" = input$seqs_type,
+        "database" = input$select_database,
+        "forward_primer" = paste(input$primer_f, input$primer_f_manu),
+        "reverse_primer" = paste(input$primer_r, input$primer_r_manu),
+        "min_length" = input$min_length,
+        "max_length" = input$max_length,
+        "computing_setting" = input$n_jobs
+      )
+      write.csv(parameter_table,
+                paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification_Pacbio.csv"), 
+                quote = F, 
+                row.names = F)
+    }
     
+    
+    if(input$seqs_type == "Single end"){
       if(file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_taxa,
-                            "/taxonomy.qzv"))){
+                            "/taxonomy_single.qzv"))){
         
         shinyjs::show("taxa_results_view")
         shinyjs::show("taxa_results_download")
@@ -9030,13 +9358,54 @@ server <- function(session, input, output) {
                               ), 
                               footer = NULL, easyClose = T, size = "l"))
       }else{
-        # output$word_training <- renderText({
-        #   print('Error')
-        # })
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
       }
+    }else if(input$seqs_type == "Paired end"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy_paired.qzv"))){
+        
+        shinyjs::show("taxa_results_view")
+        shinyjs::show("taxa_results_download")
+        
+        showModal(modalDialog(title = strong("Taxonomic analysis has been finished!"), 
+                              HTML(
+                                paste0(
+                                  "This analysis took ", spent_time, ". ",
+                                  "You can inspect the results!")
+                              ), 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "Please check your files or parameters.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    }else if(input$seqs_type == "Pacbio long read"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy_Pacbio.qzv"))){
+        
+        shinyjs::show("taxa_results_view")
+        shinyjs::show("taxa_results_download")
+        
+        showModal(modalDialog(title = strong("Taxonomic analysis has been finished!"), 
+                              HTML(
+                                paste0(
+                                  "This analysis took ", spent_time, ". ",
+                                  "You can inspect the results!")
+                              ), 
+                              footer = NULL, easyClose = T, size = "l"))
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "Please check your files or parameters.", 
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+    }
+      
+    
+    
     
     }else{
       
@@ -9048,50 +9417,72 @@ server <- function(session, input, output) {
   })
   
   
-  output$taxa_view_bttn <- renderUI({
-    tagList(
-      actionButton(inputId = "view_taxa",
-                   label = "View!",
-                   onclick = paste0("window.open('http://",
-                                    # my_qiime_ip, my_qiime_port,
-                                    "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_taxa,
-                                    "/taxonomy_unzip/new_dirname/data/index.html",
-                                    "')"),
-                   style = "margin-left: 10px; margin-bottom:5px",
-                   icon = icon("eye")
-      ),
-      downloadButton("zip_taxonomy_classification", "Download", style = "margin-bottom:5px"),
-      br(),
-      if(file.exists(paste0(
-        "/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/parameter_taxonomy_classification.csv"
-      ))){
-        downloadButton(outputId = "f_log_file_taxonomy_classification", label = "log file", style = "margin-left:10px")
-      }else{
-        actionButton(inputId = "f_log_file_taxonomy_classification_no",
-                     label = "log file",
-                     style = "color: grey;margin-left:10px"
-        )
-      }
-      
-    )
-    
-  })
+  # output$taxa_view_bttn <- renderUI({
+  #   tagList(
+  #     actionButton(inputId = "view_taxa",
+  #                  label = "View!",
+  #                  onclick = paste0("window.open('http://",
+  #                                   # my_qiime_ip, my_qiime_port,
+  #                                   "mochi.life.nctu.edu.tw/users_files/", input$input_job_id_taxa,
+  #                                   "/taxonomy_unzip/new_dirname/data/index.html",
+  #                                   "')"),
+  #                  style = "margin-left: 10px; margin-bottom:5px",
+  #                  icon = icon("eye")
+  #     ),
+  #     downloadButton("zip_taxonomy_classification", "Download", style = "margin-bottom:5px"),
+  #     br(),
+  #     if(file.exists(paste0(
+  #       "/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/parameter_taxonomy_classification.csv"
+  #     ))){
+  #       downloadButton(outputId = "f_log_file_taxonomy_classification", label = "log file", style = "margin-left:10px")
+  #     }else{
+  #       actionButton(inputId = "f_log_file_taxonomy_classification_no",
+  #                    label = "log file",
+  #                    style = "color: grey;margin-left:10px"
+  #       )
+  #     }
+  #     
+  #   )
+  #   
+  # })
   
   output$zip_taxonomy_classification <- downloadHandler(
     filename = "taxonomy_classification.zip",
     content = function(file){
-      file.copy(paste0("/home/imuser/web_version/users_files/",
-                       input$input_job_id_taxa,
-                       "/taxonomy.zip"), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/taxonomy_single.zip"), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/taxonomy_paired.zip"), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/taxonomy_Pacbio.zip"), file)
+      }
+      
     }
   )
   
   output$f_log_file_taxonomy_classification <- downloadHandler(
     filename = "taxonomy_classification_log.csv",
     content = function(file){
-      file.copy(paste0("/home/imuser/web_version/users_files/",
-                       input$input_job_id_taxa,
-                       "/parameter_taxonomy_classification.csv"), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_single.csv"), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_paired.csv"), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/",
+                         input$input_job_id_taxa,
+                         "/parameter_taxonomy_classification_Pacbio.csv"), file)
+      }
+      
     }
   )
   
@@ -9100,10 +9491,23 @@ server <- function(session, input, output) {
     filename = "taxonomic_table.qza",
     
     content = function(file){
-      file.copy(paste0("/home/imuser/web_version/users_files/", 
-                       input$input_job_id_taxa,
-                       "/taxatable7.qza"
-                       ), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", 
+                         input$input_job_id_taxa,
+                         "/taxatable7_single.qza"
+        ), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", 
+                         input$input_job_id_taxa,
+                         "/taxatable7_paired.qza"
+        ), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", 
+                         input$input_job_id_taxa,
+                         "/taxatable7_Pacbio.qza"
+        ), file)
+      }
+      
     }
     
   )
@@ -9112,13 +9516,15 @@ server <- function(session, input, output) {
     filename = "ASVs_table.qza",
     
     content = function(file){
-      # if(input$seqs_type == "Single end"){
-      #   file.copy("/home/imuser/qiime_output/table-dada2_single.qza", file)
-      # }else{
-      #   file.copy("/home/imuser/qiime_output/table-dada2_paired.qza", file)
-      # }
-      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^table-dada2_ | grep qza$"), intern = T)[1]
-      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/", lastest_file), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_single.qza"), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_paired.qza"), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_Pacbio.qza"), file)
+      }
+      # lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^table-dada2_ | grep qza$"), intern = T)[1]
+     
       
     }
   )
@@ -9127,9 +9533,15 @@ server <- function(session, input, output) {
     filename = "rep_seqs_forPhylo.qza",
     
     content = function(file){
-      
-      lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^rep-seqs-dada2_ | grep qza$"), intern = T)[1]
-      file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/", lastest_file), file)
+      if(input$seqs_type == "Single end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_single.qza"), file)
+      }else if(input$seqs_type == "Paired end"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_paired.qza"), file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_Pacbio.qza"), file)
+      }
+      # lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^rep-seqs-dada2_ | grep qza$"), intern = T)[1]
+     
       
     }
   )
@@ -9141,48 +9553,123 @@ server <- function(session, input, output) {
     content = function(file){
       
       req(input$input_job_id_taxa)
-      taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
-                                  input$input_job_id_taxa,
-                                  "/taxonomy.qza"))[["data"]]
-      colnames(taxonomy)[1] <- "ASV"
       
+      if(input$seqs_type == "Single end"){
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_single.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }else if(input$seqs_type == "Paired end"){
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_paired.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }else if(input$seqs_type == "Pacbio long read"){
+        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                    input$input_job_id_taxa,
+                                    "/taxonomy_Pacbio.qza"))[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }
       
-      write.csv(taxonomy, file)
       
     }
   )
   
+  
   observe({
-    if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                          input$input_job_id_taxa,
-                          "/taxonomy.qzv"))){
-      
-      
-      output$taxonomy_classificatio_table <- renderDataTable({
-        req(input$input_job_id_taxa)
-        taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
-                                    input$input_job_id_taxa,
-                                    "/taxonomy.qza"))[["data"]]
+    
+    if(input$seqs_type == "Single end"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy_single.qzv"))){
         
-        colnames(taxonomy)[1] <- "ASV"
-        return(taxonomy)
-      })
-      
-      output$taxacls_log_table <- renderTable({
-        log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
-                                     input$input_job_id_taxa,
-                                     "/parameter_taxonomy_classification.csv"), header = T) %>% t() %>% as.data.frame()
         
-        parameter_names <- rownames(log_table)
-        log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
-        return(log_table_[-c(1,2),])
-      })
-      
-      # shinyjs::show("taxa_results_view")
-      shinyjs::show("taxa_results_download")
-      
-      shinyjs::show("taxa_results_view")
+        output$taxonomy_classificatio_table <- renderDataTable({
+          req(input$input_job_id_taxa)
+          taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      input$input_job_id_taxa,
+                                      "/taxonomy_single.qza"))[["data"]]
+          
+          colnames(taxonomy)[1] <- "ASV"
+          return(taxonomy)
+        })
+        
+        output$taxacls_log_table <- renderTable({
+          log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                       input$input_job_id_taxa,
+                                       "/parameter_taxonomy_classification_single.csv"), header = T) %>% t() %>% as.data.frame()
+          
+          parameter_names <- rownames(log_table)
+          log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+          return(log_table_[-c(1,2),])
+        })
+        
+        shinyjs::show("taxa_results_download")
+        shinyjs::show("taxa_results_view")
+      }
+    }else if(input$seqs_type == "Paired end"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy_paired.qzv"))){
+        
+        
+        output$taxonomy_classificatio_table <- renderDataTable({
+          req(input$input_job_id_taxa)
+          taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      input$input_job_id_taxa,
+                                      "/taxonomy_paired.qza"))[["data"]]
+          
+          colnames(taxonomy)[1] <- "ASV"
+          return(taxonomy)
+        })
+        
+        output$taxacls_log_table <- renderTable({
+          log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                       input$input_job_id_taxa,
+                                       "/parameter_taxonomy_classification_paired.csv"), header = T) %>% t() %>% as.data.frame()
+          
+          parameter_names <- rownames(log_table)
+          log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+          return(log_table_[-c(1,2),])
+        })
+        
+        shinyjs::show("taxa_results_download")
+        shinyjs::show("taxa_results_view")
+      }
+    }else if(input$seqs_type == "Pacbio long read"){
+      if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                            input$input_job_id_taxa,
+                            "/taxonomy_Pacbio.qzv"))){
+        
+        
+        output$taxonomy_classificatio_table <- renderDataTable({
+          req(input$input_job_id_taxa)
+          taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                      input$input_job_id_taxa,
+                                      "/taxonomy_Pacbio.qza"))[["data"]]
+          
+          colnames(taxonomy)[1] <- "ASV"
+          return(taxonomy)
+        })
+        
+        output$taxacls_log_table <- renderTable({
+          log_table <- read.csv(paste0("/home/imuser/web_version/users_files/",
+                                       input$input_job_id_taxa,
+                                       "/parameter_taxonomy_classification_Pacbio.csv"), header = T) %>% t() %>% as.data.frame()
+          
+          parameter_names <- rownames(log_table)
+          log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+          return(log_table_[-c(1,2),])
+        })
+        
+        shinyjs::show("taxa_results_download")
+        shinyjs::show("taxa_results_view")
+      }
     }
+    
   })
   
   

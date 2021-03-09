@@ -799,9 +799,7 @@ shinyUI(
                               
                               div(
                                 id = "taxa_results_view",
-                                # h4("(2) Inspect the taxonomy classification result.", 
-                                #    style = "margin-top: 25px"),
-                                # uiOutput(outputId = "taxa_view_bttn"),
+                               
                                 hr(),
                                 h4("(2) Inspect the taxonomy classification result.", 
                                       style = "margin-top: 25px"),
@@ -893,16 +891,7 @@ shinyUI(
                                      tooltip = HTML("<p>1st column name must be <b>SampleID</b></p>"), 
                                      placement = "right",
                                      allowHTML =T),
-                   # tags$style(".tooltip {position:relative;bottom:20px}"),
                    
-                   # div(
-                   #   span("Upload the metadata (1st column name must be"), 
-                   #   strong('#SampleID'),
-                   #   span(")"),
-                   # style = "font-size: 16px"),
-                   # textOutput(outputId="word_metadata_samecol"),
-                   
-                   # span("Upload the taxonomic table file (Download from Taxonomy Analysis)"),
                    fileInput(inputId = "taxonomic_table", 
                              label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
                              multiple = F,
@@ -927,22 +916,7 @@ shinyUI(
                                 icon = icon("chalkboard-teacher"),
                                 style = "color:#317EAC;background-color:white;margin-top:10px") %>% div(),
                    
-                   # Download example button
-                   # hr(),
-                   # p('Download the example files', style = "font-weight:700"),
-                   # div(downloadButton(outputId = "downloadMetaData", 
-                   #                label = span("Metadata_example.tsv"),
-                   #     style = "margin: 5px;color: #317EAC")),
-                   # div(downloadButton(outputId = "downloadData", 
-                   #                label = span("Taxonomic_table_example.qza"),
-                   #     style = "margin: 5px;color: #317EAC")),
-                   # div(downloadButton(outputId = "example_feature_table",
-                   #                label = span("ASVs_table_example.qza"),
-                   #     style = "margin: 5px;color: #317EAC")),
-                   # div(downloadButton(outputId = "example_rep_seqs",
-                   #                    label = "Seqs_forPhylo_example.qza"),
-                   #     style = "margin: 5px;"),
-                   
+            
                    width = 3),
                  
                  
