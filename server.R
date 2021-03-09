@@ -269,8 +269,10 @@ server <- function(session, input, output) {
     showModal(dataModal_1())
     shinyjs::hide("demux_results_view_single")
     shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("demux_results_view_Pacbio")
     shinyjs::hide("dada2_results_single")
     shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
   })
   
@@ -278,8 +280,10 @@ server <- function(session, input, output) {
     showModal(dataModal_2())
     shinyjs::hide("demux_results_view_single")
     shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("demux_results_view_Pacbio")
     shinyjs::hide("dada2_results_single")
     shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
   })
   
@@ -287,8 +291,10 @@ server <- function(session, input, output) {
     showModal(dataModal_3())
     shinyjs::hide("demux_results_view_single")
     shinyjs::hide("demux_results_view_paired")
+    shinyjs::hide("demux_results_view_Pacbio")
     shinyjs::hide("dada2_results_single")
     shinyjs::hide("dada2_results_paired")
+    shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
   })
   
@@ -365,12 +371,20 @@ server <- function(session, input, output) {
         shinyjs::show("demux_results_view_paired")
       }
       
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_Pacbio_end.qzv"))){
+        shinyjs::show("demux_results_view_Pacbio")
+      }
+      
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_single.qzv"))){
         shinyjs::show("dada2_results_single")
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_paired.qzv"))){
         shinyjs::show("dada2_results_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_Pacbio.qzv"))){
+        shinyjs::show("dada2_results_Pacbio")
       }
       
       
@@ -443,12 +457,20 @@ server <- function(session, input, output) {
         shinyjs::show("demux_results_view_paired")
       }
       
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_Pacbio_end.qzv"))){
+        shinyjs::show("demux_results_view_Pacbio")
+      }
+      
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_single.qzv"))){
         shinyjs::show("dada2_results_single")
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_paired.qzv"))){
         shinyjs::show("dada2_results_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_Pacbio.qzv"))){
+        shinyjs::show("dada2_results_Pacbio")
       }
       
       removeModal()
@@ -521,12 +543,20 @@ server <- function(session, input, output) {
         shinyjs::show("demux_results_view_paired")
       }
       
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_Pacbio_end.qzv"))){
+        shinyjs::show("demux_results_view_Pacbio")
+      }
+      
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_single.qzv"))){
         shinyjs::show("dada2_results_single")
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_paired.qzv"))){
         shinyjs::show("dada2_results_paired")
+      }
+      
+      if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_Pacbio.qzv"))){
+        shinyjs::show("dada2_results_Pacbio")
       }
       
       removeModal()
@@ -538,7 +568,7 @@ server <- function(session, input, output) {
 
   
   
-  
+  # dada2 parameter ui
   observe({
     
     if(input$seqs_type == "Single end"){
@@ -1416,8 +1446,10 @@ server <- function(session, input, output) {
     a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise), full.names = T)
     if(sum(str_detect(a, "single")) > 0){
       updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
-    }else{
+    }else if(sum(str_detect(a, "paired")) > 0){
       updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+    }else if(sum(str_detect(a, "Pacbio")) > 0){
+      updatePickerInput(session, "seqs_type", choices = c("Pacbio long read", "Paired end", "Single end"))
     }
   })
   
@@ -1425,8 +1457,10 @@ server <- function(session, input, output) {
     a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa), full.names = T)
     if(sum(str_detect(a, "single")) > 0){
       updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
-    }else{
+    }else if(sum(str_detect(a, "paired")) > 0){
       updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+    }else if(sum(str_detect(a, "Pacbio")) > 0){
+      updatePickerInput(session, "seqs_type", choices = c("Pacbio long read", "Paired end", "Single end"))
     }
   })
   
@@ -7673,7 +7707,7 @@ server <- function(session, input, output) {
                     " --i-phylogeny /home/imuser/web_version/users_files/",
                     input$input_job_id_denoise,
                     "/rooted-tree_Pacbio.qza ",
-                    add_metadata_rarefaction,
+                    # add_metadata_rarefaction,
                     " --o-visualization /home/imuser/web_version/users_files/",
                     input$input_job_id_denoise,
                     "/rarefaction-dada2_Pacbio.qzv"))
