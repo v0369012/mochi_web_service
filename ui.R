@@ -1824,8 +1824,8 @@ shinyUI(
     
     tags$footer(
       tags$span(
-        tags$a("Molecular Bioinformatics Lab", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        ", National Chiao Tung University, Taiwan 300, R.O.C."),
+        tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C."),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 
