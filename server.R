@@ -10480,6 +10480,17 @@ server <- function(session, input, output) {
       ggtitle("PCA plot")+
       scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
     
+    pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+      geom_point(size=1.5)+
+      # ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+      ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      ggtitle("PCA plot")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
+    
     
     # PCoA
     library(ape)
@@ -10540,6 +10551,17 @@ server <- function(session, input, output) {
       ggtitle("PCoA plot")+
       scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
     
+    pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+      geom_point(size=1.5)+
+      # ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+      ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      ggtitle("PCoA plot")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
+    
     # NMDS
     comm_bray <- vegdist(t(taxatable_beta))
     metaMDS_beta_df_data<-metaMDS(comm_bray, distance = "bray")
@@ -10559,23 +10581,71 @@ server <- function(session, input, output) {
       #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
       scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15)) 
     
+    NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+      geom_point(size=1.5)+
+      # ggrepel::geom_text_repel(show.legend = FALSE)+
+      xlab("NMDS1")+
+      ylab("NMDS2")+
+      geom_vline(xintercept =0, linetype="dotted")+
+      geom_hline(yintercept = 0, linetype="dotted")+
+      theme_bw()+
+      labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+      #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 15))
+    
     
     if(input$sep == "PCoA" & input$beta_cluster == F) {
-      return(pcoa_Bray_df_data_plot_gg)
+      
+      if(input$beta_showID){
+        return(pcoa_Bray_df_data_plot_gg)
+      }else{
+        return(pcoa_Bray_df_data_plot_gg_noID)
+      }
+      
     }
     else if(input$sep == "PCoA" & input$beta_cluster == T){
-      return(pcoa_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+      
+      if(input$beta_showID){
+        return(pcoa_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+      }else{
+        return(pcoa_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+      }
+      
     }
     else if(input$sep == "NMDS" & input$beta_cluster == F){
-      return(NMDS_beta_df_data_plot_gg)
+      
+      if(input$beta_showID){
+        return(NMDS_beta_df_data_plot_gg)
+      }else{
+        return(NMDS_beta_df_data_plot_gg_noID)
+      }
+      
     }
     else if(input$sep == "NMDS" & input$beta_cluster == T){
-      return(NMDS_beta_df_data_plot_gg + stat_ellipse(type = "t"))
+      
+      if(input$beta_showID){
+        return(NMDS_beta_df_data_plot_gg + stat_ellipse(type = "t"))
+      }else{
+        return(NMDS_beta_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+      }
+      
     }
     else if(input$sep == "PCA" & input$beta_cluster == F){
-      return(pca_Bray_df_data_plot_gg)
+      
+      if(input$beta_showID){
+        return(pca_Bray_df_data_plot_gg)
+      }else{
+        return(pca_Bray_df_data_plot_gg_noID)
+      }
+      
     }else{
-      return(pca_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+      
+      if(input$beta_showID){
+        return(pca_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+      }else{
+        return(pca_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+      }
+      
     }
     
     
@@ -13944,82 +14014,32 @@ server <- function(session, input, output) {
       })
       
       names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
-      return(unW_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      
+      unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+               aes(x=PC1, y=PC2, color=feature))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = F)+
+          xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+          ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("Unweighted unifrac PCoA plot")+
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+      })
+      
+      names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
+      
+      if(input$phylo_showID){
+        return(unW_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      }else{
+        return(unW_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta]])
+      }
+      
       
     })
-    
-    # unW_unif_pca_plot <- reactive({
-    # 
-    #   #PCA
-    #   nonNA_position <- which(Metadata_stats()[, input$metadata_phylo_beta]!="NA")
-    #   taxatable_beta <- TaxaTable_merge()[, nonNA_position]
-    #   metadata_beta <- Metadata_stats()[nonNA_position,]
-    #   colnames(metadata_beta)[1] <- "SampleID"
-    #   
-    #   # unW_unifrac_dm_qiime <- read_qza("/home/imuser/qiime_output/core-metrics-results/unweighted_unifrac_distance_matrix.qza")[["data"]]
-    #   pca_Bray_df_data <- prcomp(unW_unifrac_dm_qiime)
-    #   PCA_rowname <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
-    #   
-    #   metadata_beta_unW_unifrac <- filter(metadata_beta, SampleID %in% PCA_rowname)
-    #   
-    #   sample_original_names <- pca_Bray_df_data$scores %>% row.names()
-    #   
-    #   update_rownames <- function(feature_name, metadata, i){
-    #     
-    #     names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
-    #     names_order <- which(names_TF==T)
-    #     
-    #     sample_names <- metadata[,1][names_order] %>% as.character()
-    #     return(sample_names)
-    #   }
-    #   
-    #   names_list <- lapply(colnames(metadata_beta_unW_unifrac)[1:ncol(metadata_beta_unW_unifrac)], function(i){
-    #     
-    #     sapply(1:length(unique(metadata_beta[, i])), function(j){
-    #       
-    #       update_rownames(i, metadata_beta,j)
-    #       
-    #       
-    #     })
-    #     
-    #   })
-    #   
-    #   names(names_list) <- colnames(metadata_beta_unW_unifrac)[1:ncol(metadata_beta_unW_unifrac)]
-    #   
-    #   for (i in 1:length(names(names_list))) {
-    #     names(names_list[[i]]) <- unique(metadata_beta_unW_unifrac[,names(names_list)[i]]) %>% as.character()
-    #   }
-    #   
-    #   samples_unW <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
-    #   colnames(metadata_beta_unW_unifrac)[1] <- "SampleID"
-    #   # metadata_beta_unW <- filter(metadata_beta, SampleID %in% samples_unW)
-    #   
-    #   # metadata_beta_unW_arrange <- arrange(metadata_beta_unW_unifrac, "SampleID")
-    #   # PCA_rowname_arrange <- metadata_beta_unW_arrange[, input$metadata_phylo_beta]
-    #   
-    #   
-    #   
-    #   
-    #   library(ggplot2)
-    #   pca_Bray_df_data_plot <- data.frame(sample=PCA_rowname, 
-    #                                       PC1=pca_Bray_df_data$scores[,1],
-    #                                       PC2=pca_Bray_df_data$scores[,2])
-    #   pc_prop <- pca_Bray_df_data$sdev^2/sum(pca_Bray_df_data$sdev^2)
-    #   
-    #   library(ggrepel)
-    #   pca_Bray_df_data_plot_gg <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_unW, color=sample))+
-    #     geom_point(size = 1.5)+
-    #     geom_text_repel(show.legend = FALSE)+
-    #     xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
-    #     ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
-    #     geom_vline(xintercept = 0, linetype="dotted")+
-    #     geom_hline(yintercept = 0, linetype="dotted")+
-    #     theme_bw()+
-    #     ggtitle("PCA plot")+
-    #     scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15)) 
-    #   
-    #   
-    # })
     
     unW_unif_nmds_plot <- reactive({
       
@@ -14082,7 +14102,24 @@ server <- function(session, input, output) {
         #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
         scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15)) 
       
-      return(NMDS_beta_df_data_plot_gg)
+      NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+        geom_point(size=1.5)+
+        # ggrepel::geom_text_repel(show.legend = FALSE)+
+        xlab("NMDS1")+
+        ylab("NMDS2")+
+        geom_vline(xintercept = 0, linetype = "dotted")+
+        geom_hline(yintercept = 0, linetype = "dotted")+
+        theme_bw()+
+        labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+        #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15)) 
+      
+      if(input$phylo_showID){
+        return(NMDS_beta_df_data_plot_gg)
+      }else{
+        return(NMDS_beta_df_data_plot_gg_noID)
+      }
+      
     })
     
     W_unif_pcoa_plot <- reactive({
@@ -14123,7 +14160,31 @@ server <- function(session, input, output) {
       
       names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
       
-      return(W_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      
+      W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+               aes(x=PC1, y=PC2, color=feature))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = F)+
+          xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+          ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("Weighted unifrac PCoA plot")+
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+      })
+      
+      names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
+      
+      
+      if(input$phylo_showID){
+        return(W_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta]])
+      }else{
+        return(W_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta]])
+      }
+      
       
       
     })
@@ -14189,7 +14250,23 @@ server <- function(session, input, output) {
         #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
         scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15))
       
-      return(NMDS_beta_df_data_plot_gg)
+      NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+        geom_point(size=1.5)+
+        # ggrepel::geom_text_repel(show.legend = FALSE)+
+        xlab("NMDS1")+
+        ylab("NMDS2")+
+        geom_vline(xintercept = 0, linetype = "dotted")+
+        geom_hline(yintercept = 0, linetype = "dotted")+
+        theme_bw()+
+        labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 15))
+      
+      if(input$phylo_showID){
+        return(NMDS_beta_df_data_plot_gg)
+      }else{
+        return(NMDS_beta_df_data_plot_gg_noID)
+      }
+      
     })
     
     
