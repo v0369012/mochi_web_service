@@ -6234,11 +6234,23 @@ server <- function(session, input, output) {
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
       
     })
+    
+    # dada2 table
+    output$dada2_table_single <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      
+    })
+    
   })
   
   
   output$dada2_sample_table_single_dl <- downloadHandler(
-    filename = "sample_table.csv",
+    filename = "sample_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       sample_table <- read.csv(
@@ -6264,7 +6276,7 @@ server <- function(session, input, output) {
   )
   
   output$dada2_asv_table_single_dl <- downloadHandler(
-    filename = "asv_table.csv",
+    filename = "asv_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       asv_qiime2 <- read_qza(
@@ -6338,6 +6350,19 @@ server <- function(session, input, output) {
     content = function(file){
       file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_single_rarefaction/new_dirname/data/observed_features.csv"), 
                 file)
+    }
+  )
+  
+  output$dada2_table_single_dl <- downloadHandler(
+    filename = "denoised_table.csv",
+    content = function(file){
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
     }
   )
   
@@ -6532,6 +6557,17 @@ server <- function(session, input, output) {
       rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
       
+    })
+    
+    # dada2 table
+    output$dada2_table_single <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_single.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+
     })
   })
   
@@ -7341,11 +7377,23 @@ server <- function(session, input, output) {
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
       
     })
+    
+    # dada2 table
+    output$dada2_table_paired <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      
+    })
+    
   })
   
   
   output$dada2_sample_table_paired_dl <- downloadHandler(
-    filename = "sample_table.csv",
+    filename = "sample_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       sample_table <- read.csv(
@@ -7371,7 +7419,7 @@ server <- function(session, input, output) {
   )
   
   output$dada2_asv_table_paired_dl <- downloadHandler(
-    filename = "asv_table.csv",
+    filename = "asv_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       asv_qiime2 <- read_qza(
@@ -7445,6 +7493,19 @@ server <- function(session, input, output) {
     content = function(file){
       file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_rarefaction/new_dirname/data/observed_features.csv"), 
                 file)
+    }
+  )
+  
+  output$dada2_table_paired_dl <- downloadHandler(
+    filename = "denoised_table.csv",
+    content = function(file){
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
     }
   )
   
@@ -7638,6 +7699,17 @@ server <- function(session, input, output) {
       colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
       rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      
+    })
+    
+    # dada2 table
+    output$dada2_table_paired <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
       
     })
   })
@@ -8268,11 +8340,23 @@ server <- function(session, input, output) {
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
       
     })
+    
+    # dada2 table
+    output$dada2_table_Pacbio <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      
+    })
+    
   })
   
   
   output$dada2_sample_table_Pacbio_dl <- downloadHandler(
-    filename = "sample_table.csv",
+    filename = "sample_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       sample_table <- read.csv(
@@ -8298,7 +8382,7 @@ server <- function(session, input, output) {
   )
   
   output$dada2_asv_table_Pacbio_dl <- downloadHandler(
-    filename = "asv_table.csv",
+    filename = "asv_summary_table.csv",
     content = function(file){
       req(input$input_job_id_denoise)
       asv_qiime2 <- read_qza(
@@ -8372,6 +8456,19 @@ server <- function(session, input, output) {
     content = function(file){
       file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv"), 
                 file)
+    }
+  )
+  
+  output$dada2_table_Pacbio_dl <- downloadHandler(
+    filename = "denoised_table.csv",
+    content = function(file){
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
     }
   )
   
@@ -8567,6 +8664,18 @@ server <- function(session, input, output) {
       ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
       
     })
+    
+    # dada2 table
+    output$dada2_table_Pacbio <- renderDataTable({
+      dada2_table <- read_qza(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_Pacbio.qza")
+      )[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      
+    })
+    
   })
   
   
@@ -15889,12 +15998,15 @@ server <- function(session, input, output) {
   )
   
   
-  # Tutorial ---------------------------------------------------------------------------------------------------
-  # output$tutorial <- renderUI({
-  #     # p <- includeHTML("/home/imuser/text_files/tutorial.html")
-  #     # return(HTML(p))
-  #   HTML(markdown::markdownToHTML(knit("/home/imuser/text_files/tutorial.Rmd", quiet = T)))
-  # })
+  # Demo ---------------------------------------------------------------------------------------------------
+  observe({
+    if(input$select_module == "Sequence preprocessing"){
+      shinyjs::show("select_module_step")
+    }else{
+      shinyjs::hide("select_module_step")
+    }
+    
+  })
   
   # dockerfile ----
   output$download_yml <- downloadHandler(

@@ -491,13 +491,13 @@ shinyUI(
                                       # br(),br(),
                                       h4("Sample read count summary"),
                                       tableOutput("dada2_sample_summary_single"),
-                                      h4("Sample table"),
+                                      h4("Sample summary table"),
                                       dataTableOutput("dada2_sample_table_single"),
                                       downloadButton("dada2_sample_table_single_dl"),
                                       br(),br(),
                                       h4("ASV read count summary"),
                                       tableOutput("dada2_asv_summary_table_single"),
-                                      h4("ASV table"),
+                                      h4("ASV summary table"),
                                       dataTableOutput("dada2_asv_table_single"),
                                       downloadButton("dada2_asv_table_single_dl")
                                     ),
@@ -524,6 +524,14 @@ shinyUI(
                                       downloadButton("rarefaction_plot_single_dl", "Download the rarefaction plot"),
                                       downloadButton("rarefaction_table_single_dl", "Download the rarefaction table")
                                     ),
+                                    
+                                    tabPanel(
+                                      title = "Table",
+                                      br(),br(),
+                                      dataTableOutput("dada2_table_single"),
+                                      downloadButton("dada2_table_single_dl")
+                                    ),
+                                    
                                     tabPanel(
                                       title = "Log",
                                       tableOutput("dada2_log_table_single"),
@@ -568,13 +576,13 @@ shinyUI(
                                       # br(),br(),
                                       h4("Sample read count summary"),
                                       tableOutput("dada2_sample_summary_paired"),
-                                      h4("Sample table"),
+                                      h4("Sample summary table"),
                                       dataTableOutput("dada2_sample_table_paired"),
                                       downloadButton("dada2_sample_table_paired_dl"),
                                       br(),br(),
                                       h4("ASV read count summary"),
                                       tableOutput("dada2_asv_summary_table_paired"),
-                                      h4("ASV table"),
+                                      h4("ASV summary table"),
                                       dataTableOutput("dada2_asv_table_paired"),
                                       downloadButton("dada2_asv_table_paired_dl")
                                     ),
@@ -600,6 +608,12 @@ shinyUI(
                                       plotOutput("rarefaction_plot_paired"),
                                       downloadButton("rarefaction_plot_paired_dl", "Download the rarefaction plot"),
                                       downloadButton("rarefaction_table_paired_dl", "Download the rarefaction table")
+                                    ),
+                                    tabPanel(
+                                      title = "Table",
+                                      br(),br(),
+                                      dataTableOutput("dada2_table_paired"),
+                                      downloadButton("dada2_table_paired_dl")
                                     ),
                                     tabPanel(
                                       title = "Log",
@@ -641,13 +655,13 @@ shinyUI(
                                              # br(),br(),
                                              h4("Sample read count summary"),
                                              tableOutput("dada2_sample_summary_Pacbio"),
-                                             h4("Sample table"),
+                                             h4("Sample summary table"),
                                              dataTableOutput("dada2_sample_table_Pacbio"),
                                              downloadButton("dada2_sample_table_Pacbio_dl"),
                                              br(),br(),
                                              h4("ASV read count summary"),
                                              tableOutput("dada2_asv_summary_table_Pacbio"),
-                                             h4("ASV table"),
+                                             h4("ASV summary table"),
                                              dataTableOutput("dada2_asv_table_Pacbio"),
                                              downloadButton("dada2_asv_table_Pacbio_dl")
                                            ),
@@ -673,6 +687,12 @@ shinyUI(
                                              plotOutput("rarefaction_plot_Pacbio"),
                                              downloadButton("rarefaction_plot_Pacbio_dl", "Download the rarefaction plot"),
                                              downloadButton("rarefaction_table_Pacbio_dl", "Download the rarefaction table")
+                                           ),
+                                           tabPanel(
+                                             title = "Table",
+                                             br(),br(),
+                                             dataTableOutput("dada2_table_Pacbio"),
+                                             downloadButton("dada2_table_Pacbio_dl")
                                            ),
                                            tabPanel(
                                              title = "Log",
@@ -1766,7 +1786,7 @@ shinyUI(
       #          )
       #          ),
     
-    # Demo
+    # Demo ----
     tabPanel(title = span("Demo", style = tabPanel_title_style),
              icon = icon("arrow-alt-circle-right", class = "arrow-alt-circle-right_icon"),
              tags$style(".arrow-alt-circle-right_icon {color: white}"),
@@ -1777,38 +1797,265 @@ shinyUI(
                       # wellPanel(
                       style = "position:relative;background-color: #317EAC; border: none; border-radius: 5px; color: white;font-size: 20px;width:500px;padding:10px",
                       # strong("Inspect your results", style = "font-size:20px;color:white"),
-                      strong("Choose a step", style = "font-size:24px;color:white;top:20px"),
-                      selectInput(inputId = "select_step", 
-                                  label = "", 
+                      strong("Demo", style = "font-size:24px;color:white;top:20px"),
+                      selectInput(inputId = "select_dataset", 
+                                  label = "Select a dataset", 
+                                  choices = c("Single end", "Paired end", "Pacbio long read") 
+                      ),
+                      selectInput(inputId = "select_module", 
+                                  label = "Select a module", 
                                   choices = c("Sequence preprocessing", "Taxonomy analysis", "Function analysis") 
-                      )
+                      ),
+                      selectInput(inputId = "select_module_step", 
+                                  label = "Select a step", 
+                                  choices = c("Step 1. Sequence summary", "Step 2. Sequence denoising", "Step 3. Taxonomy classification"), 
+                                  width = "350px"
+                      ) %>% shinyjs::hidden()
                       
                ),
                mainPanel(
+                 # single end
                  conditionalPanel(
-                   
-                   condition = "input.select_step == 'Sequence preprocessing'",
+                   #single1
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
                    
                    column(width = 12,
-                          p("111")
+                          h1("1. Sequence summary (for single end)"),
+                          
+                          div(
+                            id = "demux_single_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              tabPanel(
+                                title = span("Sequence counts summary",
+                                             style = "color:#317EAC"),
+                                h4("Forward reads"),
+                                tableOutput("demux_table_single_demo"),
+                                plotlyOutput("demux_table_boxplot_single_demo"),
+                                downloadButton("demux_table_single_demo_dl", 
+                                               "Download the read couts table")
+                              ),
+                              
+                              tabPanel(
+                                title = span("Quality plot",
+                                             style = "color:#317EAC"),
+                                h4("Sequence length summary"),
+                                tableOutput("demux_Q_seven_table_single_demo"),
+                                plotlyOutput("demux_Q_plot_single_demo") %>% withSpinner(type = 2, color.background = "white"),
+                                downloadButton("demux_Q_table_single_demo_dl", 
+                                               "Download the quality score table")
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("demux_parameter_table_single_demo"),
+                                downloadButton("demux_parameter_table_single_demo_dl")
+                              )
+                            )
+                            
+                            
+                          )
                    )
                  ),
                  conditionalPanel(
-                   
-                   condition = "input.select_step == 'Taxonomy analysis'",
+                   #single2
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          p("222")
+                          p("single2")
                    )
                  ),
                  conditionalPanel(
-                   
-                   condition = "input.select_step == 'Function analysis'",
+                   #single3
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
                    
                    column(width = 12,
-                          p("333")
+                          p("single3")
+                   )
+                 ),
+                 conditionalPanel(
+                   #single4
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Taxonomy analysis'",
+                   
+                   column(width = 12,
+                          p("single4")
+                   )
+                 ),
+                 
+                 conditionalPanel(
+                   #single5
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Function analysis'",
+                   
+                   column(width = 12,
+                          p("single5")
+                   )
+                 ),
+                 
+                 
+                 
+                 # Paired end
+                 conditionalPanel(
+                   #Paired1
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   
+                   column(width = 12,
+                          h1("1. Sequence summary (for paired end)"),
+                          
+                          div(
+                            id = "demux_paired_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              tabPanel(
+                                title = span("Sequence counts summary",
+                                             style = "color:#317EAC"),
+                                h4("Forward reads"),
+                                tableOutput("demux_table_paired_f_demo"),
+                                plotlyOutput("demux_table_boxplot_paired_f_demo"),
+                                h4("Reverse reads"),
+                                tableOutput("demux_table_paired_r_demo"),
+                                plotlyOutput("demux_table_boxplot_paired_r_demo"),
+                                downloadButton("demux_table_paired_demo_dl", 
+                                               "Download the read couts table")
+                              ),
+                              
+                              tabPanel(
+                                title = span("Quality plot",
+                                             style = "color:#317EAC"),
+                                h4("Forward sequence length summary"),
+                                tableOutput("demux_Q_seven_table_paired_f_demo"),
+                                plotlyOutput("demux_Q_plot_paired_f_demo") %>% withSpinner(type = 2, color.background = "white"),
+                                downloadButton("demux_Q_table_paired_demo_dl_f", 
+                                               "Download the forward read couts table"),
+                                
+                                h4("Reverse sequence length summary"),
+                                tableOutput("demux_Q_seven_table_paired_r_demo"),
+                                plotlyOutput("demux_Q_plot_paired_r_demo") %>% withSpinner(type = 2, color.background = "white"),
+                                downloadButton("demux_Q_table_paired_demo_dl_r", 
+                                               "Download the reverse read couts table")
+                              ), 
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("demux_parameter_table_paired_demo"),
+                                downloadButton("demux_parameter_table_paired_demo_dl")
+                              )
+                            )
+                          )
+                   )
+                 ),
+                 conditionalPanel(
+                   #Paired2
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   
+                   column(width = 12,
+                          p("Paired2")
+                   )
+                 ),
+                 conditionalPanel(
+                   #Paired3
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
+                   
+                   column(width = 12,
+                          p("Paired3")
+                   )
+                 ),
+                 conditionalPanel(
+                   #Paired4
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Taxonomy analysis'",
+                   
+                   column(width = 12,
+                          p("Paired4")
+                   )
+                 ),
+                 
+                 conditionalPanel(
+                   #Paired5
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Function analysis'",
+                   
+                   column(width = 12,
+                          p("Paired5")
+                   )
+                 ),
+                 
+                 
+                 # Pacbio long read
+                 conditionalPanel(
+                   #Pacbio long read 1
+                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   
+                   column(width = 12,
+                          h1("1. Sequence summary (for Pacbio long read)"),
+                          
+                          div(
+                            id = "demux_Pacbio_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              tabPanel(
+                                title = span("Sequence counts summary",
+                                             style = "color:#317EAC"),
+                                h4("Forward reads"),
+                                tableOutput("demux_table_Pacbio_demo"),
+                                plotlyOutput("demux_table_boxplot_Pacbio_demo"),
+                                downloadButton("demux_table_Pacbio_demo_dl", 
+                                               "Download the read couts table")
+                              ),
+                              
+                              tabPanel(
+                                title = span("Quality plot",
+                                             style = "color:#317EAC"),
+                                h4("Sequence length summary"),
+                                tableOutput("demux_Q_seven_table_Pacbio_demo"),
+                                plotlyOutput("demux_Q_plot_Pacbio_demo") %>% withSpinner(type = 2, color.background = "white"),
+                                downloadButton("demux_Q_table_Pacbio_demo_dl", 
+                                               "Download the quality score table")
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("demux_parameter_table_Pacbio_demo"),
+                                downloadButton("demux_parameter_table_Pacbio_demo_dl")
+                              )
+                            )
+                            
+                            
+                          )
+                   )
+                 ),
+                 conditionalPanel(
+                   #Pacbio long read 2
+                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   
+                   column(width = 12,
+                          p("Pacbio2")
+                   )
+                 ),
+                 conditionalPanel(
+                   #Pacbio long read 3
+                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
+                   
+                   column(width = 12,
+                          p("Pacbio3")
+                   )
+                 ),
+                 conditionalPanel(
+                   #Pacbio long read 4
+                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Taxonomy analysis'",
+                   
+                   column(width = 12,
+                          p("Pacbio4")
+                   )
+                 ),
+                 
+                 conditionalPanel(
+                   #Pacbio long read 5
+                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Function analysis'",
+                   
+                   column(width = 12,
+                          p("Pacbio5")
                    )
                  )
+                 
+                 
                  
                  
                  
