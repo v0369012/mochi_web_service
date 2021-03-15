@@ -1558,12 +1558,7 @@ shinyUI(
                  fluid = T,
                  sidebarPanel(
                    style = "background-color: #317EAC; border: none; border-radius: 5px; color: white;font-size: 20px;",
-                   # a("FAPROTAX", 
-                   #   href ="https://pages.uoregon.edu/slouca/LoucaLab/archive/FAPROTAX/lib/php/index.php", 
-                   #   target="_blank",
-                   #   style = "font-weight: 700; color:white;"), 
-                   # span("is a database that maps prokaryotic clades (e.g. genera or species) to established metabolic or other ecologically relevant functions"),
-                   # br(),br(),
+
                    
                    fileInput(inputId = "sample_data_FA", 
                              label = p(HTML("<b>Upload the metadata file</b>"),
@@ -1661,49 +1656,10 @@ shinyUI(
                
                mainPanel(
                  width = 12,
-                 # uiOutput("tutorial"),
-                 # htmlOutput("tutorial")
-                 # tabsetPanel(type="tabs",
-                 #             # tabPanel(title="Installation",
-                 #             #          withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_install.Rmd"))
-                 #             #          ),
-                 #             tabPanel(title="Sequence Preprocessing",
-                 #                      h2("The tutorial of Sequences preprocessing"),
-                 #                      selectInput(inputId = "seq_choice_tutorial",
-                 #                                  label = "Choose the process",
-                 #                                  choices = c("Step 1. Sequence summary", "Step 2. Sequence denoising", "Step 3. Taxonomy classification")),
-                 #                      hr(),
-                 #                      conditionalPanel(
-                 #                        condition = "input.seq_choice_tutorial == 'Step 1. Sequence summary'",
-                 #                        withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_seq_1.Rmd")
-                 #                                    ),
-                 #                      ),
-                 #                      conditionalPanel(
-                 #                        condition = "input.seq_choice_tutorial == 'Step 2. Sequence denoising'",
-                 #                        withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_seq_2.Rmd")
-                 #                        ),
-                 #                      ),
-                 #                      conditionalPanel(
-                 #                        condition = "input.seq_choice_tutorial == 'Step 3. Taxonomy classification'",
-                 #                        withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_seq_3.Rmd")
-                 #                        ),
-                 #                      )
-                 #                      ),
-                 #             tabPanel(title="Taxonomy Analysis",
-                 #                      withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_DA.Rmd"))
-                 #                      ),
-                 #             tabPanel(title="Function Analysis",
-                 #                      withMathJax(includeMarkdown("/home/imuser/text_files/tutorial_func.Rmd"))
-                 #                      )
-                 #                      
-                 #             )
+
                  tags$iframe(style="height: 800px; width:90%; scrolling=yes;margin:0 100px", id = "ch2",
                              src=paste0("https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Ch_2_Web_new.pdf")
-                             # src=paste0("http://", "140.113.83.24:8011", "/MOCHI_Tutorial_Ch_2.pdf")
-                             # HTML('<div class="tutorial_ch2"> 
-                             #       <iframe src="https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Ch_2.pdf" style="height:800px; width:90%; scrolling=yes;margin:0 100px>
-                             #       </iframe>
-                             #       </div>')
+
                  )
                  
                )
@@ -1866,15 +1822,118 @@ shinyUI(
                    condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          p("single2")
+                          div(
+                            id = "dada2_results_single_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              
+                              tabPanel(
+                                title = "Summary",
+                                # br(),br(),
+                                h4("Sample read count summary"),
+                                tableOutput("dada2_sample_summary_single_demo"),
+                                h4("Sample summary table"),
+                                dataTableOutput("dada2_sample_table_single_demo"),
+                                downloadButton("dada2_sample_table_single_demo_dl"),
+                                br(),br(),
+                                h4("ASV read count summary"),
+                                tableOutput("dada2_asv_summary_table_single_demo"),
+                                h4("ASV summary table"),
+                                dataTableOutput("dada2_asv_table_single_demo"),
+                                downloadButton("dada2_asv_table_single_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Filter info",
+                                br(),br(),
+                                dataTableOutput("dada2_filter_table_single_demo"),
+                                downloadButton("dada2_filter_table_single_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Sequence info",
+                                h4("Sequence Length Statistics"),
+                                tableOutput("dada2_seqs_info_single_1_demo"),
+                                h4("Seven-Number Summary of Sequence Lengths"),
+                                tableOutput("dada2_seqs_info_single_2_demo"),
+                                h4("Sequence table"),
+                                dataTableOutput("dada2_seqs_table_single_demo"),
+                                downloadButton("dada2_seqs_table_single_demo_dl", "Download the sequences as a FASTA file")
+                              ),
+                              tabPanel(
+                                title = "Rarefaction plot",
+                                br(),br(),
+                                plotOutput("rarefaction_plot_single_demo"),
+                                downloadButton("rarefaction_plot_single_demo_dl", "Download the rarefaction plot"),
+                                downloadButton("rarefaction_table_single_demo_dl", "Download the rarefaction table")
+                              ),
+                              tabPanel(
+                                title = "Table",
+                                br(),br(),
+                                dataTableOutput("dada2_table_single_demo"),
+                                downloadButton("dada2_table_single_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("dada2_log_table_single_demo"),
+                                downloadButton("dada2_log_table_single_demo_dl")
+                              )
+                            )
+                          )
                    )
                  ),
                  conditionalPanel(
                    #single3
-                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
+                   condition = "input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
                    
                    column(width = 12,
-                          p("single3")
+                          div(
+                            id = "taxa_results_view_demo",
+                            
+                            hr(),
+                            h4("(2) Inspect the taxonomy classification result.", 
+                               style = "margin-top: 25px"),
+                            tabsetPanel(
+                              type = "tabs",
+                              tabPanel(
+                                title = "Taxonomy result",
+                                br(),br(),
+                                dataTableOutput("taxonomy_classificatio_table_demo"),
+                                downloadButton("taxonomy_classificatio_table_demo_dl")
+                                
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("taxacls_log_table_demo"),
+                                downloadButton("log_file_taxonomy_classification_demo")
+                              )
+                            )
+                            
+                           
+                          ),
+                          
+                          
+                          
+                          div(
+                            id = "taxa_results_download_demo",
+                            hr(),
+                            h4("(3) Download the files for the next step.",
+                               style = "margin-top: 25px"),
+                            downloadButton(outputId = "taxatable_download_demo",
+                                           label = "The taxonomic table  ",
+                                           style = "margin-left: 0px"),
+                            
+                            downloadButton(outputId = "table_dada2_download_demo",
+                                           label = "The ASVs table  "),
+                            
+                            
+                            tippy::tippy_this(elementId = "table_dada2_download_demo",
+                                              tooltip = "<p style='text-align: left;margin:2px'>amplicon sequence variant (ASV) table, a higher-resolution analogue of the traditional OTU table</p>",
+                                              allowHTML = TRUE,
+                                              placement = "bottom"),
+                            
+                            downloadButton(outputId = "rep_seq_dada2_download_demo",
+                                           label = "The seqs data  ")
+                          )
                    )
                  ),
                  conditionalPanel(
@@ -1952,17 +2011,66 @@ shinyUI(
                    condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          p("Paired2")
+                          div(
+                            id = "dada2_results_paired_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              
+                              tabPanel(
+                                title = "Summary",
+                                # br(),br(),
+                                h4("Sample read count summary"),
+                                tableOutput("dada2_sample_summary_paired_demo"),
+                                h4("Sample summary table"),
+                                dataTableOutput("dada2_sample_table_paired_demo"),
+                                downloadButton("dada2_sample_table_paired_demo_dl"),
+                                br(),br(),
+                                h4("ASV read count summary"),
+                                tableOutput("dada2_asv_summary_table_paired_demo"),
+                                h4("ASV summary table"),
+                                dataTableOutput("dada2_asv_table_paired_demo"),
+                                downloadButton("dada2_asv_table_paired_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Filter info",
+                                br(),br(),
+                                dataTableOutput("dada2_filter_table_paired_demo"),
+                                downloadButton("dada2_filter_table_paired_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Sequence info",
+                                h4("Sequence Length Statistics"),
+                                tableOutput("dada2_seqs_info_paired_1_demo"),
+                                h4("Seven-Number Summary of Sequence Lengths"),
+                                tableOutput("dada2_seqs_info_paired_2_demo"),
+                                h4("Sequence table"),
+                                dataTableOutput("dada2_seqs_table_paired_demo"),
+                                downloadButton("dada2_seqs_table_paired_demo_dl", "Download the sequences as a FASTA file")
+                              ),
+                              tabPanel(
+                                title = "Rarefaction plot",
+                                br(),br(),
+                                plotOutput("rarefaction_plot_paired_demo"),
+                                downloadButton("rarefaction_plot_paired_demo_dl", "Download the rarefaction plot"),
+                                downloadButton("rarefaction_table_paired_demo_dl", "Download the rarefaction table")
+                              ),
+                              tabPanel(
+                                title = "Table",
+                                br(),br(),
+                                dataTableOutput("dada2_table_paired_demo"),
+                                downloadButton("dada2_table_paired_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("dada2_log_table_paired_demo"),
+                                downloadButton("dada2_log_table_paired_demo_dl")
+                              )
+                            )
+                          )
                    )
                  ),
-                 conditionalPanel(
-                   #Paired3
-                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
-                   
-                   column(width = 12,
-                          p("Paired3")
-                   )
-                 ),
+                 
                  conditionalPanel(
                    #Paired4
                    condition = "input.select_dataset == 'Paired end' & input.select_module == 'Taxonomy analysis'",
@@ -2030,17 +2138,66 @@ shinyUI(
                    condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          p("Pacbio2")
+                          div(
+                            id = "dada2_results_Pacbio_demo",
+                            hr(),
+                            tabsetPanel(
+                              type = "tabs",
+                              
+                              tabPanel(
+                                title = "Summary",
+                                # br(),br(),
+                                h4("Sample read count summary"),
+                                tableOutput("dada2_sample_summary_Pacbio_demo"),
+                                h4("Sample summary table"),
+                                dataTableOutput("dada2_sample_table_Pacbio_demo"),
+                                downloadButton("dada2_sample_table_Pacbio_demo_dl"),
+                                br(),br(),
+                                h4("ASV read count summary"),
+                                tableOutput("dada2_asv_summary_table_Pacbio_demo"),
+                                h4("ASV summary table"),
+                                dataTableOutput("dada2_asv_table_Pacbio_demo"),
+                                downloadButton("dada2_asv_table_Pacbio_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Filter info",
+                                br(),br(),
+                                dataTableOutput("dada2_filter_table_Pacbio_demo"),
+                                downloadButton("dada2_filter_table_Pacbio_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Sequence info",
+                                h4("Sequence Length Statistics"),
+                                tableOutput("dada2_seqs_info_Pacbio_1_demo"),
+                                h4("Seven-Number Summary of Sequence Lengths"),
+                                tableOutput("dada2_seqs_info_Pacbio_2_demo"),
+                                h4("Sequence table"),
+                                dataTableOutput("dada2_seqs_table_Pacbio_demo"),
+                                downloadButton("dada2_seqs_table_Pacbio_demo_dl", "Download the sequences as a FASTA file")
+                              ),
+                              tabPanel(
+                                title = "Rarefaction plot",
+                                br(),br(),
+                                plotOutput("rarefaction_plot_Pacbio_demo"),
+                                downloadButton("rarefaction_plot_Pacbio_demo_dl", "Download the rarefaction plot"),
+                                downloadButton("rarefaction_table_Pacbio_demo_dl", "Download the rarefaction table")
+                              ),
+                              tabPanel(
+                                title = "Table",
+                                br(),br(),
+                                dataTableOutput("dada2_table_Pacbio_demo"),
+                                downloadButton("dada2_table_Pacbio_demo_dl")
+                              ),
+                              tabPanel(
+                                title = "Log",
+                                tableOutput("dada2_log_table_Pacbio_demo"),
+                                downloadButton("dada2_log_table_Pacbio_demo_dl")
+                              )
+                            )
+                          )
                    )
                  ),
-                 conditionalPanel(
-                   #Pacbio long read 3
-                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
-                   
-                   column(width = 12,
-                          p("Pacbio3")
-                   )
-                 ),
+                 
                  conditionalPanel(
                    #Pacbio long read 4
                    condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Taxonomy analysis'",

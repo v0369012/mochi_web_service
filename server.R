@@ -6598,7 +6598,7 @@ server <- function(session, input, output) {
   })
   
   
-  demux_paired_seqs_Q_f <- reactive({
+  demux_paired_seqs_Q_r <- reactive({
     demux_paired_qp <- readLines(
       paste0("/home/imuser/web_version/users_files/",
              input$input_job_id_demux,
@@ -16084,6 +16084,1440 @@ server <- function(session, input, output) {
     }
     
   })
+  
+  
+  # Demux single
+  output$demux_table_single_demo <- renderTable({
+      
+      demux_table <- read.table("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+      colnames(demux_table) <- c("SampleID", "Forward read count")
+      
+      summary_table <- data.frame(
+        Min = min(demux_table[,2]),
+        Mean = mean(demux_table[,2]) %>% round(4),
+        Median = median(demux_table[,2]),
+        Max = max(demux_table[,2]),
+        Total = sum(demux_table[,2]),
+        `Sample size` = length(demux_table[,2])
+      )
+      return(summary_table)
+
+  })
+  
+  output$demux_table_boxplot_single_demo <- renderPlotly({
+    demux_table <- read.table("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count")
+    
+    demux_table_sort <- demux_table[order(demux_table[,2]),]
+    
+    demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+    
+    a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+      panel.border = element_blank(), 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(), 
+      axis.line = element_line(colour = "black")
+    )
+    ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+  })
+  
+  output$demux_table_single_demo_dl <- downloadHandler(
+    filename = "per-sample-fastq-counts_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/per-sample-fastq-counts.tsv", file)
+    }
+  )
+  
+  output$demux_Q_seven_table_single_demo <- renderTable({
+    demux_single_qp <- readLines("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/quality-plot.html")
+    nts_position <- which(str_detect(demux_single_qp, "nts") == T)
+    nts_value <- demux_single_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[1],
+      "9%" = nts[2],
+      "25%" = nts[3],
+      "50%" = nts[4],
+      "75%" = nts[5],
+      "91%" = nts[6],
+      "98%" = nts[7]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(q_seven_table)
+  })
+  
+  output$demux_Q_plot_single_demo <- renderPlotly({
+    Q <- read.table("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv", sep = "\t", header = T)
+    Q_t <- t(Q) %>% as.data.frame()
+    colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+    Q_t <- Q_t[-1,]
+    Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+    
+    for (i in 1:ncol(Q_t_plot)) {
+      Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+    }
+    
+
+    f <- list(
+      family = "Courier New, monospace",
+      size = 18,
+      color = "#7f7f7f"
+    )
+    x <- list(
+      title = "Sequence Base",
+      titlefont = f
+    )
+    y <- list(
+      title = "Quality Score",
+      titlefont = f
+    )
+    
+    Q_ggplotly <- plot_ly(
+      x = as.factor(1:nrow(Q_t_plot)),
+      # y = as.list(1:152),
+      type = "box", 
+      lowerfence = as.list(Q_t_plot[,"2%"]),
+      q1 = as.list(Q_t_plot[,"25%"]),
+      median = as.list(Q_t_plot[,"50%"]),
+      q3 = as.list(Q_t_plot[,"75%"]),
+      upperfence = as.list(Q_t_plot[,"98%"]),
+      
+    ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+    
+    
+    return(Q_ggplotly)
+  })
+  
+  output$demux_parameter_table_single_demo <- renderTable({
+    log_table <- read.csv("/home/imuser/example_files/single/parameter_demux_single.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-1,])
+  })
+  
+  output$demux_Q_table_single_demo_dl <- downloadHandler(
+    filename = "forward-seven-number-summaries_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/demux_single_unzip/new_dirname/data/forward-seven-number-summaries.tsv", file)
+    }
+  )
+  
+  output$demux_parameter_table_single_demo_dl <- downloadHandler(
+    filename = "parameter_summarize_single_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/parameter_demux_single.csv", file
+      )
+    }
+  )
+  
+  
+  # demux paired
+  output$demux_table_paired_f_demo <- renderTable({
+    
+    demux_table <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+    
+    summary_table <- data.frame(
+      Min = min(demux_table[,2]),
+      Mean = mean(demux_table[,2]) %>% round(4),
+      Median = median(demux_table[,2]),
+      Max = max(demux_table[,2]),
+      Total = sum(demux_table[,2]),
+      `Sample size` = length(demux_table[,2])
+    )
+    return(summary_table)
+    
+  })
+  
+  output$demux_table_paired_r_demo <- renderTable({
+    demux_table <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+    
+    summary_table <- data.frame(
+      Min = min(demux_table[,3]),
+      Mean = mean(demux_table[,3]) %>% round(4),
+      Median = median(demux_table[,3]),
+      Max = max(demux_table[,3]),
+      Total = sum(demux_table[,3]),
+      `Sample size` = length(demux_table[,3])
+    )
+    return(summary_table)
+    
+  })
+  
+  output$demux_table_boxplot_paired_f_demo <- renderPlotly({
+    demux_table <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+    
+    demux_table_sort <- demux_table[order(demux_table[,2]),]
+    
+    demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+    
+    a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+      panel.border = element_blank(), 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(), 
+      axis.line = element_line(colour = "black")
+    )
+    ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+  })
+  
+  output$demux_table_boxplot_paired_r_demo <- renderPlotly({
+    
+    demux_table <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv", header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count", "Reverse read count")
+    
+    demux_table_sort <- demux_table[order(demux_table[,3]),]
+    
+    demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+    
+    a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Reverse read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+      panel.border = element_blank(), 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(), 
+      axis.line = element_line(colour = "black")
+    )
+    ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+  })
+  
+  output$demux_Q_seven_table_paired_f_demo <- renderTable({
+    
+    demux_paired_qp <- readLines("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/quality-plot.html")
+    nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+    nts_value <- demux_paired_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[1],
+      "9%" = nts[2],
+      "25%" = nts[3],
+      "50%" = nts[4],
+      "75%" = nts[5],
+      "91%" = nts[6],
+      "98%" = nts[7]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(q_seven_table)
+  })
+  
+  output$demux_Q_seven_table_paired_r_demo <- renderTable({
+    
+    demux_paired_qp <- readLines("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/quality-plot.html")
+    nts_position <- which(str_detect(demux_paired_qp, "nts") == T)
+    nts_value <- demux_paired_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[8],
+      "9%" = nts[9],
+      "25%" = nts[10],
+      "50%" = nts[11],
+      "75%" = nts[12],
+      "91%" = nts[13],
+      "98%" = nts[14]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(q_seven_table)
+  })
+  
+  output$demux_Q_plot_paired_f_demo <- renderPlotly({
+    
+    Q <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv", sep = "\t", header = T)
+    Q_t <- t(Q) %>% as.data.frame()
+    colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+    Q_t <- Q_t[-1,]
+    Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+    
+    for (i in 1:ncol(Q_t_plot)) {
+      Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+    }
+    
+    
+    f <- list(
+      family = "Courier New, monospace",
+      size = 18,
+      color = "#7f7f7f"
+    )
+    x <- list(
+      title = "Sequence Base",
+      titlefont = f
+    )
+    y <- list(
+      title = "Quality Score",
+      titlefont = f
+    )
+    
+    Q_ggplotly <- plot_ly(
+      x = as.factor(1:nrow(Q_t_plot)),
+      # y = as.list(1:152),
+      type = "box", 
+      lowerfence = as.list(Q_t_plot[,"2%"]),
+      q1 = as.list(Q_t_plot[,"25%"]),
+      median = as.list(Q_t_plot[,"50%"]),
+      q3 = as.list(Q_t_plot[,"75%"]),
+      upperfence = as.list(Q_t_plot[,"98%"]),
+      
+    ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y) 
+    
+    return(Q_ggplotly)
+  })
+  
+  output$demux_Q_plot_paired_r_demo <- renderPlotly({
+    
+    Q <- read.table("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv", sep = "\t", header = T)
+    Q_t <- t(Q) %>% as.data.frame()
+    colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+    Q_t <- Q_t[-1,]
+    Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+    
+    for (i in 1:ncol(Q_t_plot)) {
+      Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+    }
+    
+    
+    f <- list(
+      family = "Courier New, monospace",
+      size = 18,
+      color = "#7f7f7f"
+    )
+    x <- list(
+      title = "Sequence Base",
+      titlefont = f
+    )
+    y <- list(
+      title = "Quality Score",
+      titlefont = f
+    )
+    
+    Q_ggplotly <- plot_ly(
+      x = as.factor(1:nrow(Q_t_plot)),
+      # y = as.list(1:152),
+      type = "box", 
+      lowerfence = as.list(Q_t_plot[,"2%"]),
+      q1 = as.list(Q_t_plot[,"25%"]),
+      median = as.list(Q_t_plot[,"50%"]),
+      q3 = as.list(Q_t_plot[,"75%"]),
+      upperfence = as.list(Q_t_plot[,"98%"]),
+      
+    ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+    
+    
+    return(Q_ggplotly)
+  })
+  
+  output$demux_parameter_table_paired_demo <- renderTable({
+    
+    log_table <- read.csv("/home/imuser/example_files/paired/parameter_demux_paired.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-1,])
+  })
+  
+  output$demux_table_paired_demo_dl <- downloadHandler(
+    filename = "per-sample-fastq-counts_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/per-sample-fastq-counts.tsv", file)
+    }
+  )
+  
+  output$demux_Q_table_paired_demo_dl_f <- downloadHandler(
+    filename = "forward-seven-number-summaries_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/forward-seven-number-summaries.tsv", file)
+    }
+  )
+  
+  output$demux_Q_table_paired_demo_dl_r <- downloadHandler(
+    filename = "reverse-seven-number-summaries_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/demux_paired_unzip/new_dirname/data/reverse-seven-number-summaries.tsv", file)
+    }
+  )
+  
+  output$demux_parameter_table_paired_demo_dl <- downloadHandler(
+    filename = "parameter_summarize_paired_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/parameter_demux_paired.csv", file
+      )
+    }
+  )
+  
+  
+  # demux Pacbio
+  output$demux_table_Pacbio_demo <- renderTable({
+    
+    demux_table <- read.table(
+      "/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/per-sample-fastq-counts.tsv"
+      , 
+      header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count")
+    
+    summary_table <- data.frame(
+      Min = min(demux_table[,2]),
+      Mean = mean(demux_table[,2]) %>% round(4),
+      Median = median(demux_table[,2]),
+      Max = max(demux_table[,2]),
+      Total = sum(demux_table[,2]),
+      `Sample size` = length(demux_table[,2])
+    )
+    return(summary_table)
+    
+  })
+  
+  output$demux_table_boxplot_Pacbio_demo <- renderPlotly({
+    
+    demux_table <- read.table("/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/per-sample-fastq-counts.tsv", 
+                              header = T, sep = "\t")
+    colnames(demux_table) <- c("SampleID", "Forward read count")
+    
+    demux_table_sort <- demux_table[order(demux_table[,2]),]
+    
+    demux_table_sort[,1] <- factor(demux_table_sort[,1], levels = demux_table_sort[,1])
+    
+    a_plot <- ggplot(demux_table_sort, aes(x= SampleID, y=`Forward read count`)) + geom_bar(stat = "identity", fill = "#317EAC") + theme_bw() +theme(
+      panel.border = element_blank(), 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(), 
+      axis.line = element_line(colour = "black")
+    )
+    ggplotly(a_plot) %>% layout(xaxis=list(tickangle=45))
+  })
+  
+  output$demux_Q_seven_table_Pacbio_demo <- renderTable({
+    
+    demux_Pacbio_qp <- readLines("/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/quality-plot.html")
+    nts_position <- which(str_detect(demux_Pacbio_qp, "nts") == T)
+    nts_value <- demux_Pacbio_qp[nts_position]
+    nts <- str_remove_all(nts_value, "<td>") %>% str_remove_all("nts</td>") %>% as.numeric()
+    q_seven_table <- data.frame(
+      "Total sequences sampled" = 10000,
+      "2%" = nts[1],
+      "9%" = nts[2],
+      "25%" = nts[3],
+      "50%" = nts[4],
+      "75%" = nts[5],
+      "91%" = nts[6],
+      "98%" = nts[7]
+    )
+    colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    q_seven_table[1,] <- as.character(q_seven_table[1,])
+    return(q_seven_table)
+  })
+  
+  output$demux_Q_plot_Pacbio_demo <- renderPlotly({
+    
+    Q <- read.table("/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/forward-seven-number-summaries.tsv", sep = "\t", header = T)
+    Q_t <- t(Q) %>% as.data.frame()
+    colnames(Q_t) <- c("count","2%", "9%", "25%", "50%", "75%", "91%","98%")
+    Q_t <- Q_t[-1,]
+    Q_t_plot <- cbind(position = 1:nrow(Q_t), Q_t)
+    
+    for (i in 1:ncol(Q_t_plot)) {
+      Q_t_plot[,i] <- as.character(Q_t_plot[,i]) %>% as.numeric()
+    }
+    
+    
+    f <- list(
+      family = "Courier New, monospace",
+      size = 18,
+      color = "#7f7f7f"
+    )
+    x <- list(
+      title = "Sequence Base",
+      titlefont = f
+    )
+    y <- list(
+      title = "Quality Score",
+      titlefont = f
+    )
+    
+    Q_ggplotly <- plot_ly(
+      x = as.factor(1:nrow(Q_t_plot)),
+      # y = as.list(1:152),
+      type = "box", 
+      lowerfence = as.list(Q_t_plot[,"2%"]),
+      q1 = as.list(Q_t_plot[,"25%"]),
+      median = as.list(Q_t_plot[,"50%"]),
+      q3 = as.list(Q_t_plot[,"75%"]),
+      upperfence = as.list(Q_t_plot[,"98%"]),
+      
+    ) %>% layout(xaxis=list(tickangle=45)) %>% layout(xaxis = x, yaxis = y)
+    
+    
+    return(Q_ggplotly)
+  })
+  
+  output$demux_parameter_table_Pacbio_demo <- renderTable({
+    
+    log_table <- read.csv("/home/imuser/example_files/Pacbio/parameter_demux_Pacbio.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-1,])
+  })
+  
+  output$demux_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "per-sample-fastq-counts_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/per-sample-fastq-counts.tsv", file)
+    }
+  )
+  
+  output$demux_Q_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "forward-seven-number-summaries_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/demux_Pacbio_unzip/new_dirname/data/forward-seven-number-summaries.tsv", file)
+    }
+  )
+  
+  output$demux_parameter_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "parameter_summarize_Pacbio_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/parameter_demux_Pacbio.csv", file
+      )
+    }
+  )
+  
+  
+  
+  # denoise single
+  # summary table
+  output$dada2_sample_summary_single_demo <- renderTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    sample_summary_table_ <- data.frame(
+      Min = min(sample_summary_table[,2]),
+      Mean = mean(sample_summary_table[,2]),
+      Median = median(sample_summary_table[,2]),
+      Max = max(sample_summary_table[,2]),
+      Toatal = sum(sample_summary_table[,2]),
+      "Sample size" = nrow(sample_summary_table)
+    )
+  })
+  
+  output$dada2_sample_table_single_demo <- renderDataTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+    return(sample_summary_table)
+  })
+  
+  output$dada2_asv_summary_table_single_demo <- renderTable({
+    
+    asv_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    asv_summary <- data.frame(
+      Min = min(asv_table[,2]),
+      Mean = mean(asv_table[,2]),
+      Median = median(asv_table[,2]),
+      Max = max(asv_table[,2]),
+      Total = sum(asv_table[,2]),
+      "Number of ASVs" = nrow(asv_table)
+    )
+  })
+  
+  output$dada2_asv_table_single_demo <- renderDataTable({
+    
+    asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    
+    asv_found_number <- c()
+    for (i in 1:nrow(asv_qiime2)) {
+      asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+    }
+    
+    asv_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    
+    asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+    
+    colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+    
+    return(asv_smr_table)
+  })
+  
+  # filter info 
+  output$dada2_filter_table_single_demo <- renderDataTable({
+    
+    read.table("/home/imuser/example_files/single/denoise_single_stats/new_dirname/data/metadata.tsv", header = T, sep = "\t")
+    
+  })
+  
+  # seqs info 
+  output$dada2_seqs_info_single_1_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/single/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", header = T)
+    seqs_info_table_1 <- data.frame(
+      "Sequence count" = seqs_info_qiime2[1,2],
+      "Min length" = seqs_info_qiime2[2,2],
+      "Mean length" = seqs_info_qiime2[4,2],
+      "Max length" = seqs_info_qiime2[3,2],
+      "Range" = seqs_info_qiime2[5,2],
+      "Standard deviation" = seqs_info_qiime2[6,2]
+    )
+  })
+  
+  output$dada2_seqs_info_single_2_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/single/denoise_single_seqs/new_dirname/data/seven_number_summary.tsv", sep = "\t", header = T)
+    seqs_info_table_2 <- data.frame(
+      "Percentile:" = "Length (nts):",
+      "2th" = seqs_info_qiime2[1,2],
+      "9th" = seqs_info_qiime2[2,2],
+      "25th" = seqs_info_qiime2[3,2],
+      "50th" = seqs_info_qiime2[4,2],
+      "75th" = seqs_info_qiime2[5,2],
+      "91th" = seqs_info_qiime2[6,2],
+      "98th" = seqs_info_qiime2[7,2]
+    )
+    colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    return(seqs_info_table_2)
+  })
+  
+  output$dada2_seqs_table_single_demo <- renderDataTable({
+    
+    seqs <- readLines("/home/imuser/example_files/single/denoise_single_seqs/new_dirname/data/sequences.fasta")
+    seqs_table <- data.frame(
+      ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+      "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+      Sequence = seqs[seq(2,length(seqs), 2)]
+    )
+  })
+  
+  # rarefaction
+  output$rarefaction_plot_single_demo <- renderPlot({
+    
+    rarefaction_table <- read.csv("/home/imuser/example_files/single/denoise_single_rarefaction/new_dirname/data/observed_features.csv")
+    depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+    rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+      table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+      table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+      table_2 <- table_1[,c(1,12)]
+    })
+    rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+    rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+    colnames(rarefaction_table_list_cbind)[-1] <- depth
+    rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+    colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+    rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+    ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+    
+  })
+  
+  # dada2 table
+  output$dada2_table_single_demo <- renderDataTable({
+    dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]] %>% as.data.frame()
+    dada2_table_rname <- rownames(dada2_table)
+    dada2_table_tibble <- as.tibble(dada2_table)
+    dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+  })
+  
+  # dada2 log
+  output$dada2_log_table_single_demo <- renderTable({
+    
+    log_table <- read.csv("/home/imuser/example_files/single/parameter_denoise_single.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-c(1,2),])
+    
+  })
+  
+  
+  output$dada2_sample_table_single_demo_dl <- downloadHandler(
+    
+    filename = "sample_summary_table_demo.csv",
+    content = function(file){
+      
+      sample_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv" , header = F)
+      
+      sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_single_demo_dl <- downloadHandler(
+    filename = "asv_summary_table_demo.csv",
+    content = function(file){
+      
+      asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_single_demo_dl <- downloadHandler(
+    filename = "filter_info_table_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/denoise_single_stats/new_dirname/data/metadata.tsv", file)
+    }
+  )
+  
+  output$dada2_seqs_table_single_demo_dl <- downloadHandler(
+    filename = "sequences_demo.fasta",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/denoise_single_seqs/new_dirname/data/sequences.fasta", file)
+    }
+  )
+  
+  output$rarefaction_plot_single_demo_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot_demo.png",
+    content = function(file){
+      
+      rarefaction_table <- read.csv("/home/imuser/example_files/single/denoise_single_rarefaction/new_dirname/data/observed_features.csv")
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_single_demo_dl <- downloadHandler(
+    filename = "rarefaction_table_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/denoise_single_rarefaction/new_dirname/data/observed_features.csv", file)
+    }
+  )
+  
+  output$dada2_table_single_demo_dl <- downloadHandler(
+    filename = "denoised_table_demo.csv",
+    content = function(file){
+      dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
+    }
+  )
+  
+  output$dada2_log_table_single_demo_dl <- downloadHandler(
+    filename = "parameter_denoise_single_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/parameter_denoise_single.csv", file)
+    }
+  )
+  
+  
+  # denoise paired
+  # summary table
+  output$dada2_sample_summary_paired_demo <- renderTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    sample_summary_table_ <- data.frame(
+      Min = min(sample_summary_table[,2]),
+      Mean = mean(sample_summary_table[,2]),
+      Median = median(sample_summary_table[,2]),
+      Max = max(sample_summary_table[,2]),
+      Toatal = sum(sample_summary_table[,2]),
+      "Sample size" = nrow(sample_summary_table)
+    )
+  })
+  
+  output$dada2_sample_table_paired_demo <- renderDataTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+    return(sample_summary_table)
+  })
+  
+  output$dada2_asv_summary_table_paired_demo <- renderTable({
+    
+    asv_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    asv_summary <- data.frame(
+      Min = min(asv_table[,2]),
+      Mean = mean(asv_table[,2]),
+      Median = median(asv_table[,2]),
+      Max = max(asv_table[,2]),
+      Total = sum(asv_table[,2]),
+      "Number of ASVs" = nrow(asv_table)
+    )
+  })
+  
+  output$dada2_asv_table_paired_demo <- renderDataTable({
+    
+    asv_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+    
+    asv_found_number <- c()
+    for (i in 1:nrow(asv_qiime2)) {
+      asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+    }
+    
+    asv_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    
+    asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+    
+    colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+    
+    return(asv_smr_table)
+  })
+  
+  # filter info 
+  output$dada2_filter_table_paired_demo <- renderDataTable({
+    
+    read.table("/home/imuser/example_files/paired/denoise_paired_stats/new_dirname/data/metadata.tsv", header = T, sep = "\t")
+    
+  })
+  
+  # seqs info 
+  output$dada2_seqs_info_paired_1_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/paired/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", header = T)
+    seqs_info_table_1 <- data.frame(
+      "Sequence count" = seqs_info_qiime2[1,2],
+      "Min length" = seqs_info_qiime2[2,2],
+      "Mean length" = seqs_info_qiime2[4,2],
+      "Max length" = seqs_info_qiime2[3,2],
+      "Range" = seqs_info_qiime2[5,2],
+      "Standard deviation" = seqs_info_qiime2[6,2]
+    )
+  })
+  
+  output$dada2_seqs_info_paired_2_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/paired/denoise_paired_seqs/new_dirname/data/seven_number_summary.tsv", sep = "\t", header = T)
+    seqs_info_table_2 <- data.frame(
+      "Percentile:" = "Length (nts):",
+      "2th" = seqs_info_qiime2[1,2],
+      "9th" = seqs_info_qiime2[2,2],
+      "25th" = seqs_info_qiime2[3,2],
+      "50th" = seqs_info_qiime2[4,2],
+      "75th" = seqs_info_qiime2[5,2],
+      "91th" = seqs_info_qiime2[6,2],
+      "98th" = seqs_info_qiime2[7,2]
+    )
+    colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    return(seqs_info_table_2)
+  })
+  
+  output$dada2_seqs_table_paired_demo <- renderDataTable({
+    
+    seqs <- readLines("/home/imuser/example_files/paired/denoise_paired_seqs/new_dirname/data/sequences.fasta")
+    seqs_table <- data.frame(
+      ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+      "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+      Sequence = seqs[seq(2,length(seqs), 2)]
+    )
+  })
+  
+  # rarefaction
+  output$rarefaction_plot_paired_demo <- renderPlot({
+    
+    rarefaction_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_rarefaction/new_dirname/data/observed_features.csv")
+    depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+    rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+      table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+      table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+      table_2 <- table_1[,c(1,12)]
+    })
+    rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+    rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+    colnames(rarefaction_table_list_cbind)[-1] <- depth
+    rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+    colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+    rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+    ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+    
+  })
+  
+  # dada2 table
+  output$dada2_table_paired_demo <- renderDataTable({
+    dada2_table <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]] %>% as.data.frame()
+    dada2_table_rname <- rownames(dada2_table)
+    dada2_table_tibble <- as.tibble(dada2_table)
+    dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+  })
+  
+  # dada2 log
+  output$dada2_log_table_paired_demo <- renderTable({
+    
+    log_table <- read.csv("/home/imuser/example_files/paired/parameter_denoise_paired.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-c(1,2),])
+    
+  })
+  
+  
+  output$dada2_sample_table_paired_demo_dl <- downloadHandler(
+    
+    filename = "sample_summary_table_demo.csv",
+    content = function(file){
+      
+      sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv" , header = F)
+      
+      sample_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_paired_demo_dl <- downloadHandler(
+    filename = "asv_summary_table_demo.csv",
+    content = function(file){
+      
+      asv_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_paired_demo_dl <- downloadHandler(
+    filename = "filter_info_table_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/denoise_paired_stats/new_dirname/data/metadata.tsv", file)
+    }
+  )
+  
+  output$dada2_seqs_table_paired_demo_dl <- downloadHandler(
+    filename = "sequences_demo.fasta",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/denoise_paired_seqs/new_dirname/data/sequences.fasta", file)
+    }
+  )
+  
+  output$rarefaction_plot_paired_demo_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot_demo.png",
+    content = function(file){
+      
+      rarefaction_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_rarefaction/new_dirname/data/observed_features.csv")
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_paired_demo_dl <- downloadHandler(
+    filename = "rarefaction_table_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/paired/denoise_paired_rarefaction/new_dirname/data/observed_features.csv", file)
+    }
+  )
+  
+  output$dada2_table_paired_demo_dl <- downloadHandler(
+    filename = "denoised_table_demo.csv",
+    content = function(file){
+      dada2_table <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
+    }
+  )
+  
+  output$dada2_log_table_paired_demo_dl <- downloadHandler(
+    filename = "parameter_denoise_paired_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/parameter_denoise_paired.csv", file)
+    }
+  )
+  
+  
+  # denoise Pacbio
+  # summary table
+  output$dada2_sample_summary_Pacbio_demo <- renderTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    sample_summary_table_ <- data.frame(
+      Min = min(sample_summary_table[,2]),
+      Mean = mean(sample_summary_table[,2]),
+      Median = median(sample_summary_table[,2]),
+      Max = max(sample_summary_table[,2]),
+      Toatal = sum(sample_summary_table[,2]),
+      "Sample size" = nrow(sample_summary_table)
+    )
+  })
+  
+  output$dada2_sample_table_Pacbio_demo <- renderDataTable({
+    
+    sample_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    
+    sample_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+    sample_found_number <- c()
+    for (i in 1:ncol(sample_qiime2)) {
+      sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+    }
+    
+    
+    sample_summary_table <- data.frame(
+      SampleID = colnames(sample_qiime2),
+      "Read count" = sample_table[,2],
+      "Number of ASVs observed in" = sample_found_number
+    )
+    
+    colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+    return(sample_summary_table)
+  })
+  
+  output$dada2_asv_summary_table_Pacbio_demo <- renderTable({
+    
+    asv_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    asv_summary <- data.frame(
+      Min = min(asv_table[,2]),
+      Mean = mean(asv_table[,2]),
+      Median = median(asv_table[,2]),
+      Max = max(asv_table[,2]),
+      Total = sum(asv_table[,2]),
+      "Number of ASVs" = nrow(asv_table)
+    )
+  })
+  
+  output$dada2_asv_table_Pacbio_demo <- renderDataTable({
+    
+    asv_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+    
+    asv_found_number <- c()
+    for (i in 1:nrow(asv_qiime2)) {
+      asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+    }
+    
+    asv_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    
+    asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+    
+    colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+    
+    return(asv_smr_table)
+  })
+  
+  # filter info 
+  output$dada2_filter_table_Pacbio_demo <- renderDataTable({
+    
+    read.table("/home/imuser/example_files/Pacbio/denoise_Pacbio_stats/new_dirname/data/metadata.tsv", header = T, sep = "\t")
+    
+  })
+  
+  # seqs info 
+  output$dada2_seqs_info_Pacbio_1_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/Pacbio/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv", sep = "\t", header = T)
+    seqs_info_table_1 <- data.frame(
+      "Sequence count" = seqs_info_qiime2[1,2],
+      "Min length" = seqs_info_qiime2[2,2],
+      "Mean length" = seqs_info_qiime2[4,2],
+      "Max length" = seqs_info_qiime2[3,2],
+      "Range" = seqs_info_qiime2[5,2],
+      "Standard deviation" = seqs_info_qiime2[6,2]
+    )
+  })
+  
+  output$dada2_seqs_info_Pacbio_2_demo <- renderTable({
+    
+    seqs_info_qiime2 <- read.table("/home/imuser/example_files/Pacbio/denoise_Pacbio_seqs/new_dirname/data/seven_number_summary.tsv", sep = "\t", header = T)
+    seqs_info_table_2 <- data.frame(
+      "Percentile:" = "Length (nts):",
+      "2th" = seqs_info_qiime2[1,2],
+      "9th" = seqs_info_qiime2[2,2],
+      "25th" = seqs_info_qiime2[3,2],
+      "50th" = seqs_info_qiime2[4,2],
+      "75th" = seqs_info_qiime2[5,2],
+      "91th" = seqs_info_qiime2[6,2],
+      "98th" = seqs_info_qiime2[7,2]
+    )
+    colnames(seqs_info_table_2) <- c("Percentile:","2%", "9%", "25%", "50%", "75%", "91%", "98%")
+    return(seqs_info_table_2)
+  })
+  
+  output$dada2_seqs_table_Pacbio_demo <- renderDataTable({
+    
+    seqs <- readLines("/home/imuser/example_files/Pacbio/denoise_Pacbio_seqs/new_dirname/data/sequences.fasta")
+    seqs_table <- data.frame(
+      ASV = seqs[seq(1,length(seqs), 2)] %>% str_remove_all(">"),
+      "Sequence length" = str_length(seqs[seq(2,length(seqs), 2)]),
+      Sequence = seqs[seq(2,length(seqs), 2)]
+    )
+  })
+  
+  # rarefaction
+  output$rarefaction_plot_Pacbio_demo <- renderPlot({
+    
+    rarefaction_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv")
+    depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+    rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+      table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+      table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+      table_2 <- table_1[,c(1,12)]
+    })
+    rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+    rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+    colnames(rarefaction_table_list_cbind)[-1] <- depth
+    rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+    colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+    rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+    ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+    
+  })
+  
+  # dada2 table
+  output$dada2_table_Pacbio_demo <- renderDataTable({
+    dada2_table <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]] %>% as.data.frame()
+    dada2_table_rname <- rownames(dada2_table)
+    dada2_table_tibble <- as.tibble(dada2_table)
+    dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+  })
+  
+  # dada2 log
+  output$dada2_log_table_Pacbio_demo <- renderTable({
+    
+    log_table <- read.csv("/home/imuser/example_files/Pacbio/parameter_denoise_Pacbio.csv") %>% t() %>% as.data.frame()
+    
+    parameter_names <- rownames(log_table)
+    log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+    return(log_table_[-c(1,2),])
+    
+  })
+  
+  
+  output$dada2_sample_table_Pacbio_demo_dl <- downloadHandler(
+    
+    filename = "sample_summary_table_demo.csv",
+    content = function(file){
+      
+      sample_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv" , header = F)
+      
+      sample_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+      sample_found_number <- c()
+      for (i in 1:ncol(sample_qiime2)) {
+        sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
+      }
+      
+      
+      sample_summary_table <- data.frame(
+        SampleID = colnames(sample_qiime2),
+        "Read count" = sample_table[,2],
+        "Number of ASVs observed in" = sample_found_number
+      )
+      
+      colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
+      write.csv(sample_summary_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_asv_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "asv_summary_table_demo.csv",
+    content = function(file){
+      
+      asv_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+      
+      asv_found_number <- c()
+      for (i in 1:nrow(asv_qiime2)) {
+        asv_found_number[i] <- sum(asv_qiime2[i,]!=0)
+      }
+      
+      asv_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+      
+      asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
+      
+      colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
+      write.csv(asv_smr_table, file, row.names = F)
+    }
+  )
+  
+  output$dada2_filter_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "filter_info_table_demo.tsv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/denoise_Pacbio_stats/new_dirname/data/metadata.tsv", file)
+    }
+  )
+  
+  output$dada2_seqs_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "sequences_demo.fasta",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/denoise_Pacbio_seqs/new_dirname/data/sequences.fasta", file)
+    }
+  )
+  
+  output$rarefaction_plot_Pacbio_demo_dl <- downloadHandler(
+    
+    filename = "rarefaction_plot_demo.png",
+    content = function(file){
+      
+      rarefaction_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv")
+      depth <- colnames(rarefaction_table)[-1] %>% str_replace_all("depth.", "") %>% str_replace_all("_iter.[0-9]{1,2}", "") %>% unique()
+      rarefaction_table_list <- lapply(0:((ncol(rarefaction_table)-1)/10-1), function(x){
+        table <- rarefaction_table[,c(1, (10*x+2):(10*x+2+10-1))]
+        table_1 <- cbind(table, Mean = rowMeans(table[,-1]))
+        table_2 <- table_1[,c(1,12)]
+      })
+      rarefaction_table_list_cbind <- rlist::list.cbind(rarefaction_table_list)
+      rarefaction_table_list_cbind <- rarefaction_table_list_cbind[, c(1, seq(2, ncol(rarefaction_table_list_cbind), 2))]
+      colnames(rarefaction_table_list_cbind)[-1] <- depth
+      rarefaction_table_list_cbind_melt <- reshape2::melt(rarefaction_table_list_cbind, id = "sample.id")
+      colnames(rarefaction_table_list_cbind_melt)[1:3] <- c("SampleID","Base", "ASVs")
+      rarefaction_table_list_cbind_melt[,"Base"] <- as.numeric(as.character(rarefaction_table_list_cbind_melt[,"Base"]))
+      g <- ggplot2::ggplot(data = rarefaction_table_list_cbind_melt, aes(x = Base, y = ASVs, color = SampleID, group = SampleID)) + geom_point() + geom_line()
+      ggsave(file, 
+             plot = g + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+             , width = 80, height = 40, units = "cm")
+    }
+    
+  )
+  
+  output$rarefaction_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "rarefaction_table_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/example_files/Pacbio/denoise_Pacbio_rarefaction/new_dirname/data/observed_features.csv", file)
+    }
+  )
+  
+  output$dada2_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "denoised_table_demo.csv",
+    content = function(file){
+      dada2_table <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]] %>% as.data.frame()
+      dada2_table_rname <- rownames(dada2_table)
+      dada2_table_tibble <- as.tibble(dada2_table)
+      dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
+      write_csv(dada2_table_tibble, file)
+    }
+  )
+  
+  output$dada2_log_table_Pacbio_demo_dl <- downloadHandler(
+    filename = "parameter_denoise_Pacbio_demo.csv",
+    content = function(file){
+      file.copy("/home/imuser/parameter_denoise_Pacbio.csv", file)
+    }
+  )
+  
+  
+  # taxonomy classification
+  observe({
+  if(input$select_dataset == "Single end"){
+    
+    output$taxonomy_classificatio_table_demo <- renderDataTable({
+      req(input$input_job_id_taxa)
+      taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_single.qza")[["data"]]
+      colnames(taxonomy)[1] <- "ASV"
+      return(taxonomy)
+    })
+    
+    output$taxacls_log_table_demo <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_single.csv"), header = T) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-1,])
+    })
+    
+  }else if(input$select_dataset == "Paired end"){
+    
+    output$taxonomy_classificatio_table_demo <- renderDataTable({
+      req(input$input_job_id_taxa)
+      taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_paired.qza")[["data"]]
+      colnames(taxonomy)[1] <- "ASV"
+      return(taxonomy)
+    })
+    
+    output$taxacls_log_table_demo <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_paired.csv"), header = T) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-1,])
+    })
+    
+  }else if(input$select_dataset == "Pacbio long read"){
+    
+    output$taxonomy_classificatio_table_demo <- renderDataTable({
+      req(input$input_job_id_taxa)
+      taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_Pacbio.qza")[["data"]]
+      colnames(taxonomy)[1] <- "ASV"
+      return(taxonomy)
+    })
+    
+    output$taxacls_log_table_demo <- renderTable({
+      log_table <- read.csv(paste0("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_Pacbio.csv"), header = T) %>% t() %>% as.data.frame()
+      
+      parameter_names <- rownames(log_table)
+      log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
+      return(log_table_[-1,])
+    })
+  }
+  
+  })
+  
+  output$taxonomy_classificatio_table_dl <- downloadHandler(
+    filename = "taxonomy_classificatio_table_demo.csv",
+    
+    content = function(file){
+      
+      if(input$select_dataset == "Single end"){
+        taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_single.qza")[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }else if(input$select_dataset == "Paired end"){
+        taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_paired.qza")[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }else if(input$select_dataset == "Pacbio long read"){
+        taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_Pacbio.qza")[["data"]]
+        colnames(taxonomy)[1] <- "ASV"
+        write.csv(taxonomy, file)
+      }
+      
+      
+    }
+  )
+  
+  output$log_file_taxonomy_classification <- downloadHandler(
+    filename = "taxonomy_classification_log_demo.csv",
+    content = function(file){
+      if(input$select_dataset == "Single end"){
+        file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_single.csv", file)
+      }else if(input$select_dataset == "Paired end"){
+        file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_paired.csv", file)
+      }else if(input$select_dataset == "Pacbio long read"){
+        file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_Pacbio.csv", file)
+      }
+      
+    }
+  )
   
   # dockerfile ----
   output$download_yml <- downloadHandler(
