@@ -1822,6 +1822,7 @@ shinyUI(
                    condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
+                          h1('2. Sequence denoising (DADA2) for Single end'),
                           div(
                             id = "dada2_results_single_demo",
                             hr(),
@@ -1886,11 +1887,15 @@ shinyUI(
                    condition = "input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
                    
                    column(width = 12,
+                          
+                          h1("3. Taxonomy classification", 
+                             style = "color: #317EAC;margin-top: 0px;"),
+                          
                           div(
                             id = "taxa_results_view_demo",
                             
                             hr(),
-                            h4("(2) Inspect the taxonomy classification result.", 
+                            h4("Inspect the taxonomy classification result.", 
                                style = "margin-top: 25px"),
                             tabsetPanel(
                               type = "tabs",
@@ -2011,6 +2016,7 @@ shinyUI(
                    condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
+                          h1('2. Sequence denoising (DADA2) for Paired end'),
                           div(
                             id = "dada2_results_paired_demo",
                             hr(),
@@ -2138,6 +2144,8 @@ shinyUI(
                    condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
+                          
+                          h1('2. Sequence denoising (DADA2) for Pacbio long read'),
                           div(
                             id = "dada2_results_Pacbio_demo",
                             hr(),
