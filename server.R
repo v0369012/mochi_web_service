@@ -3175,6 +3175,9 @@ server <- function(session, input, output) {
                                 ), 
                                 footer = NULL, easyClose = T, size = "l"))
         }else{
+          
+          shinyjs::hide("demux_results_view_single")
+          
           showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                                 "Please check your files.", 
                                 footer = NULL, easyClose = T, size = "l"))
@@ -3957,6 +3960,9 @@ server <- function(session, input, output) {
                                 ), 
                                 footer = NULL, easyClose = T, size = "l"))
         }else{
+          
+          shinyjs::hide("demux_results_view_paired")
+          
           showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                                 "Please check your files.", 
                                 footer = NULL, easyClose = T, size = "l"))
@@ -5014,6 +5020,9 @@ server <- function(session, input, output) {
                                     ), 
                                     footer = NULL, easyClose = T, size = "l"))
             }else{
+              
+              shinyjs::hide("demux_results_view_Pacbio")
+              
               showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                                     "Please check your files.", 
                                     footer = NULL, easyClose = T, size = "l"))
@@ -5718,7 +5727,7 @@ server <- function(session, input, output) {
                       input$input_job_id_denoise,
                       "/rarefaction-dada2_single.zip"))
         
-        shinyjs::show("dada2_results_single")
+        
         
         # update reference seqs filter length
         if(input$seqs_type == "Single end"){
@@ -5826,6 +5835,8 @@ server <- function(session, input, output) {
                            )
                )==4){
           
+          shinyjs::show("dada2_results_single")
+          
           showModal(modalDialog(title = strong("Denoising succecessfully!"), 
                                 HTML(
                                   paste0(
@@ -5834,6 +5845,9 @@ server <- function(session, input, output) {
                                 ), 
                                 footer = NULL, easyClose = T, size = "l"))
         }else{
+          
+          shinyjs::hide("dada2_results_single")
+          
           showModal(modalDialog(title = strong("Error!", style = "color: red"),
                                 "Please check your files.", 
                                 footer = NULL, easyClose = T, size = "l"))
@@ -6895,8 +6909,6 @@ server <- function(session, input, output) {
                   input$input_job_id_denoise,
                   "/rarefaction-dada2_paired.zip"))
     
-    shinyjs::show("dada2_results_paired")
-    
     
     # update reference seqs filter length
     if(input$seqs_type == "Single end"){
@@ -7006,6 +7018,8 @@ server <- function(session, input, output) {
     )
     )==4){
       
+      shinyjs::show("dada2_results_paired")
+      
       showModal(modalDialog(title = strong("Denoising succecessfully!"), 
                             HTML(
                               paste0(
@@ -7014,6 +7028,9 @@ server <- function(session, input, output) {
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
     }else{
+      
+      shinyjs::hide("dada2_results_paired")
+      
       showModal(modalDialog(title = strong("Error!", style = "color: red"),
                             "Please check your files.", 
                             footer = NULL, easyClose = T, size = "l"))
@@ -8037,7 +8054,7 @@ server <- function(session, input, output) {
                     input$input_job_id_denoise,
                     "/rarefaction-dada2_Pacbio.zip"))
       
-      shinyjs::show("dada2_results_Pacbio")
+      
       
       # update reference seqs filter length
       if(input$seqs_type == "Single end"){
@@ -8147,6 +8164,8 @@ server <- function(session, input, output) {
       )
       )==4){
         
+        shinyjs::show("dada2_results_Pacbio")
+        
         showModal(modalDialog(title = strong("Denoising succecessfully!"), 
                               HTML(
                                 paste0(
@@ -8155,6 +8174,9 @@ server <- function(session, input, output) {
                               ), 
                               footer = NULL, easyClose = T, size = "l"))
       }else{
+        
+        shinyjs::hide("dada2_results_Pacbio")
+        
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files.", 
                               footer = NULL, easyClose = T, size = "l"))
@@ -9579,6 +9601,9 @@ server <- function(session, input, output) {
                               ), 
                               footer = NULL, easyClose = T, size = "l"))
       }else{
+        
+        shinyjs::hide("taxa_results_view")
+        
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
@@ -9599,6 +9624,9 @@ server <- function(session, input, output) {
                               ), 
                               footer = NULL, easyClose = T, size = "l"))
       }else{
+        
+        shinyjs::hide("taxa_results_view")
+        
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
@@ -9619,6 +9647,9 @@ server <- function(session, input, output) {
                               ), 
                               footer = NULL, easyClose = T, size = "l"))
       }else{
+        
+        shinyjs::hide("taxa_results_view")
+        
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
