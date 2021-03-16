@@ -5475,7 +5475,7 @@ server <- function(session, input, output) {
                               "Please finish sequence summary first.", 
                               footer = NULL, easyClose = T, size = "l"))
         
-      }else if(sum(single_input_position() > demux_single_seqs_Q()[7]) > 0){
+      }else if(sum(single_input_position() > demux_single_seqs_Q()[8]) > 0){
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Your position to trim can not be large than the sequence length.", 
@@ -6594,7 +6594,7 @@ server <- function(session, input, output) {
     )
     colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
     q_seven_table[1,] <- as.character(q_seven_table[1,])
-    return(as.numeric(q_seven_table))
+    return(as.numeric(q_seven_table[1,]))
   })
   
   
@@ -6618,7 +6618,7 @@ server <- function(session, input, output) {
     )
     colnames(q_seven_table) <- c("Total sequences sampled", "2%", "9%", "25%", "50%", "75%", "91%", "98%")
     q_seven_table[1,] <- as.character(q_seven_table[1,])
-    return(as.numeric(q_seven_table))
+    return(as.numeric(q_seven_table[1,]))
   })
   
   
@@ -6641,13 +6641,13 @@ server <- function(session, input, output) {
                             "Please finish sequence summary first.", 
                             footer = NULL, easyClose = T, size = "l"))
       
-    }else if(sum(paired_input_position_f() > demux_paired_seqs_Q_f()[7])>0){
+    }else if(sum(paired_input_position_f() > demux_paired_seqs_Q_f()[8])>0){
       
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Your position to trim can not be large than the sequence length.", 
                             footer = NULL, easyClose = T, size = "l"))
       
-    }else if(sum(paired_input_position_r() > demux_paired_seqs_Q_r()[7])>0){
+    }else if(sum(paired_input_position_r() > demux_paired_seqs_Q_r()[8])>0){
       
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Your position to trim can not be large than the sequence length.", 
