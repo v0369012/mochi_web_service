@@ -3392,6 +3392,9 @@ server <- function(session, input, output) {
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
     }else{
+      
+      shinyjs::hide("demux_results_view_single")
+      
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Please check your files.", 
                             footer = NULL, easyClose = T, size = "l"))
@@ -4166,6 +4169,9 @@ server <- function(session, input, output) {
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
     }else{
+      
+      shinyjs::hide("demux_results_view_paired")
+      
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Please check your files.", 
                             footer = NULL, easyClose = T, size = "l"))
@@ -5144,6 +5150,9 @@ server <- function(session, input, output) {
                                   ), 
                                   footer = NULL, easyClose = T, size = "l"))
           }else{
+            
+            shinyjs::hide("demux_results_view_Pacbio")
+            
             showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                                   "Please check your files.", 
                                   footer = NULL, easyClose = T, size = "l"))
