@@ -3171,7 +3171,7 @@ server <- function(session, input, output) {
                                 HTML(
                                   paste0(
                                     "This analysis took ", spent_time, ". ",
-                                    "You can click the button ", strong('View') ," to inspect the result.")
+                                    "You can inspect the results now.")
                                 ), 
                                 footer = NULL, easyClose = T, size = "l"))
         }else{
@@ -3388,7 +3388,7 @@ server <- function(session, input, output) {
                             HTML(
                               paste0(
                                 "This analysis took ", spent_time, ". ",
-                                "You can click the button ", strong('View') ," to inspect the result.")
+                                "You can inspect the results now.")
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
     }else{
@@ -3959,7 +3959,7 @@ server <- function(session, input, output) {
                                 HTML(
                                   paste0(
                                     "This analysis took ", spent_time, ". ",
-                                    "You can click the button ", strong('View') ," to inspect the result.")
+                                    "You can inspect the results now.")
                                 ), 
                                 footer = NULL, easyClose = T, size = "l"))
         }else{
@@ -4165,7 +4165,7 @@ server <- function(session, input, output) {
                             HTML(
                               paste0(
                                 "This analysis took ", spent_time, ". ",
-                                "You can click the button ", strong('View') ," to inspect the result.")
+                                "You can inspect the results now.")
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
     }else{
@@ -5022,7 +5022,7 @@ server <- function(session, input, output) {
                                     HTML(
                                       paste0(
                                         "This analysis took ", spent_time, ". ",
-                                        "You can click the button ", strong('View') ," to inspect the result.")
+                                        "You can inspect the results now.")
                                     ), 
                                     footer = NULL, easyClose = T, size = "l"))
             }else{
@@ -5146,7 +5146,7 @@ server <- function(session, input, output) {
                                   HTML(
                                     paste0(
                                       "This analysis took ", spent_time, ". ",
-                                      "You can click the button ", strong('View') ," to inspect the result.")
+                                      "You can inspect the results now.")
                                   ), 
                                   footer = NULL, easyClose = T, size = "l"))
           }else{
@@ -15653,7 +15653,7 @@ server <- function(session, input, output) {
                             HTML(
                               paste0(
                                 "This analysis took ", spent_time, ". ",
-                                "You can inspect the results.")
+                                "You can inspect the results now.")
                             ), 
                             footer = NULL, easyClose = T, size = "l"))
       
