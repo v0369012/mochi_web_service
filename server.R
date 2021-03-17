@@ -274,6 +274,7 @@ server <- function(session, input, output) {
     shinyjs::hide("dada2_results_paired")
     shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
+    shinyjs::hide("taxa_results_download")
   })
   
   observeEvent(input$change_job_id_denoise,{
@@ -285,6 +286,7 @@ server <- function(session, input, output) {
     shinyjs::hide("dada2_results_paired")
     shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
+    shinyjs::hide("taxa_results_download")
   })
   
   observeEvent(input$change_job_id_taxa,{
@@ -296,6 +298,7 @@ server <- function(session, input, output) {
     shinyjs::hide("dada2_results_paired")
     shinyjs::hide("dada2_results_Pacbio")
     shinyjs::hide("taxa_results_view")
+    shinyjs::hide("taxa_results_download")
   })
   
   # job id before OK
@@ -9612,6 +9615,7 @@ server <- function(session, input, output) {
       }else{
         
         shinyjs::hide("taxa_results_view")
+        shinyjs::hide("taxa_results_download")
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
@@ -9635,6 +9639,7 @@ server <- function(session, input, output) {
       }else{
         
         shinyjs::hide("taxa_results_view")
+        shinyjs::hide("taxa_results_download")
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
@@ -9658,6 +9663,7 @@ server <- function(session, input, output) {
       }else{
         
         shinyjs::hide("taxa_results_view")
+        shinyjs::hide("taxa_results_download")
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
                               "Please check your files or parameters.", 
