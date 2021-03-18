@@ -16819,7 +16819,7 @@ server <- function(session, input, output) {
   
   output$dada2_asv_summary_table_single_demo <- renderTable({
     
-    asv_table <- read.csv("/home/imuser/example_files/single//table-dada2.qza", header = F)
+    asv_table <- read.csv("/home/imuser/example_files/single/table-dada2.qza", header = F)
     asv_read_count <- rowSums(asv_qiime2)
     asv_summary <- data.frame(
       Min = min(asv_table[,2]),
