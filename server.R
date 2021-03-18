@@ -16819,7 +16819,8 @@ server <- function(session, input, output) {
   
   output$dada2_asv_summary_table_single_demo <- renderTable({
     
-    asv_table <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
+    asv_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+    asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
     asv_read_count <- rowSums(asv_qiime2)
     asv_summary <- data.frame(
       Min = min(asv_table[,2]),
