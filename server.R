@@ -384,7 +384,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
         }else{
           shinyjs::hide("demux_results_view_Pacbio")
@@ -409,7 +409,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
         }else{
           shinyjs::hide("dada2_results_Pacbio")
@@ -496,7 +496,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
         }else{
           shinyjs::hide("demux_results_view_Pacbio")
@@ -521,7 +521,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
         }else{
           shinyjs::hide("dada2_results_Pacbio")
@@ -608,7 +608,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
         }else{
           shinyjs::hide("demux_results_view_Pacbio")
@@ -633,7 +633,7 @@ server <- function(session, input, output) {
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Pacbio long read"){
+        if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
         }else{
           shinyjs::hide("dada2_results_Pacbio")
@@ -864,7 +864,7 @@ server <- function(session, input, output) {
         )
       })
       
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       
       output$dada2_parameter <- renderUI({
         
@@ -1510,15 +1510,15 @@ server <- function(session, input, output) {
     if(sum(str_detect(a, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))==length(a)){
 
       if(sum(stringr::str_detect(a, "_R2[(\\.)(_)]")) > 0 ){
-        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Long read"))
       }else{
-        updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
+        updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Long read"))
       }
     }else{
       if(sum(stringr::str_detect(a, "_(R){0,1}2[(\\.)(_)]")) > 0 ){
-        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+        updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Long read"))
       }else{
-      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Long read"))
       }
       }
   })
@@ -1526,22 +1526,22 @@ server <- function(session, input, output) {
   observeEvent(input$input_job_id_denoise,{
     a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise), full.names = T)
     if(sum(str_detect(a, "single")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Long read"))
     }else if(sum(str_detect(a, "paired")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Long read"))
     }else if(sum(str_detect(a, "Pacbio")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Pacbio long read", "Paired end", "Single end"))
+      updatePickerInput(session, "seqs_type", choices = c("Long read", "Paired end", "Single end"))
     }
   })
   
   observeEvent(input$input_job_id_taxa,{
     a <- list.files(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa), full.names = T)
     if(sum(str_detect(a, "single")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Pacbio long read"))
+      updatePickerInput(session, "seqs_type", choices = c("Single end", "Paired end", "Long read"))
     }else if(sum(str_detect(a, "paired")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Pacbio long read"))
+      updatePickerInput(session, "seqs_type", choices = c("Paired end", "Single end", "Long read"))
     }else if(sum(str_detect(a, "Pacbio")) > 0){
-      updatePickerInput(session, "seqs_type", choices = c("Pacbio long read", "Paired end", "Single end"))
+      updatePickerInput(session, "seqs_type", choices = c("Long read", "Paired end", "Single end"))
     }
   })
   
@@ -2079,7 +2079,7 @@ server <- function(session, input, output) {
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       if(file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_taxa,
                             "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
@@ -2691,7 +2691,7 @@ server <- function(session, input, output) {
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/parameter_taxonomy_classification_paired.csv"), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/parameter_taxonomy_classification_Pacbio.csv"), file)
@@ -4861,7 +4861,7 @@ server <- function(session, input, output) {
     
   # Demux Pacbio ----
     observe({
-      if(input$seqs_type == "Pacbio long read"){
+      if(input$seqs_type == "Long read"){
         shinyjs::hide("primer_seqs_bttn")
         updateSelectInput(session, "primer_f", choices = c("27F", "8F", "CC [F]", "341F","357F", "515F", "533F", "16S.1100.F16", "1237F", "other"))
         updateSelectInput(session, "primer_r", choices = c("1492R (l)", "519R", "CD [R]", "806R","907R", "1100R", "1391R", "1492R (s)", "other"))
@@ -5783,7 +5783,7 @@ server <- function(session, input, output) {
             updateTextInput(session, inputId = "min_length", value = 0)
             updateTextInput(session, inputId = "max_length", value = 0)
           }
-        }else if(input$seqs_type == "Pacbio long read"){
+        }else if(input$seqs_type == "Long read"){
           if(file.exists(paste0("/home/imuser/web_version/users_files/",
                                 input$input_job_id_taxa,
                                 "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
@@ -6964,7 +6964,7 @@ server <- function(session, input, output) {
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       if(file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_taxa,
                             "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
@@ -8110,7 +8110,7 @@ server <- function(session, input, output) {
           updateTextInput(session, inputId = "min_length", value = 0)
           updateTextInput(session, inputId = "max_length", value = 0)
         }
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         if(file.exists(paste0("/home/imuser/web_version/users_files/",
                               input$input_job_id_taxa,
                               "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
@@ -8533,7 +8533,7 @@ server <- function(session, input, output) {
   
   observe({
     
-    req(input$seqs_type == "Pacbio long read")
+    req(input$seqs_type == "Long read")
     
     # log table
     output$dada2_log_table_Pacbio <- renderTable({
@@ -8971,7 +8971,7 @@ server <- function(session, input, output) {
   observe({
     # req(input$primer_f, input$primer_r)
     
-    if(input$seqs_type == "Pacbio long read"){
+    if(input$seqs_type == "Long read"){
       output$check_primer <- renderUI(
         tagList(
           p("Your forward primer is ",  strong(input$primer_f_Pacbio),  " now.",
@@ -9107,7 +9107,7 @@ server <- function(session, input, output) {
                               "Please check the sequence type.", 
                               footer = NULL, easyClose = T, size = "l"))
         
-      }else if(input$seqs_type == "Pacbio long read" & file.exists(paste0(
+      }else if(input$seqs_type == "Long read" & file.exists(paste0(
         "/home/imuser/web_version/users_files/",
         input$input_job_id_taxa,
         "/rep-seqs-dada2_Pacbio.qza"
@@ -9287,7 +9287,7 @@ server <- function(session, input, output) {
                     input$input_job_id_taxa,
                     "/taxonomy_paired.qza"))
       
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.qza"))
       system(paste0(qiime_cmd, 
                     " feature-classifier classify-sklearn --i-classifier /home/imuser/web_version/users_files/",
@@ -9321,7 +9321,7 @@ server <- function(session, input, output) {
                     " --o-visualization /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
                     "/taxonomy_paired.qzv"))
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.qzv"))
       system(paste0(qiime_cmd, 
                     " metadata tabulate --m-input-file /home/imuser/web_version/users_files/",
@@ -9359,7 +9359,7 @@ server <- function(session, input, output) {
                    " --p-level 7 --o-collapsed-table /home/imuser/web_version/users_files/",
                    input$input_job_id_taxa,
                    "/taxatable7_single.qza"))
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxatable7_Pacbio.qza"))
       system(paste0(qiime_cmd, 
                     " taxa collapse --i-table /home/imuser/web_version/users_files/",
@@ -9420,7 +9420,7 @@ server <- function(session, input, output) {
                     "/taxonomy_paired_unzip/",
                     " /srv/shiny-server/www/users_files/",
                     input$input_job_id_taxa))
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       system(paste0("rm -r ", "/home/imuser/web_version/users_files/",input$input_job_id_taxa, "/taxonomy_Pacbio_unzip"))
       system(paste0("unzip -d /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
@@ -9461,7 +9461,7 @@ server <- function(session, input, output) {
                     "/taxonomy_paired.qzv /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
                     "/taxonomy_paired.zip"))
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/taxonomy_Pacbio.zip"))
       system(paste0("cp /home/imuser/web_version/users_files/",
                     input$input_job_id_taxa,
@@ -9512,7 +9512,7 @@ server <- function(session, input, output) {
         log_table_ <- cbind(Record = parameter_names, "Value" = as.character(log_table[,1]))
         return(log_table_[-c(1,2),])
       })
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       output$taxonomy_classificatio_table <- renderDataTable({
         req(input$input_job_id_taxa)
         taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
@@ -9577,7 +9577,7 @@ server <- function(session, input, output) {
                 paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/parameter_taxonomy_classification_paired.csv"), 
                 quote = F, 
                 row.names = F)
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       parameter_table <- data.frame(
         "JobID" = input$input_job_id_taxa,
         "Step" = "Taxonomy classification",
@@ -9646,7 +9646,7 @@ server <- function(session, input, output) {
                               "Please check your files or parameters.", 
                               footer = NULL, easyClose = T, size = "l"))
       }
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       if(file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_taxa,
                             "/taxonomy_Pacbio.qzv"))){
@@ -9725,7 +9725,7 @@ server <- function(session, input, output) {
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/taxonomy_paired.zip"), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/taxonomy_Pacbio.zip"), file)
@@ -9745,7 +9745,7 @@ server <- function(session, input, output) {
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/parameter_taxonomy_classification_paired.csv"), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/",
                          input$input_job_id_taxa,
                          "/parameter_taxonomy_classification_Pacbio.csv"), file)
@@ -9769,7 +9769,7 @@ server <- function(session, input, output) {
                          input$input_job_id_taxa,
                          "/taxatable7_paired.qza"
         ), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/", 
                          input$input_job_id_taxa,
                          "/taxatable7_Pacbio.qza"
@@ -9788,7 +9788,7 @@ server <- function(session, input, output) {
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_single.qza"), file)
       }else if(input$seqs_type == "Paired end"){
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_paired.qza"), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/table-dada2_Pacbio.qza"), file)
       }
       # lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^table-dada2_ | grep qza$"), intern = T)[1]
@@ -9805,7 +9805,7 @@ server <- function(session, input, output) {
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_single.qza"), file)
       }else if(input$seqs_type == "Paired end"){
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_paired.qza"), file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         file.copy(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/rep-seqs-dada2_Pacbio.qza"), file)
       }
       # lastest_file <- system(paste0("ls -t /home/imuser/web_version/users_files/", input$input_job_id_taxa, " | grep ^rep-seqs-dada2_ | grep qza$"), intern = T)[1]
@@ -9834,7 +9834,7 @@ server <- function(session, input, output) {
                                     "/taxonomy_paired.qza"))[["data"]]
         colnames(taxonomy)[1] <- "ASV"
         write.csv(taxonomy, file)
-      }else if(input$seqs_type == "Pacbio long read"){
+      }else if(input$seqs_type == "Long read"){
         taxonomy <- read_qza(paste0("/home/imuser/web_version/users_files/",
                                     input$input_job_id_taxa,
                                     "/taxonomy_Pacbio.qza"))[["data"]]
@@ -9907,7 +9907,7 @@ server <- function(session, input, output) {
         shinyjs::show("taxa_results_download")
         shinyjs::show("taxa_results_view")
       }
-    }else if(input$seqs_type == "Pacbio long read"){
+    }else if(input$seqs_type == "Long read"){
       if(file.exists(paste0("/home/imuser/web_version/users_files/",
                             input$input_job_id_taxa,
                             "/taxonomy_Pacbio.qzv"))){
@@ -17553,7 +17553,7 @@ server <- function(session, input, output) {
       return(log_table_[-1,])
     })
     
-  }else if(input$select_dataset == "Pacbio long read"){
+  }else if(input$select_dataset == "Long read"){
     
     output$taxonomy_classificatio_table_demo <- renderDataTable({
       req(input$input_job_id_taxa)
@@ -17586,7 +17586,7 @@ server <- function(session, input, output) {
         taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_paired.qza")[["data"]]
         colnames(taxonomy)[1] <- "ASV"
         write.csv(taxonomy, file)
-      }else if(input$select_dataset == "Pacbio long read"){
+      }else if(input$select_dataset == "Long read"){
         taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_Pacbio.qza")[["data"]]
         colnames(taxonomy)[1] <- "ASV"
         write.csv(taxonomy, file)
@@ -17603,7 +17603,7 @@ server <- function(session, input, output) {
         file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_single.csv", file)
       }else if(input$select_dataset == "Paired end"){
         file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_paired.csv", file)
-      }else if(input$select_dataset == "Pacbio long read"){
+      }else if(input$select_dataset == "Long read"){
         file.copy("/home/imuser/example_files/taxonomy_classification/parameter_taxonomy_classification_Pacbio.csv", file)
       }
       

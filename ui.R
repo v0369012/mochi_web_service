@@ -188,7 +188,7 @@ shinyUI(
                               pickerInput(inputId = "seqs_type",
                                           label = span("Choose the sequence type", 
                                                        style= "font-size: 20px; font-weight: 300; color: white; margin: 0px;"),
-                                          choices = c("Single end", "Paired end", "Pacbio long read"),
+                                          choices = c("Single end", "Paired end", "Long read"),
                                           width = "300px"
                               ),
                               
@@ -378,9 +378,9 @@ shinyUI(
                               ),
                               
                               conditionalPanel(
-                                condition = "input.seqs_type == 'Pacbio long read'",
+                                condition = "input.seqs_type == 'Long read'",
                                 column(width = 12,
-                                       h1("1. Sequence summary (for Pacbio long read)"),
+                                       h1("1. Sequence summary (for Long read)"),
                                        h4("(1) Summarize the long reads.",style = "color: #317EAC;"),
                                        actionButton(inputId = "demultiplexed_Pacbio", 
                                                     label = strong("Start!"), 
@@ -631,11 +631,11 @@ shinyUI(
                               
                               conditionalPanel(
                                 
-                                condition = "input.seqs_type == 'Pacbio long read'",
+                                condition = "input.seqs_type == 'Long read'",
                                 
                                 column(width = 12,
                                        
-                                       h1('2. Sequence denoising (DADA2) for Pacbio long read'),
+                                       h1('2. Sequence denoising (DADA2) for Long read'),
                                        
                                        h4("(1) Start to denoise."),
                                        actionButton(inputId = "denoising_Pacbio", 
@@ -1760,7 +1760,7 @@ shinyUI(
                       strong("Demo", style = "font-size:24px;color:white;top:20px"),
                       selectInput(inputId = "select_dataset", 
                                   label = "Select a dataset", 
-                                  choices = c("Single end", "Paired end", "Pacbio long read") 
+                                  choices = c("Single end", "Paired end", "Long read") 
                       ),
                       selectInput(inputId = "select_module", 
                                   label = "Select a module", 
@@ -2096,13 +2096,13 @@ shinyUI(
                  ),
                  
                  
-                 # Pacbio long read
+                 # Long read
                  conditionalPanel(
-                   #Pacbio long read 1
-                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   #Long read 1
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
                    
                    column(width = 12,
-                          h1("1. Sequence summary (for Pacbio long read)"),
+                          h1("1. Sequence summary (for Long read)"),
                           
                           div(
                             id = "demux_Pacbio_demo",
@@ -2140,12 +2140,12 @@ shinyUI(
                    )
                  ),
                  conditionalPanel(
-                   #Pacbio long read 2
-                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   #Long read 2
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
                           
-                          h1('2. Sequence denoising (DADA2) for Pacbio long read'),
+                          h1('2. Sequence denoising (DADA2) for Long read'),
                           div(
                             id = "dada2_results_Pacbio_demo",
                             hr(),
@@ -2207,8 +2207,8 @@ shinyUI(
                  ),
                  
                  conditionalPanel(
-                   #Pacbio long read 4
-                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Taxonomy analysis'",
+                   #Long read 4
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Taxonomy analysis'",
                    
                    column(width = 12,
                           p("Pacbio4")
@@ -2216,8 +2216,8 @@ shinyUI(
                  ),
                  
                  conditionalPanel(
-                   #Pacbio long read 5
-                   condition = "input.select_dataset == 'Pacbio long read' & input.select_module == 'Function analysis'",
+                   #Long read 5
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Function analysis'",
                    
                    column(width = 12,
                           p("Pacbio5")
