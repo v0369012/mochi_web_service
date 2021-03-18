@@ -7640,11 +7640,11 @@ server <- function(session, input, output) {
     
     output$dada2_sample_summary_paired <- renderTable({
       req(input$input_job_id_denoise)
-      sample_table <- read.csv(
-        paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
-        , header = F)
-      
-      sample_table <- filter(sample_table, V2 != 0) # qiime version problem
+      # sample_table <- read.csv(
+      #   paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv")
+      #   , header = F)
+      # 
+      # sample_table <- filter(sample_table, V2 != 0) # qiime version problem
       
       sample_qiime2 <- read_qza(paste0("/home/imuser/web_version/users_files/", input$input_job_id_denoise, "/table-dada2_paired.qza"))[["data"]]
       sample_found_number <- c()
@@ -7655,7 +7655,7 @@ server <- function(session, input, output) {
       
       sample_summary_table <- data.frame(
         SampleID = colnames(sample_qiime2),
-        "Read count" = sample_table[,2],
+        "Read count" = colSums(sample_qiime2),
         "Number of ASVs observed in" = sample_found_number
       )
       
@@ -16767,9 +16767,9 @@ server <- function(session, input, output) {
   # summary table
   output$dada2_sample_summary_single_demo <- renderTable({
     
-    sample_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    # sample_table <- read.csv("/home/imuser/example_files/single/denoise_single_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
     
-    sample_table <- filter(sample_table, V2 != 0) # qiime version problem
+    # sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
     sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
     sample_found_number <- c()
@@ -16780,7 +16780,7 @@ server <- function(session, input, output) {
     
     sample_summary_table <- data.frame(
       SampleID = colnames(sample_qiime2),
-      "Read count" = sample_table[,2],
+      "Read count" = colSums(sample_qiime2),
       "Number of ASVs observed in" = sample_found_number
     )
     
@@ -17085,9 +17085,9 @@ server <- function(session, input, output) {
   # summary table
   output$dada2_sample_summary_paired_demo <- renderTable({
     
-    sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
-    
-    sample_table <- filter(sample_table, V2 != 0) # qiime version problem
+    # sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    # 
+    # sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
     sample_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
     sample_found_number <- c()
@@ -17098,7 +17098,7 @@ server <- function(session, input, output) {
     
     sample_summary_table <- data.frame(
       SampleID = colnames(sample_qiime2),
-      "Read count" = sample_table[,2],
+      "Read count" = colSums(sample_qiime2),
       "Number of ASVs observed in" = sample_found_number
     )
     
@@ -17114,9 +17114,9 @@ server <- function(session, input, output) {
   
   output$dada2_sample_table_paired_demo <- renderDataTable({
     
-    sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
-    
-    sample_table <- filter(sample_table, V2 != 0) # qiime version problem
+    # sample_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    # 
+    # sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
     sample_qiime2 <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
     sample_found_number <- c()
@@ -17127,9 +17127,9 @@ server <- function(session, input, output) {
     
     sample_summary_table <- data.frame(
       SampleID = colnames(sample_qiime2),
-      "Read count" = sample_table[,2],
+      "Read count" = colSums(sample_qiime2),
       "Number of ASVs observed in" = sample_found_number
-    )
+    ) %>% as_tibble()
     
     colnames(sample_summary_table) <- c("SampleID", "Read count", "Number of ASVs observed in")
     return(sample_summary_table)
@@ -17407,9 +17407,9 @@ server <- function(session, input, output) {
   # summary table
   output$dada2_sample_summary_Pacbio_demo <- renderTable({
     
-    sample_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
-    
-    sample_table <- filter(sample_table, V2 != 0) # qiime version problem
+    # sample_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/sample-frequency-detail.csv", header = F)
+    # 
+    # sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
     sample_qiime2 <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
     sample_found_number <- c()
@@ -17420,7 +17420,7 @@ server <- function(session, input, output) {
     
     sample_summary_table <- data.frame(
       SampleID = colnames(sample_qiime2),
-      "Read count" = sample_table[,2],
+      "Read count" = colSums(sample_qiime2),
       "Number of ASVs observed in" = sample_found_number
     )
     
@@ -17780,7 +17780,10 @@ server <- function(session, input, output) {
   
   })
   
-  output$taxonomy_classificatio_table_dl <- downloadHandler(
+  
+  # dl
+  
+  output$taxonomy_classificatio_table_demo_dl <- downloadHandler(
     filename = "taxonomy_classificatio_table_demo.csv",
     
     content = function(file){
@@ -17788,22 +17791,22 @@ server <- function(session, input, output) {
       if(input$select_dataset == "Single end"){
         taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_single.qza")[["data"]]
         colnames(taxonomy)[1] <- "ASV"
-        write.csv(taxonomy, file)
+        write.csv(taxonomy, file, row.names = F)
       }else if(input$select_dataset == "Paired end"){
         taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_paired.qza")[["data"]]
         colnames(taxonomy)[1] <- "ASV"
-        write.csv(taxonomy, file)
+        write.csv(taxonomy, file, row.names = F)
       }else if(input$select_dataset == "Long read"){
         taxonomy <- read_qza("/home/imuser/example_files/taxonomy_classification/taxonomy_Pacbio.qza")[["data"]]
         colnames(taxonomy)[1] <- "ASV"
-        write.csv(taxonomy, file)
+        write.csv(taxonomy, file, row.names = F)
       }
       
       
     }
   )
   
-  output$log_file_taxonomy_classification <- downloadHandler(
+  output$log_file_taxonomy_classification_demo <- downloadHandler(
     filename = "taxonomy_classification_log_demo.csv",
     content = function(file){
       if(input$select_dataset == "Single end"){
@@ -17816,6 +17819,83 @@ server <- function(session, input, output) {
       
     }
   )
+  
+  
+  
+  observe({
+    if(input$select_dataset == "Single end"){
+      
+      output$taxatable_download_demo <- downloadHandler(
+        filename <-"taxonomic_table_single_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/single/taxatable7_single.qza", file)
+        }
+      )
+      
+      output$table_dada2_download_demo <- downloadHandler(
+        filename = "ASVs_table_single_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/single/table-dada2_single.qza", file)
+        }
+      )
+      
+      output$rep_seq_dada2_download_demo <- downloadHandler(
+        filename = "rep_seqs_forPhylo_single_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/single/rep-seqs-dada2_single.qza", file)
+        }
+      )
+      
+    }else if(input$select_dataset == "Paired end"){
+      
+      output$taxatable_download_demo <- downloadHandler(
+        filename <-"taxonomic_table_paired_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/paired/taxatable7_paired.qza", file)
+        }
+      )
+      
+      output$table_dada2_download_demo <- downloadHandler(
+        filename = "ASVs_table_paired_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/paired/table-dada2_paired.qza", file)
+        }
+      )
+      
+      output$rep_seq_dada2_download_demo <- downloadHandler(
+        filename = "rep_seqs_forPhylo_paired_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/paired/rep-seqs-dada2_paired.qza", file)
+        }
+      )
+      
+      
+    }else if(input$select_dataset == "Long read"){
+      
+      output$taxatable_download_demo <- downloadHandler(
+        filename <-"taxonomic_table_long_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/Pacbio/taxatable7_Pacbio.qza", file)
+        }
+      )
+      
+      output$table_dada2_download_demo <- downloadHandler(
+        filename = "ASVs_table_long_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza", file)
+        }
+      )
+      
+      output$rep_seq_dada2_download_demo <- downloadHandler(
+        filename = "rep_seqs_forPhylo_long_demo.qza",
+        content = function(file){
+          file.copy("/home/imuser/example_files/Pacbio/rep-seqs-dada2_Pacbio.qza", file)
+        }
+      )
+      
+    }
+    
+  })
   
   # dockerfile ----
   output$download_yml <- downloadHandler(
