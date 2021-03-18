@@ -2940,7 +2940,7 @@ server <- function(session, input, output) {
       
       if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")) == 0 | sum(str_count(input$seqs_data_upload$name, "_")) != 1*length(input$seqs_data_upload$name)){
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read}_{set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
                               footer = NULL, easyClose = T, size = "l"))
       # }else{
       #   showModal(modalDialog(title = strong("Error!", style = "color: red"),
@@ -2975,7 +2975,7 @@ server <- function(session, input, output) {
       
       if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")) == 0 | sum(str_count(input$seqs_data_upload$name, "_")) != 1*length(input$seqs_data_upload$name)){
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read}_{set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
                               footer = NULL, easyClose = T, size = "l"))
       }else{
         # showModal(modalDialog(title = strong("Error!", style = "color: red"),
@@ -3773,7 +3773,7 @@ server <- function(session, input, output) {
       
       if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")) == 0 | sum(str_count(input$seqs_data_upload$name, "_")) != 1*length(input$seqs_data_upload$name)){
         showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                              "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read}_{set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
                               footer = NULL, easyClose = T, size = "l"))
       }else{
         # showModal(modalDialog(title = strong("Error!", style = "color: red"),
@@ -4894,7 +4894,7 @@ server <- function(session, input, output) {
           
           if(sum(str_detect(input$seqs_data_upload$name, ".+_R{0,1}[12]\\.")) == 0 | sum(str_count(input$seqs_data_upload$name, "_")) != 1*length(input$seqs_data_upload$name)){
             showModal(modalDialog(title = strong("Error!", style = "color: red"),
-                                  "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read_set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
+                                  "File names must be {sample ID}_{barcode identifier}_{lane number}_{direction of read}_{set number} (e.g. L2S357_15_L001_R1_001) or {Sample ID}_{direction of read} (e.g. L2S357_R1 or L2S357_1).",
                                   footer = NULL, easyClose = T, size = "l"))
           }else{
             
