@@ -16771,7 +16771,7 @@ server <- function(session, input, output) {
     
     sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
-    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
     sample_found_number <- c()
     for (i in 1:ncol(sample_qiime2)) {
       sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
@@ -16800,7 +16800,7 @@ server <- function(session, input, output) {
     
     sample_table <- filter(sample_table, V2 != 0) # qiime version problem
     
-    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
     sample_found_number <- c()
     for (i in 1:ncol(sample_qiime2)) {
       sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
@@ -16819,7 +16819,7 @@ server <- function(session, input, output) {
   
   output$dada2_asv_summary_table_single_demo <- renderTable({
     
-    asv_table <- read.csv("/home/imuser/example_files/single//table-dada2_single.qza", header = F)
+    asv_table <- read.csv("/home/imuser/example_files/single//table-dada2.qza", header = F)
     asv_read_count <- rowSums(asv_qiime2)
     asv_summary <- data.frame(
       Min = min(asv_table[,2]),
@@ -16833,7 +16833,7 @@ server <- function(session, input, output) {
   
   output$dada2_asv_table_single_demo <- renderDataTable({
     
-    asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+    asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
     
     asv_found_number <- c()
     for (i in 1:nrow(asv_qiime2)) {
@@ -16934,7 +16934,7 @@ server <- function(session, input, output) {
   
   # dada2 table
   output$dada2_table_single_demo <- renderDataTable({
-    dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]] %>% as.data.frame()
+    dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]] %>% as.data.frame()
     dada2_table_rname <- rownames(dada2_table)
     dada2_table_tibble <- as.tibble(dada2_table)
     dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
@@ -16961,7 +16961,7 @@ server <- function(session, input, output) {
       
       sample_table <- filter(sample_table, V2 != 0) # qiime version problem
       
-      sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+      sample_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
       sample_found_number <- c()
       for (i in 1:ncol(sample_qiime2)) {
         sample_found_number[i] <- sum(sample_qiime2[,i]!=0)
@@ -16983,7 +16983,7 @@ server <- function(session, input, output) {
     filename = "asv_summary_table_demo.csv",
     content = function(file){
       
-      asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]]
+      asv_qiime2 <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]]
       
       asv_found_number <- c()
       for (i in 1:nrow(asv_qiime2)) {
@@ -17064,7 +17064,7 @@ server <- function(session, input, output) {
   output$dada2_table_single_demo_dl <- downloadHandler(
     filename = "denoised_table_demo.csv",
     content = function(file){
-      dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2_single.qza")[["data"]] %>% as.data.frame()
+      dada2_table <- read_qza("/home/imuser/example_files/single/table-dada2.qza")[["data"]] %>% as.data.frame()
       dada2_table_rname <- rownames(dada2_table)
       dada2_table_tibble <- as.tibble(dada2_table)
       dada2_table_tibble <- cbind("ASV" = dada2_table_rname, dada2_table_tibble)
