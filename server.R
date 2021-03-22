@@ -21707,7 +21707,7 @@ server <- function(session, input, output) {
       
       W_unif_nmds_plot_demo <- reactive({
         
-        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta]!="NA")
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo]!="NA")
         taxatable_beta <- asv_table_demo()[, nonNA_position]
         metadata_beta <- Metadata_stats_demo()[nonNA_position,]
         colnames(metadata_beta)[1] <- "SampleID"
