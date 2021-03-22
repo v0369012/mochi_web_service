@@ -21419,7 +21419,7 @@ server <- function(session, input, output) {
           colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
         }
         
-        A_diversity_metadata_list[[input$metadata_phylo_alpha]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha]], feature_name!="NA")
+        A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]], feature_name!="NA")
         
         Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$faith_pd, A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$feature_name)
         Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
