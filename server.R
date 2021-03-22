@@ -21918,7 +21918,7 @@ server <- function(session, input, output) {
         nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
         nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
         
-        W_unifrac_dm <- read_qza("/home/imuser/qiime_output/core-metrics-results/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/single/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
         nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
         
         adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
@@ -22471,7 +22471,7 @@ server <- function(session, input, output) {
             sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
             # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
             #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
-            W_unifrac_ds <- read_qza("/home/imuser/qiime_output/core-metrics-results/weighted_unifrac_distance_matrix.qza")[["data"]]
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/single/weighted_unifrac_distance_matrix.qza")[["data"]]
             return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
           })
           
