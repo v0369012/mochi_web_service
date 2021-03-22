@@ -1941,21 +1941,595 @@ shinyUI(
                           )
                    )
                  ),
+                 
+                 # Taxonomy analysis demo
                  conditionalPanel(
-                   #single4
-                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Taxonomy analysis'",
+                   
+                   condition = "input.select_module == 'Taxonomy analysis'",
                    
                    column(width = 12,
-                          p("single4")
+                          tabsetPanel(type = "tabs",
+                                      
+                                      tabPanel(title = 'Taxonomic table',
+                                               icon = icon(name = "table"),
+                                               
+                                               useShinyjs(),
+                                               
+                                               div(
+                                                 id = "taxatable_ui_demo",
+                                                 radioButtons(inputId = "metadata1_demo", 
+                                                              label = "Choose the group", 
+                                                              choices = " ", 
+                                                              inline = T),
+                                                 withSpinner(
+                                                   dataTableOutput(outputId = "contents_demo"), 
+                                                   type = 2, 
+                                                   color.background = "white"),
+                                                 downloadButton(outputId = "downloadTaxaTable_demo", 
+                                                                label = "Download Taxonomic table"),
+                                                 style = "margin-top:10px"
+                                               ),
+                                               
+                                               
+                                               tags$head(
+                                                 tags$style(HTML("
+                                                                      .shiny-output-error-validation {
+                                                                        color: red;
+                                                                        font-size: 24px;
+                                                                        font-weight: 600;
+                                                                        margin-top: 40px;
+                                                                        }
+                                                                    "))
+                                               )
+                                               # tableOutput(outputId = "taxatable_summary")
+                                               
+                                               
+                                               
+                                               
+                                               
+                                               
+                                               
+                                      ),
+                                      
+                                      tabPanel(title = "Taxonomic barplot",
+                                               icon = icon(name = "chart-bar"),
+                                               
+                                               div(
+                                                 id = "taxabarplot_ui_demo",
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "barplot_demo", 
+                                                                height = "600px"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 
+                                                 textOutput(outputId="word_metadata_NA_1_demo") %>% shinyjs::hidden(),  
+                                                 selectInput(inputId = "select_level_bar_demo", 
+                                                             label = "Choose the level_demo", 
+                                                             choices = c("Kingdom","Phylum","Class","Order","Family","Genus","Species") 
+                                                 ),
+                                                 sliderInput(inputId = "integer_demo", 
+                                                             label = "Top N:",
+                                                             min = 1, 
+                                                             max = 30,
+                                                             value = 10,
+                                                             ticks = F),
+                                                 radioButtons(inputId = "metadata_barplot_demo", 
+                                                              label = "Choose the group",
+                                                              choices = " ",
+                                                              inline = T),
+                                                 downloadButton(outputId = "download_barplot_demo", 
+                                                                label = "Download barplot")
+                                                 
+                                               )
+                                      ),
+                                      
+                                      tabPanel(title = "Taxonomic heatmap", 
+                                               icon = icon(name = "th"),
+                                               div(
+                                                 id = "taxaheatmap_ui_demo",
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "crimeplot_demo", 
+                                                                height = "600px"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 textOutput(outputId="word_metadata_NA_2_demo"),
+                                                 selectInput(inputId = "select_level_hm_demo", 
+                                                             label = "Choose the level", 
+                                                             choices = c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+                                                 ),
+                                                 radioButtons(inputId = "metadata_hm_demo", 
+                                                              label = "Choose the group",
+                                                              choices = " ",
+                                                              inline = T),
+                                                 downloadButton(outputId = "downloadHMmatrix_demo", 
+                                                                label = "Download Heatmap matrix")
+                                               ),
+                                               
+                                      ),
+                                      
+                                      tabPanel(title = "Krona", 
+                                               icon = icon(name = "chart-pie"),
+                                               
+                                               div(
+                                                 id = "krona_ui_demo",
+                                                 withSpinner(
+                                                   uiOutput(outputId = "krona_output_demo"),
+                                                   type = spinner_type,
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 
+                                                 downloadButton(outputId ="download_krona_demo", 
+                                                                label = "Download Krona results (.zip)")
+                                               ),
+                                               
+                                               
+                                      ),
+                                      
+                                      
+                                      tabPanel(title = "Alpha diversity",
+                                               icon = icon(name = "info"),
+                                               div(
+                                                 id = "alpha_ui_demo",
+                                                 h3("Table"),
+                                                 withSpinner(
+                                                   dataTableOutput(outputId = "contents2_demo"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 
+                                                 downloadButton(outputId = "downloadAlpha_demo", 
+                                                                label = "Download Alpha Diversity Table"),
+                                                 hr(),
+                                                 h3("Boxplot"),
+                                                 selectInput(inputId = "select_diversity_demo", 
+                                                             label = "Choose the index", 
+                                                             choices = c("Richness", "Chao1", "ACE", 
+                                                                         "Shannon_diverstiy", "Simpson_diversity", "InvSimpson_diversity",
+                                                                         "Shannon_evenness", "Simpson_evenness", "Goods_coverage")),
+                                                 radioButtons(inputId = "select_stat_demo", 
+                                                              label = "Choose the statistic method", 
+                                                              choices = c("ANOVA", "Kruskal-Wallis test"), 
+                                                              inline = T),
+                                                 radioButtons(inputId = "metadata_alpha_demo", 
+                                                              label = "Choose the group",
+                                                              choices = " ",
+                                                              inline = T),
+                                                 
+                                                 # plotOutput("alpha_boxplot"),
+                                                 withSpinner(
+                                                   plotOutput(outputId = "alpha_boxplot_demo"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 textOutput(outputId="word_metadata_NA_3_demo"),
+                                                 downloadButton(outputId = "downloadAlphaBoxPlot_demo", 
+                                                                label = "Download Alpha Diversity Boxplot"),
+                                                 hr(),
+                                                 h3("Post hoc analysis"),
+                                                 textOutput(outputId = "post_test_type_demo"),
+                                                 tags$head(
+                                                   tags$style("#post_test_type_demo{color: black;
+                                                               font-size: 20px;
+                                                                       }"
+                                                   )
+                                                 ),
+                                                 withSpinner(
+                                                   tableOutput(outputId = "post_test_demo"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 downloadButton(outputId = "Alpha_posttest_DL_demo", 
+                                                                label = "Download Alpha Diversity statistical result"),
+                                                 br(),br()
+                                                 
+                                               ),
+                                               
+                                               
+                                               
+                                      ),
+                                      
+                                      tabPanel(title = "Beta diversity",
+                                               icon = icon("info"),
+                                               div(
+                                                 id = "beta_ui",
+                                                 h3("Beta diversity table (Bray-Curtis)"),
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "beta_dsmx_hm_demo", 
+                                                                height = "600px"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 downloadButton(outputId = "download_beta_dsmx_hm_demo", 
+                                                                label = "Download Beta Diversity distance matrix data"),
+                                                 
+                                                 hr(),
+                                                 h3("Dimension reduction plot"),
+                                                 withSpinner(
+                                                   plotOutput(outputId = "betaplot_demo", 
+                                                              height = "600px"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color),
+                                                 # textOutput(outputId="word_metadata_NA_4"),
+                                                 radioButtons(inputId = "sep_demo", 
+                                                              label = "Choose the method",
+                                                              choices = c("PCA","PCoA","NMDS"), 
+                                                              inline = T),
+                                                 checkboxInput(inputId = "beta_cluster_demo", 
+                                                               label = "Clustering"),
+                                                 checkboxInput(inputId = "beta_showID_demo", 
+                                                               label = "Show sample ID",value = F),
+                                                 textOutput(outputId = "NMDS_stress_demo"),
+                                                 radioButtons(inputId = "metadata_beta_demo", 
+                                                              label = "Choose the group",
+                                                              choices = " ",
+                                                              inline = T),
+                                                 downloadButton(outputId = "downloadBetaPlot_demo", 
+                                                                label = "Download Beta Diversity Plot"),
+                                                 hr(),
+                                                 
+                                                 h3("Statistical analysis"),
+                                                 column(
+                                                   width = 4,
+                                                   textOutput(outputId = "Permanova_title_demo"), 
+                                                   tags$style(type="text/css", "#Permanova_title_demo {font-size: 15px; font-weight: bold;}"),
+                                                   #dataTableOutput("permanova_table"),
+                                                   withSpinner(
+                                                     tableOutput(outputId = "permanova_table_demo"), 
+                                                     type = spinner_type, 
+                                                     color.background = spinner_bg_color),
+                                                   downloadButton(outputId = "download_permanova_demo", 
+                                                                  label = "Download PERMANOVA table"),
+                                                   hr()
+                                                 ),
+                                                 
+                                                 
+                                                 column(width = 4,
+                                                        textOutput(outputId = "ANOSIM_title_demo"), 
+                                                        tags$style(type="text/css", "#ANOSIM_title_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "ANOSIM_table_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_ANOSIM_demo", 
+                                                                       label = "Download ANOSIM table"),
+                                                        hr()
+                                                 ),
+                                                 
+                                                 
+                                                 column(width = 4,
+                                                        textOutput(outputId = "MRPP_title_demo"), 
+                                                        tags$style(type="text/css", "#MRPP_title_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "MRPP_table_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_MRPP_demo", 
+                                                                       label = "Download MRPP table"),
+                                                        hr()
+                                                 ),
+                                                 
+                                                 hr(),
+                                                 # h3("Pair"),
+                                                 # h4("Permanova"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "Permanova_pair_title_demo"), 
+                                                        tags$style(type="text/css", "#Permanova_pair_title_demo {font-size: 15px; font-weight: bold;}"), 
+                                                        withSpinner(
+                                                          tableOutput(outputId = "permanova_pair_table_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_permanova_pair_demo", 
+                                                                       label = "Download pairwise PERMANOVA table")
+                                                 ),
+                                                 # h4("ANOSIM"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "ANOSIM_pair_title_demo"), 
+                                                        tags$style(type="text/css", "#ANOSIM_pair_title_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "ANOSIM_pair_table_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_ANOSIM_pair_demo", 
+                                                                       label = "Download pairwise ANOSIM table")
+                                                 ),
+                                                 # h4("MRPP"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "MRPP_pair_title_demo"), 
+                                                        tags$style(type="text/css", "#MRPP_pair_title_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "MRPP_pair_table_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_MRPP_pair_demo", 
+                                                                       label = "Download pairwise MRPP table")
+                                                 )
+                                               ),
+                                               
+                                               
+                                      ),
+                                      
+                                      
+                                      tabPanel(title = "Phylogenetic diversity",
+                                               icon = icon("code-branch"),
+                                               
+                                              div(
+                                                 id = "phylo_output_ui_demo",
+                                                 hr(),
+                                                 # textOutput(outputId = "word_phylo_tree"),
+                                                 h3("Faith PD table"),
+                                                 withSpinner(
+                                                   dataTableOutput(outputId = "contents4_demo"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 downloadButton(outputId = "download_faithPD_table_demo",
+                                                                label = "Download Faith PD table"),
+                                                 hr(),
+                                                 
+                                                 h3("Faith PD boxplot"),
+                                                 withSpinner(
+                                                   plotOutput(outputId = "faith_PD_boxplot_demo"),
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 
+                                                 radioButtons(inputId = "select_stat_phylo_demo", 
+                                                              label = "Choose the statistic method", 
+                                                              choices = c("ANOVA", "Kruskal-Wallis test"), 
+                                                              inline = T),
+                                                 radioButtons(inputId = "metadata_phylo_alpha_demo", 
+                                                              label = "Choose the group", 
+                                                              choices = " ",
+                                                              inline = T),
+                                                 downloadButton(outputId = "download_faithPD_boxplot_demo", 
+                                                                label = "Download Faith PD boxplot"),
+                                                 hr(),
+                                                 h3("Post hoc analysis"),
+                                                 textOutput(outputId = "post_test_type_phylo_demo"),
+                                                 tags$head(tags$style("#post_test_type_phylo_demo{color: black;
+                                                               font-size: 20px;
+                                                                                     }"
+                                                 )
+                                                 ),
+                                                 
+                                                 withSpinner(
+                                                   tableOutput(outputId = "post_test_phylo_demo"),
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 
+                                                 downloadButton(outputId = "download_faithPD_posttest_demo", 
+                                                                label = "Download Faith PD post hoc result"),
+                                                 hr(),
+                                                 
+                                                 h3("Heatmap of UniFrac distance"),
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "unif_dm_hm_demo", 
+                                                                height = "600px"),
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 radioButtons(inputId = "UnW_or_W_demo", 
+                                                              label = "Choose the method",
+                                                              choices = c("Unweighted", "Weighted"), 
+                                                              inline = T),
+                                                 downloadButton(outputId = "download_unif_dm_demo", 
+                                                                label = "Download UniFrac distance matrix"),
+                                                 hr(),
+                                                 
+                                                 h3("Dimension reduction plot of UniFrac distance"),
+                                                 withSpinner(
+                                                   plotOutput(outputId = "unW_unif_ordination_demo", 
+                                                              height = "600px"),
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 radioButtons(inputId = "UnW_or_W_phylo_demo", 
+                                                              label = "Choose the method",
+                                                              choices = c("Unweighted", "Weighted"), 
+                                                              inline = T),
+                                                 radioButtons(inputId = "ordination_phylo_demo", 
+                                                              label = "Choose the ordination method",
+                                                              choices = c("PCoA", "NMDS"), 
+                                                              inline = T),
+                                                 checkboxInput(inputId = "phylo_cluster_demo", 
+                                                               label = "Clustering"),
+                                                 checkboxInput(inputId = "phylo_showID_demo", 
+                                                               label = "Show sample ID",value = F),
+                                                 radioButtons(inputId = "metadata_phylo_beta_demo", 
+                                                              label = "Choose the group", 
+                                                              choices = " ", 
+                                                              inline = T),
+                                                 downloadButton(outputId = "download_unif_plot_demo", 
+                                                                label = "Download UniFrac plot"),
+                                                 
+                                                 hr(),
+                                                 
+                                                 h3("Statistical analysis"),
+                                                 column(
+                                                   width = 4,
+                                                   textOutput(outputId = "Permanova_title_phylo_demo"), 
+                                                   tags$style(type="text/css", "#Permanova_title_phylo_demo {font-size: 15px; font-weight: bold;}"),
+                                                   #dataTableOutput("permanova_table"),
+                                                   withSpinner(
+                                                     tableOutput(outputId = "permanova_table_phylo_demo"), 
+                                                     type = spinner_type, 
+                                                     color.background = spinner_bg_color),
+                                                   downloadButton(outputId = "download_permanova_phylo_demo", 
+                                                                  label = "Download PERMANOVA table"),
+                                                   hr()
+                                                 ),
+                                                 
+                                                 
+                                                 column(width = 4,
+                                                        textOutput(outputId = "ANOSIM_title_phylo_demo"), 
+                                                        tags$style(type="text/css", "#ANOSIM_title_phylo_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "ANOSIM_table_phylo_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_ANOSIM_phylo_demo", 
+                                                                       label = "Download ANOSIM table"),
+                                                        hr()
+                                                 ),
+                                                 
+                                                 
+                                                 column(width = 4,
+                                                        textOutput(outputId = "MRPP_title_phylo_demo"), 
+                                                        tags$style(type="text/css", "#MRPP_title_phylo_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "MRPP_table_phylo_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_MRPP_phylo_demo", 
+                                                                       label = "Download MRPP table"),
+                                                        hr()
+                                                 ),
+                                                 
+                                                 hr(),
+                                                 # h3("Pair"),
+                                                 # h4("Permanova"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "Permanova_pair_title_phylo_demo"), 
+                                                        tags$style(type="text/css", "#Permanova_pair_title_phylo_demo {font-size: 15px; font-weight: bold;}"), 
+                                                        withSpinner(
+                                                          tableOutput(outputId = "permanova_pair_table_phylo_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_permanova_pair_phylo_demo", 
+                                                                       label = "Download pairwise PERMANOVA table")
+                                                 ),
+                                                 # h4("ANOSIM"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "ANOSIM_pair_title_phylo_demo"), 
+                                                        tags$style(type="text/css", "#ANOSIM_pair_title_phylo_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "ANOSIM_pair_table_phylo_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_ANOSIM_pair_phylo_demo", 
+                                                                       label = "Download pairwise ANOSIM table")
+                                                 ),
+                                                 # h4("MRPP"),
+                                                 
+                                                 column(width = 4, 
+                                                        textOutput(outputId = "MRPP_pair_title_phylo_demo"), 
+                                                        tags$style(type="text/css", "#MRPP_pair_title_phylo_demo {font-size: 15px; font-weight: bold;}"),
+                                                        withSpinner(
+                                                          tableOutput(outputId = "MRPP_pair_table_phylo_demo"), 
+                                                          type = spinner_type, 
+                                                          color.background = spinner_bg_color),
+                                                        downloadButton(outputId = "download_MRPP_pair_phylo_demo", 
+                                                                       label = "Download pairwise MRPP table")
+                                                 )
+                                                 
+                                               ),
+                                               
+                                               
+                                      ),
+                                      
+                                      tabPanel(title = "ANCOM",
+                                               icon = icon("window-maximize"),
+                                               div(
+                                                 id = "ancom_ui_demo",
+                                                 strong("ANCOM (Analysis of composition of microbiomes) is used for comparing the composition of microbiomes in two or more populations.",
+                                                        style = "font-size: 18px"),
+                                                 br(),br(),
+                                                 radioButtons(inputId = "metadata_ANCOM_demo", 
+                                                              label = "Select an attribute comparison.", 
+                                                              choices = " ", 
+                                                              inline = T),
+                                                 selectInput(inputId = "ANCOM_level_demo", 
+                                                             label = "Choose the level", 
+                                                             choices = c("Phylum","Class","Order","Family","Genus","Species") 
+                                                 ),
+                                                 actionButton(inputId = "ANCOM_start_demo", 
+                                                              label = strong("Start!"),
+                                                              icon = icon("play-circle")
+                                                 ),
+                                           
+                                                 hr(),
+                                                 style = "margin-top:10px"
+                                               ) %>% shinyjs::hidden(),
+                                               
+                                               div(
+                                                 id = "ancom_output_ui_demo",
+                                                 uiOutput(outputId = "word_ancom_plotly_demo"),
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "ancom_plotly_demo"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 
+                                                 uiOutput(outputId = "annotation_ancom_demo"),
+                                                 hr(),
+                                                 uiOutput(outputId = "word_ancom_table_demo"),
+                                                 
+                                                 withSpinner(
+                                                   dataTableOutput(outputId = "ancom_sig_demo"),
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 )
+                                                 
+                                               ),
+                                               downloadButton(outputId = "ancom_table_download_demo",
+                                                              label = "Download the ANCOM result table (Contain all species)")
+                                               
+                                               
+                                               
+                                      )
+                                      
+                          )
                    )
                  ),
                  
                  conditionalPanel(
                    #single5
-                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Function analysis'",
+                   condition = "input.select_module == 'Function analysis'",
                    
                    column(width = 12,
-                          p("single5")
+                          tabsetPanel(type="tabs",
+                                      tabPanel(title = "Function annotation table",
+                                               icon = icon("table"),
+                                               div(
+                                                 id = "func_table_ui_demo",
+                                                 h3("Summary"),
+                                                 uiOutput(outputId = "function_report_demo"),
+                                                 hr(),
+                                                 h3("Function annotation table"),
+                                                 withSpinner(
+                                                   dataTableOutput(outputId = "func_table_BY_sampleid_demo",
+                                                                   height = "auto"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 downloadButton(outputId = "func_table_ID_demo", 
+                                                                label = "Download the function annotation table")
+                                               )
+                                      ),
+                                     
+                                      tabPanel(title = "Function barplot",
+                                               icon = icon("th"),
+                                               div(
+                                                 id="func_barplot_ui_demo",
+                                                 h3("Function barplot"),
+                                                 withSpinner(
+                                                   plotlyOutput(outputId = "Function_barplot_demo", 
+                                                                height = "800px"), 
+                                                   type = spinner_type, 
+                                                   color.background = spinner_bg_color
+                                                 ),
+                                                 radioButtons(inputId = "metadata_FA_demo", 
+                                                              label = "Choose the group", 
+                                                              choices = " ",
+                                                              inline = T),
+                                                 downloadButton(outputId = "FA_plot_download_demo",
+                                                                label = "Download the function barplot")
+                                               )
+                                      )
+                          )
                    )
                  ),
                  
@@ -2077,23 +2651,6 @@ shinyUI(
                    )
                  ),
                  
-                 conditionalPanel(
-                   #Paired4
-                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Taxonomy analysis'",
-                   
-                   column(width = 12,
-                          p("Paired4")
-                   )
-                 ),
-                 
-                 conditionalPanel(
-                   #Paired5
-                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Function analysis'",
-                   
-                   column(width = 12,
-                          p("Paired5")
-                   )
-                 ),
                  
                  
                  # Long read
@@ -2204,25 +2761,11 @@ shinyUI(
                             )
                           )
                    )
-                 ),
-                 
-                 conditionalPanel(
-                   #Long read 4
-                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Taxonomy analysis'",
-                   
-                   column(width = 12,
-                          p("Pacbio4")
-                   )
-                 ),
-                 
-                 conditionalPanel(
-                   #Long read 5
-                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Function analysis'",
-                   
-                   column(width = 12,
-                          p("Pacbio5")
-                   )
                  )
+                 
+                 
+                 
+                 
                  
                  
                  
