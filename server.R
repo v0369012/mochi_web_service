@@ -21150,15 +21150,13 @@ server <- function(session, input, output) {
       
       observe({
         
-        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_beta_demo)
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_phylo_beta_demo)
         nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
         nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
         
-        # nonNA_taxtable <- asv_table()[,nonNA_sampleid]
         nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
         
         group_names <- unique(nonNA_metadata[,selection_position])
-        # group_names <- unique(select(nonNA_metadata, colnames(Metadata_stats()[selection_position])))
         
         if(length(group_names)<=2){
           shinyjs::hide("download_permanova_pair_phylo_demo")
