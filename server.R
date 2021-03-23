@@ -367,53 +367,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_single_end.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("demux_results_view_single")
-        }else{
-          shinyjs::hide("demux_results_view_single")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_single")
+        # }
         
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_paired_end.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("demux_results_view_paired")
-        }else{
-          shinyjs::hide("demux_results_view_paired")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
-        }else{
-          shinyjs::hide("demux_results_view_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_Pacbio")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_single.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("dada2_results_single")
-        }else{
-          shinyjs::hide("dada2_results_single")
-        }
-        
+        # }else{
+        #   shinyjs::hide("dada2_results_single")
+        # }
+        # 
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_paired.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("dada2_results_paired")
-        }else{
-          shinyjs::hide("dada2_results_paired")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_1, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
-        }else{
-          shinyjs::hide("dada2_results_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_Pacbio")
+        # }
       }
       
       
@@ -479,53 +479,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_single_end.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("demux_results_view_single")
-        }else{
-          shinyjs::hide("demux_results_view_single")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_single")
+        # }
         
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_paired_end.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("demux_results_view_paired")
-        }else{
-          shinyjs::hide("demux_results_view_paired")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
-        }else{
-          shinyjs::hide("demux_results_view_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_Pacbio")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_single.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("dada2_results_single")
-        }else{
-          shinyjs::hide("dada2_results_single")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_single")
+        # }
         
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_paired.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("dada2_results_paired")
-        }else{
-          shinyjs::hide("dada2_results_paired")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_2, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
-        }else{
-          shinyjs::hide("dada2_results_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_Pacbio")
+        # }
       }
       
       removeModal()
@@ -591,53 +591,53 @@ server <- function(session, input, output) {
       })
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_single_end.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("demux_results_view_single")
-        }else{
-          shinyjs::hide("demux_results_view_single")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_single")
+        # }
         
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_paired_end.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("demux_results_view_paired")
-        }else{
-          shinyjs::hide("demux_results_view_paired")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/demux_Pacbio_end.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("demux_results_view_Pacbio")
-        }else{
-          shinyjs::hide("demux_results_view_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("demux_results_view_Pacbio")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_single.qzv"))){
-        if(input$seqs_type == "Single end"){
+        # if(input$seqs_type == "Single end"){
           shinyjs::show("dada2_results_single")
-        }else{
-          shinyjs::hide("dada2_results_single")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_single")
+        # }
         
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_paired.qzv"))){
-        if(input$seqs_type == "Paired end"){
+        # if(input$seqs_type == "Paired end"){
           shinyjs::show("dada2_results_paired")
-        }else{
-          shinyjs::hide("dada2_results_paired")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_paired")
+        # }
       }
       
       if(file.exists(paste0("/home/imuser/web_version/users_files/", input$new_job_id_3, "/table-dada2_Pacbio.qzv"))){
-        if(input$seqs_type == "Long read"){
+        # if(input$seqs_type == "Long read"){
           shinyjs::show("dada2_results_Pacbio")
-        }else{
-          shinyjs::hide("dada2_results_Pacbio")
-        }
+        # }else{
+        #   shinyjs::hide("dada2_results_Pacbio")
+        # }
       }
       
       removeModal()
