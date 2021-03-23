@@ -60,7 +60,7 @@ server <- function(session, input, output) {
       a("Shiny", href = "https://shiny.rstudio.com/", target = "_blank"), span(".", .noWS = "outside"),
       p("MOCHI may also be downloaded and operated locally."),
       # actionButton("home_demo", "Demo"),
-      img(src = "https://mochi.life.nctu.edu.tw/mochi_pipeline_new_3.png", alt = "pipeline", width = "80%", height = "80%", style = "margin:10px;max-width:1000px"),
+      img(src = "https://mochi.life.nctu.edu.tw/mochi_pipeline_new_4.png", alt = "pipeline", width = "80%", height = "80%", style = "margin:10px;max-width:1000px"),
       hr(),
       h4("The advantages of MOCHI", style = "font-weight:bolder;color:#317EAC"),
       tags$ul(
