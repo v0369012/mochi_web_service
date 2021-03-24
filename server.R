@@ -11317,7 +11317,7 @@ server <- function(session, input, output) {
             
             plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
                     y= rownames(heatmap_list[[feature]][[i]]),
-                    z = heatmap_list[[feature]][[i]],
+                    z = heatmap_list[[feature]][[i]] %>% as.matrix(),
                     zmin = min(unlist(heatmap_list[[feature]])),
                     zmax = max(unlist(heatmap_list[[feature]])),
                     type = "heatmap",
@@ -11329,7 +11329,7 @@ server <- function(session, input, output) {
             
             plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
                     y= rownames(heatmap_list[[feature]][[i]]),
-                    z = heatmap_list[[feature]][[i]],
+                    z = heatmap_list[[feature]][[i]] %>% as.matrix(),
                     type = "heatmap",
                     colors = colorRamp(c("green", "red")),
                     showscale = F,
@@ -19789,7 +19789,7 @@ server <- function(session, input, output) {
                 
                 plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
                         y= rownames(heatmap_list[[feature]][[i]]),
-                        z = heatmap_list[[feature]][[i]],
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
                         zmin = min(unlist(heatmap_list[[feature]])),
                         zmax = max(unlist(heatmap_list[[feature]])),
                         type = "heatmap",
@@ -19801,7 +19801,7 @@ server <- function(session, input, output) {
                 
                 plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
                         y= rownames(heatmap_list[[feature]][[i]]),
-                        z = heatmap_list[[feature]][[i]],
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
                         type = "heatmap",
                         colors = colorRamp(c("green", "red")),
                         showscale = F,
@@ -19917,7 +19917,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_example_single.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_single_example.html")
         # includeHTML(path = "/home/imuser/example_files/single/iframe_krona.html")
       })
       
@@ -23096,7 +23096,10357 @@ server <- function(session, input, output) {
       
     }else if(input$select_dataset == "Paired end"){
       
+      
+      
+      # Taxonomic table
+      updateRadioButtons(session, 
+                         inputId = "metadata1_demo",
+                         choices = c("SampleID", "Collection_Date"),
+                         inline = T
+      )
+      
+      Metadata_demo <- reactive({
+        
+        
+        metadata <- read.table("/home/imuser/example_files/paired/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        
+        asv_table <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        return(metadata)
+        
+        
+      }) # read the input sample data file
+      
+      TaxaTable_demo <- reactive({
+        
+        read_qza("/home/imuser/example_files/paired/taxatable7_paired.qza")$data
+        
+      }) # read the input file (.qza)
+      
+      TaxaTable_output_demo <- reactive({
+        
+        # revise the species names 
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        }
+        
+        
+        as_taxtable_perFeature<-function(taxatable_data, metadata_data){
+          
+          
+          metadata_feature_name <- colnames(metadata_data)
+          
+          
+          
+          metadata_feature_summary <- lapply(1:length(metadata_data), function(i){
+            metadata_data[,i] %>% unique() %>% as.character()
+          })
+          names(metadata_feature_summary) <- metadata_feature_name
+          
+          
+          k<-function(x, taxatable_data_k, metadata_data_k){
+            
+            sample_<-lapply(1:length(metadata_feature_summary[[x]]), function(i){
+              
+              metadata_data_k[,1][which(metadata_data_k[,x]==metadata_feature_summary[[x]][i])] %>% as.character()
+              
+            })
+            
+            names(sample_) <- metadata_feature_summary[[x]]
+            
+            
+            taxatable_data_ <- lapply(1:length(metadata_feature_summary[[x]]), function(i){
+              
+              rowSums(as.data.frame(taxatable_data_k[,sample_[[i]]]))
+              
+            })
+            
+            taxatable_data_<-as.data.frame(taxatable_data_)
+            colnames(taxatable_data_)<-names(sample_)
+            
+            return(taxatable_data_)
+          }
+          
+          
+          all_taxatable_perFeature <- sapply(1:length(metadata_feature_name), function(i){
+            
+            k(i, taxatable_data, metadata_data)
+            
+          })
+          
+          names(all_taxatable_perFeature) <- metadata_feature_name
+          return(all_taxatable_perFeature)
+          
+        }
+        
+        
+        TaxaTable_data_list <- as_taxtable_perFeature(TaxaTable_demo(), Metadata_demo())
+        
+        TaxaTable_data_list_output <- as_output_taxtable(TaxaTable_data_list[[input$metadata1_demo]])
+        
+        
+        colnames(TaxaTable_data_list_output)[1:7] <- c(
+          paste0('Kingdom', " (K=", length(unique(TaxaTable_data_list_output[, 1])), ")"),
+          paste0('Phylum', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:2])), ")"),
+          paste0('Class', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:3])), ")"),
+          paste0('Order', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:4])), ")"),
+          paste0('Family', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:5])), ")"),
+          paste0('Genus', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:6])), ")"),
+          paste0('Species', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:7])), ")")
+        )
+        
+        
+        
+        a <- as_output_taxtable(TaxaTable_demo())
+        ft_names <- input$metadata1_demo 
+        b <- list()
+        b <- lapply(as.character(unique(Metadata_demo()[, ft_names])), function(i){
+          
+          b_metadata_select <- Metadata_demo()[Metadata_demo()[, ft_names] %in% i,] %>% select("SampleID") 
+          b_metadata_select <- b_metadata_select[, "SampleID"] %>% as.character()
+          b_select <- a %>% select(b_metadata_select)
+          
+        })
+        
+        k <- a[, 1:7]
+        for (i in 1:length(unique(Metadata_demo()[, ft_names]))) {
+          
+          k <- cbind(k, b[[i]])
+          
+        }
+        
+        
+        c <- list()
+        c <- lapply(unique(Metadata_demo()[, ft_names]), function(i){
+          
+          c_metadata_select <- Metadata_demo()[Metadata_demo()[, ft_names] %in% i,] %>% select("SampleID") 
+          c_metadata_select_length <- c_metadata_select[, "SampleID"] %>% as.character() %>% length()
+          
+        })
+        
+        names(c) <- unique(Metadata_demo()[, ft_names])
+        
+        
+        sketch = htmltools::withTags(table(style="text-align:center;",
+                                           class = 'display',
+                                           col(style="width:50%"),
+                                           thead(
+                                             tr(
+                                               th(rowspan = 2, paste0('Kingdom', " (K=", length(unique(k[, 1])), ")")),
+                                               th(rowspan = 2, paste0('Phylum', " (K=", nrow(unique(k[, 1:2])), ")")),
+                                               th(rowspan = 2, paste0('Class', " (K=", nrow(unique(k[, 1:3])), ")")),
+                                               th(rowspan = 2, paste0('Order', " (K=", nrow(unique(k[, 1:4])), ")")),
+                                               th(rowspan = 2, paste0('Family', " (K=", nrow(unique(k[, 1:5])), ")")),
+                                               th(rowspan = 2, paste0('Genus', " (K=", nrow(unique(k[, 1:6])), ")")),
+                                               th(rowspan = 2, paste0('Species', " (K=", nrow(unique(k[, 1:7])), ")")),
+                                               # th(colspan = 8, 'gut'),
+                                               # th(colspan = 8, 'left palm'),
+                                               # th(colspan = 9, 'right palm'),
+                                               # th(colspan = 9, 'tongue')
+                                               lapply(1:length(unique(Metadata_demo()[, ft_names])), function(i){
+                                                 
+                                                 th(colspan = c[[i]], paste0(unique(Metadata_demo()[, ft_names])[i]), " ( N=", c[[i]], ")")
+                                               })
+                                             ),
+                                             tr(
+                                               lapply(colnames(k)[-(1:7)], th)
+                                             )
+                                           )
+        ))
+        
+        
+        
+        
+        
+        
+        if(input$metadata1_demo=="SampleID"){
+          
+          return(DT::datatable(TaxaTable_data_list_output, rownames = F))
+        }else{
+          # use rownames = FALSE here because we did not generate a cell for row names in the header
+          return(DT::datatable(k, container = sketch, rownames = F))
+        }
+        
+      }) # show the taxatable in Data analysis
+      
+      output$contents_demo <- renderDataTable({
+        return(TaxaTable_output_demo())
+      })
+      
+      TaxaTable_forDL_demo <- reactive({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          return(as.data.frame(df_data))
+        }
+        a <- TaxaTable_demo() %>% as_output_taxtable
+        return(a)
+      })
+      
+      output$downloadTaxaTable_demo<-downloadHandler(
+        
+        filename = "TaxaTable_result.csv",
+        content = function(file) {
+          
+          write.csv(TaxaTable_forDL_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      # Taxanomic barplot
+      # update metadata selection
+      updateRadioButtons(session, 
+                         inputId = "metadata_barplot_demo",
+                         choices = c("SampleID", "Collection_Date"),
+                         inline = T
+      )
+      
+      # update top N
+      observe({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        } # clean the taxatable 
+        
+        taxatable <- as_output_taxtable(TaxaTable_demo())
+        
+        level_position <- which(level_group_demo()==input$select_level_bar_demo)
+        val <- length(unique(taxatable[, level_position]))
+        # Control the value, min, max, and step.
+        # Step size is 2 when input value is even; 1 when value is odd.
+        updateSliderInput(session, "integer_demo", value = val,
+                          min = 1, max = val, step = 1)
+      })
+      
+      Metadata_stats_demo <- reactive({
+        
+        metadata <- read.table("/home/imuser/example_files/paired/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        
+        asv_table <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+        
+        colnames(metadata)[1] <- "SampleID"
+        metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)==0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        metadata <- metadata[, c("SampleID", OKstats_col)]
+        
+        return(metadata)
+        
+      })
+      
+      level_group_demo <- reactive({
+        
+        return(c("Kingdom","Phylum","Class","Order","Family","Genus","Species"))
+        
+      })
+      
+      output$barplot_demo <- renderPlotly({
+        
+        plot_LeveltoSamples<-function(taxtable, Level=level_group_demo(), topN){
+          
+          species_taxtable<-row.names(taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          #factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[-c(1:topN)]
+            return(species_name_topN)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]])
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,3]))
+          })
+          
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+            Samples_ID <- append_taxtable_list_all$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+          }
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          number_nameslist <- Metadata_stats_demo()[, 1] %>% length()
+          
+          append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100 %>% round(2)
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                             y="Relative abundance (%)",
+                                                                                                             fill="")
+          
+          library("plotly")
+          ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+        }
+        
+        plot_LeveltoSamples_noUnassigned<-function(taxtable, Level=level_group_demo(), topN){
+          
+          topN_species_list <- lapply(1:ncol(taxtable), function(i){
+            
+            sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+          })
+          
+          topN_species_union <- unique(unlist(topN_species_list))
+          
+          new_taxtable <- taxtable[topN_species_union,]
+          
+          species_taxtable<-row.names(new_taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(new_taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[, 2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          # factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID, barplot_taxa_table_data_percent_Level, FUN = sum)
+          
+          # remove unassigned
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+          
+          # compute percentage again
+          h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+            
+            filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+            
+          })
+          
+          for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+            
+            h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+            
+          }
+          
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+          
+          
+          y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+          
+          sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID == y_name)) {
+            Samples_ID <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__", barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID)
+          }
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage$read_percentage <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$read_percentage %>% round(2)
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_noUnassigned_percentage,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())
+          # + scale_y_continuous(labels = scales::percent_format())
+          
+          library("plotly")
+          ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+        }
+        
+        plot_LeveltoSamples_sub<-function(taxtable, metadata,features, Level=level_group_demo(), topN){
+          
+          
+          species_taxtable<-row.names(taxtable) 
+          barplot_taxa_table_data<-as_tibble(taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          species_union <- unique(unlist(TopN_list))
+          species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+          species_diff <- setdiff(species_Levels, species_union)
+          
+          
+          '%!in%' <- function(x,y)!('%in%'(x,y))
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            b <- filter(a, Levels %!in% species_union)
+            b$Levels <- as.character(b$Levels)
+            return(b)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]]$Levels)
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+          })
+          
+          # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+          #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          # })
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            lapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+            
+            
+            # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+            sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                              y="Relative abundance (%)",
+                                                                                                                                              fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(append_taxtable_list_all, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 2:length(p_Level_plot_list[[features]])) {
+            
+            p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          subplot(p_Level_plot_list[[features]],
+                  shareY = T,
+                  titleX = T)
+          
+        }
+        
+        plot_LeveltoSamples_sub_noUnassigned<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
+          
+          topN_species_list <- lapply(1:ncol(taxtable), function(i){
+            
+            sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+          })
+          
+          topN_species_union <- unique(unlist(topN_species_list))
+          
+          new_taxtable <- taxtable[topN_species_union,]
+          
+          species_taxtable<-row.names(new_taxtable) 
+          barplot_taxa_table_data<-as_tibble(new_taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          # remove unassigned
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+          
+          # compute percentage again
+          h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+            
+            filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+            
+          })
+          
+          for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+            
+            h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+            
+          }
+          
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+          
+          
+          y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+          
+          sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            sapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, features, features_sub){
+            
+            barplot_taxa_table_data_percent_Level_sub <- subset(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, Sample_ID %in% names_list[[features]][[features_sub]])  
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=features_sub, fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 2:length(p_Level_plot_list[[features]])) {
+            
+            p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          subplot(p_Level_plot_list[[features]],
+                  shareY = T,
+                  titleX = T)
+          
+        }
+        
+        
+        if (input$metadata_barplot_demo == "SampleID"){
+          
+          # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+          return(plot_LeveltoSamples(TaxaTable_demo(), input$select_level_bar_demo, input$integer_demo))
+          
+        }else{
+          
+          # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+          return(plot_LeveltoSamples_sub(TaxaTable_demo(), Metadata_stats_demo(),input$metadata_barplot_demo, input$select_level_bar_demo, input$integer_demo))
+          
+        }
+        
+      })
+      
+      # download
+      TaxaTable_merge_demo <- reactive({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        } # clean the taxatable 
+        
+        taxatable <- as_output_taxtable(TaxaTable_demo())
+        
+        if(input$`18S`){
+          taxatable$Level <- paste(taxatable$`Level 1`,
+                                   taxatable$`Level 2`,
+                                   taxatable$`Level 3`,
+                                   taxatable$`Level 4`,
+                                   taxatable$`Level 5`,
+                                   taxatable$`Level 6`,
+                                   taxatable$`Level 7`,
+                                   sep = ";")
+        }else{
+          taxatable$Level <- paste(taxatable$Kingdom,
+                                   taxatable$Phylum,
+                                   taxatable$Class,
+                                   taxatable$Order,
+                                   taxatable$Family,
+                                   taxatable$Genus,
+                                   taxatable$Species,
+                                   sep = ";")
+        }
+        
+        
+        taxatable_merge <- taxatable[, -(1:7)]
+        taxatable_merge[,-ncol(taxatable_merge)] <- data.frame(sapply(taxatable_merge[,-ncol(taxatable_merge)], function(x){
+          as.character(x) %>% as.numeric()
+        }))
+        
+        taxatable_merge_result <- taxatable_merge %>% group_by(Level) %>% summarise_all(funs(sum)) %>% as.data.frame()
+        rownames(taxatable_merge_result) <- taxatable_merge_result$Level
+        taxatable_merge_result <- taxatable_merge_result[, -1]
+        
+        return(taxatable_merge_result)
+      }) # Some OTUs may be unassigned or multi-matched, in this object, both are considered as unassigned
+      
+      barplot_download_demo <- reactive({
+        
+        plot_LeveltoSamples_save<-function(taxtable, Level=level_group_demo(), topN){
+          
+          species_taxtable<-row.names(taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          #factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[-c(1:topN)]
+            return(species_name_topN)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]])
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,3]))
+          })
+          
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+            Samples_ID <- append_taxtable_list_all$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+          }
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          number_nameslist <- Metadata_stats_demo()[, 1] %>% length()
+          
+          append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100 %>% round(2)
+          
+          # col_names <- colnames(append_taxtable_list_all)
+          # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+          # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+          # colnames(append_taxtable_list_all) <- col_names_new
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                             y="Relative abundance (%)",
+                                                                                                             fill="")
+          
+          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+        }
+        
+        return(plot_LeveltoSamples_save(TaxaTable_merge_demo(), input$select_level_bar_demo, input$integer_demo))
+        
+      })
+      
+      barplot_sub_download_demo <- reactive({
+        
+        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
+          
+          
+          species_taxtable<-row.names(taxtable) 
+          barplot_taxa_table_data<-as_tibble(taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          species_union <- unique(unlist(TopN_list))
+          species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+          species_diff <- setdiff(species_Levels, species_union)
+          
+          
+          '%!in%' <- function(x,y)!('%in%'(x,y))
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            b <- filter(a, Levels %!in% species_union)
+            b$Levels <- as.character(b$Levels)
+            return(b)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]]$Levels)
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+          })
+          
+          # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+          #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          # })
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            sapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+            
+            
+            # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+            sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                              y="Relative abundance (%)",
+                                                                                                                                              fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(append_taxtable_list_all, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 1:(length(p_Level_plot_list[[features]])-1)) {
+            
+            p_Level_plot_list[[features]][[i]] <- p_Level_plot_list[[features]][[i]] + theme(legend.position="none")
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          egg::ggarrange(plots = p_Level_plot_list[[features]], nrow=1)
+          
+        }
+        
+        return(plot_LeveltoSamples_sub(taxtable = TaxaTable_merge_demo(), metadata = Metadata_stats_demo(), features = input$metadata_barplot_demo, Level = input$select_level_bar_demo, topN = input$integer_demo))
+      })
+      
+      output$download_barplot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("barplot_", input$metadata_barplot_demo, "_", input$select_level_bar_demo, "_demo.jpg")
+        },
+        content = function(file){
+          
+          if (input$metadata_barplot_demo=="SampleID"){
+            
+            ggsave(file, 
+                   plot = barplot_download_demo() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                   , width = 80, height = 40, units = "cm")
+            
+          }else{
+            
+            ggsave(file, plot = barplot_sub_download_demo(), width = 80, height = 40, units = "cm")
+            
+            
+          }
+        }
+      )
+      
+      # heatmap
+      
+      updateRadioButtons(session, 
+                         inputId = "metadata_hm_demo",
+                         choices = c("SampleID", "Collection_Date"),
+                         inline = T
+      )
+      
+      
+      output$crimeplot_demo <- renderPlotly({
+        
+        options(scipen=999)# not shown by scientific sign
+        
+        microbioHeatmap_ly<-function(taxtable_data, Level=level_group_demo()){
+          
+          library(tidyr)
+          species_taxtable_data<-row.names(taxtable_data) 
+          taxtable_data<-as_tibble(taxtable_data) 
+          taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+          
+          taxtable_data<-gather(taxtable_data,
+                                key = "Sample_ID",
+                                value = "read_count",
+                                colnames(taxtable_data[,-1]))
+          
+          taxtable_data<-separate(data = taxtable_data,
+                                  col = "Species",
+                                  into = level_group_demo(),
+                                  sep = ";")
+          
+          taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+          
+          colnames(taxtable_data_Level)[1]<-"Levels"
+          
+          taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+          
+          taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+          
+          row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+          taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+          
+          taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+          taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+          taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+          
+          #去除物種前面的代碼
+          rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          #將"__"變為"Unassigned"
+          rownames(taxtable_data_Level_spread_prop)<-
+            replace(rownames(taxtable_data_Level_spread_prop), 
+                    rownames(taxtable_data_Level_spread_prop)=="__", 
+                    "Unassigned")
+          
+          taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+          
+          #使sample_ID隨按鈕變動
+          y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            library(dplyr)
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          library('plotly')
+          plot_ly(x = Metadata_stats_demo()[,input$metadata_hm_demo],
+                  y = rownames(taxtable_data_Level_spread_prop_logtrf),
+                  z = taxtable_data_Level_spread_prop_logtrf,
+                  type = "heatmap",
+                  colors = colorRamp(c("green", "red")),
+          ) %>% layout(xaxis=list(tickangle=45))
+          
+          
+          
+        }
+        
+        microbioHeatmap_subly<-function(taxtable_data, Level=level_group_demo()){
+          
+          library(tidyr)
+          species_taxtable_data<-row.names(taxtable_data) 
+          taxtable_data<-as_tibble(taxtable_data) 
+          taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+          
+          taxtable_data<-gather(taxtable_data,
+                                key = "Sample_ID",
+                                value = "read_count",
+                                colnames(taxtable_data[,-1]))
+          
+          taxtable_data<-separate(data = taxtable_data,
+                                  col = "Species",
+                                  into = level_group(),
+                                  sep = ";")
+          
+          taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+          
+          colnames(taxtable_data_Level)[1]<-"Levels"
+          
+          taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+          
+          taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+          
+          row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+          taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+          
+          taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+          taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+          taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+          
+          # remove non-sense string 
+          rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          # replace "__" to "Unassigned"
+          rownames(taxtable_data_Level_spread_prop)<-
+            replace(rownames(taxtable_data_Level_spread_prop), 
+                    rownames(taxtable_data_Level_spread_prop)=="__", 
+                    "Unassigned")
+          
+          taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+          
+          #  Make sample_ID change by button
+          y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            library(dplyr)
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          taxtable_data_Level_spread_prop_logtrf_list <- list()
+          taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+            })
+            
+          })
+          
+          for (i in 1:length(names(names_list))) {
+            names(taxtable_data_Level_spread_prop_logtrf_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          names(taxtable_data_Level_spread_prop_logtrf_list) <- names(names_list)
+          
+          Heatmap_plotly <- function(heatmap_list, feature) {
+            library('plotly')
+            heatmap_plot_list <- list()
+            heatmap_plot_list <- lapply(1:length(heatmap_list[[feature]]), function(i){
+              
+              if(i==1){
+                
+                plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                        y= rownames(heatmap_list[[feature]][[i]]),
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
+                        zmin = min(unlist(heatmap_list[[feature]])),
+                        zmax = max(unlist(heatmap_list[[feature]])),
+                        type = "heatmap",
+                        colors = colorRamp(c("green", "red")),
+                        colorbar=list(title="scale")
+                ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+                
+              }else{
+                
+                plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                        y= rownames(heatmap_list[[feature]][[i]]),
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
+                        type = "heatmap",
+                        colors = colorRamp(c("green", "red")),
+                        showscale = F,
+                        colorbar=list(title=names(heatmap_list[[feature]])[i])
+                ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+              }
+              
+            })
+            
+            return(heatmap_plot_list)
+          }
+          
+          z_heatmap_plotly <- Heatmap_plotly(taxtable_data_Level_spread_prop_logtrf_list, input$metadata_hm_demo)
+          
+          nonNA_position <- which(unique(Metadata_stats_demo()[, input$metadata_hm_demo])!="NA")
+          z_heatmap_plotly <- z_heatmap_plotly[nonNA_position]
+          
+          return(subplot(z_heatmap_plotly, shareY = T, titleX = T))
+          
+        }
+        
+        if (input$metadata_hm_demo=="SampleID"){
+          return(microbioHeatmap_ly(TaxaTable_merge_demo(), input$select_level_hm_demo))
+        }
+        return(microbioHeatmap_subly(TaxaTable_merge_demo(), input$select_level_hm_demo))
+        
+        
+      })
+      
+      # download
+      output$downloadHMmatrix_demo<-downloadHandler(
+        
+        filename = "Heatmap_matrix_demo.csv",
+        content = function(file) {
+          
+          options(scipen=999)# not shown by scientific sign
+          
+          microbioHeatmap_matrix <- function(taxtable_data, Level=level_group_demo()){
+            
+            library(tidyr)
+            species_taxtable_data<-row.names(taxtable_data) 
+            taxtable_data<-as_tibble(taxtable_data) 
+            taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+            
+            taxtable_data<-gather(taxtable_data,
+                                  key = "Sample_ID",
+                                  value = "read_count",
+                                  colnames(taxtable_data[,-1]))
+            
+            taxtable_data<-separate(data = taxtable_data,
+                                    col = "Species",
+                                    into = level_group_demo(),
+                                    sep = ";")
+            
+            taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+            
+            colnames(taxtable_data_Level)[1]<-"Levels"
+            
+            taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+            
+            taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+            
+            row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+            taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+            
+            taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+            taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+            taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+            
+            # remove non-sense string
+            rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                            "", 
+                                                            rownames(taxtable_data_Level_spread_prop))
+            
+            
+            
+            rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                            "", 
+                                                            rownames(taxtable_data_Level_spread_prop))
+            
+            
+            
+            # replace "__" to "Unassigned"
+            rownames(taxtable_data_Level_spread_prop)<-
+              replace(rownames(taxtable_data_Level_spread_prop), 
+                      rownames(taxtable_data_Level_spread_prop)=="__", 
+                      "Unassigned")
+            
+            
+            return(taxtable_data_Level_spread_prop)
+          }
+          
+          if(input$select_level_hm_demo == "Kingdom") {
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Kingdom"), file, row.names = T)
+          } else if (input$select_level_hm_demo == "Phylum"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Phylum"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Class"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Class"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Order"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Order"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Family"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Family"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Genus"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Genus"), file, row.names = T)
+          }
+          else {
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Species"), file, row.names = T)
+          }
+        }
+        
+        
+      )
+      
+      # Krona
+      output$krona_output_demo <- renderUI({
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_example_paired.html")
+        # includeHTML(path = "/home/imuser/example_files/paired/iframe_krona.html")
+      })
+      
+      # download
+      output$download_krona_demo <- downloadHandler(
+        
+        filename = "Krona_results_demo.zip",
+        
+        content = function(file){
+          
+          file.copy("/home/imuser/example_files/paired/Krona.zip", file)
+          
+        }
+      )
+      
+      
+      # Alpha diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_alpha_demo",
+                         choices = "Collection_Date",
+                         inline = T
+      )
+      
+      asv_table_demo <- reactive({
+        asv_table <- read_qza("/home/imuser/example_files/paired/table-dada2_paired.qza")[["data"]]
+        return(asv_table)
+      })
+      
+      alpha_diversity_table_demo <- reactive({
+        
+        as_alpha_diversity_table <- function(taxatable_data){
+          
+          alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+            nrow(subset(as.data.frame(taxatable_data), 
+                        as.data.frame(taxatable_data)[,i]>0))
+          })
+          
+          library(fossil)
+          alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
+            chao1(taxatable_data[,i])
+          })
+          
+          alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
+            ACE(taxatable_data[,i])
+          })
+          
+          library(vegan)
+          alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "shannon")
+          })
+          
+          alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "simpson")
+          })
+          
+          alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "invsimpson")
+          })
+          
+          
+          ShannonEvenness<-function(data_vector){
+            
+            shannon_diversity<-diversity(data_vector, index = "shannon")
+            species_number<-length(data_vector)
+            Hmax<-log(species_number)
+            J<-shannon_diversity/Hmax
+            print(J)
+            
+          }
+          
+          alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+            ShannonEvenness(taxatable_data[,i])
+          })
+          
+          
+          SimpsonEvenness<-function(data_vector){
+            
+            D<-diversity(data_vector, index = "simpson")
+            species_number<-length(data_vector)
+            E<-(1/(1-D))/species_number
+            print(E)
+            
+          }
+          
+          alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+            SimpsonEvenness(taxatable_data[,i])
+          })
+          
+          GoodCoverage<-function(data_vector){
+            
+            n<-length(which(data_vector==1))
+            N<-length(which(data_vector!=0))
+            C<-(1-(n/N))
+            print(C)
+            
+          }
+          
+          alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+            GoodCoverage(taxatable_data[,i])
+          })
+          
+          
+          alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
+                                            Richness=alpha_diversity_richness,
+                                            Chao1=alpha_diversity_Choa1,
+                                            ACE=alpha_diversity_ACE,
+                                            Shannon_diverstiy=alpha_diversity_Shannon,
+                                            Simpson_diversity=alpha_diversity_Simpson,
+                                            InvSimpson_diversity=alpha_diversity_InvSimpson,
+                                            Shannon_evenness=alpha_diversity_ShannonEvenness,
+                                            Simpson_evenness=alpha_diversity_SimpsonEveness,
+                                            Goods_coverage=alpha_diversity_GoodCoverage
+          )
+          
+          
+          alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
+            round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
+          
+          return(alpha_diversity_table)
+        }
+        
+        return(as_alpha_diversity_table(asv_table_demo()))
+        
+      })
+      
+      
+      
+      alpha_anova_boxplot_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        anova_summary <- summary(anova_result)
+        # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+        # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Alpha diversity") +
+          xlab(input$metadata_alpha_demo) +
+          ylab(input$select_diversity_demo)+
+          labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                     geom = "text", 
+                                                                                                                                                     hjust = 0.5,
+                                                                                                                                                     vjust = 0.9)
+      })
+      
+      alpha_anova_tukey_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index) 
+        
+        anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        
+        tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+        tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+        tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+        tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+        tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+        colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+        return(tukey_result_table_separate_order[, c(1,2,3,6)])
+        
+      })
+      
+      alpha_KW_boxplot_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        KW_result <- kruskal.test(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Alpha diversity") +
+          xlab(input$metadata_alpha_demo) +
+          ylab(input$select_diversity_demo)+
+          labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                            geom = "text", 
+                                                                                                                                            hjust = 0.5,
+                                                                                                                                            vjust = 0.9)
+      })
+      
+      alpha_KW_Dunn_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        
+        Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list_melt_forplot$value, A_diversity_metadata_list_melt_forplot$feature_name)
+        Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                                 Z=Dunn_result$Z,
+                                 Pvalue= Dunn_result$P)
+        Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+        Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+        Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+        colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+        return(Dunn_table_separate_order)
+        
+      })
+      
+      output$contents2_demo<-renderDataTable({
+        
+        return(alpha_diversity_table_demo())
+        
+      })
+      
+      output$downloadAlpha_demo<-downloadHandler(
+        
+        filename = "AlphaDiversityTable_result_demo.csv",
+        content = function(file) {
+          
+          write.csv(alpha_diversity_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      output$alpha_boxplot_demo <- renderPlot({
+        
+        if(input$select_stat_demo=="ANOVA"){
+          return(alpha_anova_boxplot_demo())
+        }else{
+          return(alpha_KW_boxplot_demo())
+        }
+        
+        
+      })
+      
+      output$word_metadata_NA_3_demo <- renderText({
+        
+        if("NA" %in% Metadata_demo()[,input$metadata_alpha_demo]){
+          NA_position <- which(Metadata_demo()[,input$metadata_alpha_demo]=="NA")
+          NA_sampleid <- Metadata_demo()[,1][NA_position]
+          print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+        }
+      })
+      
+      output$downloadAlphaBoxPlot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Alpha_diversity_boxplot_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.jpg")
+        },
+        content = function(file){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            ggsave(file, plot = alpha_anova_boxplot_demo())
+          }else{
+            ggsave(file, plot = alpha_KW_boxplot_demo())
+          }
+          
+        }
+      )
+      
+      output$post_test_type_demo <- renderText({
+        
+        if(input$select_stat_demo=="ANOVA"){
+          return("Tukey test")
+        }else{
+          return("Dunn test")
+        } 
+        
+      })
+      
+      output$post_test_demo <- renderTable({
+        
+        if(input$select_stat_demo == "ANOVA"){
+          return(alpha_anova_tukey_demo())
+        }else{
+          return(alpha_KW_Dunn_demo())
+        }
+        
+      })
+      
+      output$Alpha_posttest_DL_demo <- downloadHandler(
+        
+        filename = function(){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            paste0("Alpha_diversity_Tukey_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.csv")
+          }else{
+            paste0("Alpha_diversity_Dunn_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.csv")
+          }
+          
+        },
+        
+        content = function(file){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            write.csv(alpha_anova_tukey_demo(), file, row.names = F)
+          }else{
+            write.csv(alpha_KW_Dunn_demo(), file, row.names = F)
+          }
+          
+        }
+      )
+      
+      # Beta diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_beta_demo",
+                         choices = c("Collection_Date"),
+                         inline = T
+      )
+      
+      BetaTable_bray_demo <- reactive({
+        
+        Bray_df_data<-vegan::vegdist(t(asv_table_demo()), method = "bray") %>% as.matrix() %>% as.data.frame()
+        return(Bray_df_data)
+        
+      })
+      
+      Beta_dsmx_heatmap_demo <- reactive({
+        
+        beta_dsmx <- BetaTable_bray_demo() %>% as.matrix()
+        plot_ly(x=colnames(beta_dsmx),
+                y=rownames(beta_dsmx),
+                z=beta_dsmx,
+                # colors = palette(50),
+                colors = colorRamp(c("green", "red")),
+                type = "heatmap") %>% layout(title="Beta diversity distance matrix heatmap", xaxis=list(tickangle=45))
+      })
+      
+      BetaPlot_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        
+        library(vegan)
+        Bray_df_data<-vegdist(t(taxatable_beta), method = "bray")
+        
+        
+        # PCA
+        taxatable_beta_percent <- t(t(taxatable_beta)/rowSums(t(taxatable_beta)))
+        pca_Bray_df_data <- prcomp(t(taxatable_beta_percent))
+        PCA_rowname <- pca_Bray_df_data$x %>% row.names()
+        sample_original_names <- pca_Bray_df_data$x %>% row.names()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+        
+        PCA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta_demo]
+        
+        
+        library(ggplot2)
+        pca_Bray_df_data_plot <- data.frame(sample=PCA_rowname_arrange, 
+                                            PC1=pca_Bray_df_data$x[,1],
+                                            PC2=pca_Bray_df_data$x[,2])
+        pc_prop <- pca_Bray_df_data$sdev^2/sum(pca_Bray_df_data$sdev^2)
+        
+        library(ggrepel)
+        pca_Bray_df_data_plot_gg <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        
+        # PCoA
+        library(ape)
+        pcoa_Bray_df_data<-pcoa(Bray_df_data)
+        
+        # Get the name of every point in PCoA
+        # Change the names by features
+        PCoA_rowname <- pcoa_Bray_df_data$vectors %>% row.names()
+        
+        sample_original_names <- pcoa_Bray_df_data$vectors %>% row.names()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+        
+        PCoA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta_demo]
+        
+        
+        
+        library(ggplot2)
+        pcoa_Bray_df_data_plot <- data.frame(sample=PCoA_rowname_arrange, 
+                                             PC1=pcoa_Bray_df_data$vectors[,1],
+                                             PC2=pcoa_Bray_df_data$vectors[,2])
+        
+        library(ggrepel)
+        pcoa_Bray_df_data_plot_gg<-ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCoA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCoA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        # NMDS
+        comm_bray <- vegdist(t(taxatable_beta))
+        metaMDS_beta_df_data<-metaMDS(comm_bray, distance = "bray")
+        NMDS_beta_df_data<-data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        NMDS_rowname <- PCoA_rowname_arrange
+        NMDS_beta_df_data_plot<-data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg<-ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        
+        if(input$sep_demo == "PCoA" & input$beta_cluster_demo == F) {
+          
+          if(input$beta_showID_demo == T){
+            return(pcoa_Bray_df_data_plot_gg)
+          }else{
+            return(pcoa_Bray_df_data_plot_gg_noID)
+          }
+          
+        }
+        else if(input$sep_demo == "PCoA" & input$beta_cluster_demo == T){
+          
+          if(input$beta_showID_demo == T){
+            return(pcoa_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(pcoa_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+        }
+        else if(input$sep_demo == "NMDS" & input$beta_cluster_demo == F){
+          
+          if(input$beta_showID_demo == T){
+            return(NMDS_beta_df_data_plot_gg)
+          }else{
+            return(NMDS_beta_df_data_plot_gg_noID)
+          }
+          
+        }
+        else if(input$sep_demo == "NMDS" & input$beta_cluster_demo == T){
+          
+          if(input$beta_showID_demo == T){
+            return(NMDS_beta_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(NMDS_beta_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+        }
+        else if(input$sep_demo == "PCA" & input$beta_cluster_demo == F){
+          
+          if(input$beta_showID_demo == T){
+            return(pca_Bray_df_data_plot_gg)
+          }else{
+            return(pca_Bray_df_data_plot_gg_noID)
+          }
+          
+        }else{
+          
+          if(input$beta_showID_demo == T){
+            return(pca_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(pca_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+          
+        }
+        
+        
+      })
+      
+      output$NMDS_stress_demo <- renderText({
+        
+        if(input$sep_demo=="NMDS"){
+          return("A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, > 0.2 is good/ok, and stress > 0.3 provides a poor representation.")
+        }
+        
+      })
+      
+      output$beta_dsmx_hm_demo <- renderPlotly({
+        
+        return(Beta_dsmx_heatmap_demo())
+      })
+      
+      output$download_beta_dsmx_hm_demo <- downloadHandler(
+        
+        filename = "Beta_dsmx_data_demo.csv",
+        content = function(file){
+          write.csv(BetaTable_bray_demo(), file, row.names = T)
+        }
+      )
+      
+      output$betaplot_demo<-renderPlot({
+        
+        return(BetaPlot_demo())
+        
+      })
+      
+      output$downloadBetaPlot_demo <- downloadHandler(
+        
+        filename = function(){
+          if(input$sep_demo == "PCA"){
+            paste0("BetaPlot_PCA_", input$metadata_beta_demo,"_demo.jpg")
+          }
+          else if(input$sep == "PCoA") {
+            paste0("BetaPlot_PCoA_", input$metadata_beta_demo,"_demo.jpg")
+          }
+          else {
+            paste0("BetaPlot_NMDS_", input$metadata_beta_demo, "_demo.jpg")
+          }
+        },
+        content = function(file){
+          
+          return(ggsave(file, plot = BetaPlot_demo()))
+          
+        }
+      )
+      
+      Permanova_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(bray_df~nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      output$Permanova_title_demo <- renderText({
+        
+        if(is.data.frame(Permanova_table_demo())){
+          
+          return("PERMANOVA")
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$permanova_table_demo <- renderTable({
+        
+        return(Permanova_table_demo())
+        
+      })
+      
+      output$download_permanova_demo <- downloadHandler(
+        
+        filename = "PERMANOVA_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(Permanova_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      ANOSIM_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(bray_df, nonNA_metadata[, input$metadata_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      output$ANOSIM_title_demo <- renderText({
+        
+        if(is.data.frame(ANOSIM_table_demo())){
+          
+          return("ANOSIM")
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$ANOSIM_table_demo <- renderTable({
+        
+        return(ANOSIM_table_demo())
+      })
+      
+      # download ANOSIM table
+      output$download_ANOSIM_demo <- downloadHandler(
+        
+        filename = "ANOSIM_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(ANOSIM_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      
+      MRPP_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        mrpp_result <- mrpp(bray_df, nonNA_metadata[, input$metadata_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      output$MRPP_title_demo <- renderText({
+        
+        if(is.data.frame(MRPP_table_demo())){
+          
+          return("MRPP")
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$MRPP_table_demo <- renderTable({
+        
+        return(MRPP_table_demo())
+        
+      })
+      
+      # download MRPP table
+      output$download_MRPP_demo <- downloadHandler(
+        
+        filename = "MRPP_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(MRPP_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      
+      Permanova_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(nonNA_taxtable[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            adonis_result_pair <- adonis(bray_df_pair~metadata_pair[,input$metadata_beta_demo], 
+                                         metadata_pair, permutations = 999) 
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(adonis_result_pair_list_table[, c(1, 6, 7, 8)])
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$Permanova_pair_title_demo <- renderText({
+        
+        if(is.null(Permanova_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise PERMANOVA")
+        }
+        
+        
+      })
+      
+      output$permanova_pair_table_demo <- renderTable({
+        
+        return(Permanova_pair_table_demo())
+      })
+      
+      
+      # download permanova pair table
+      output$download_permanova_pair_demo <- downloadHandler(
+        
+        filename = "PERMANOVA_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(Permanova_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      ANOSIM_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(asv_table_demo()[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            anosim_result_pair <- anosim(bray_df_pair, metadata_pair[,input$metadata_beta_demo],
+                                         metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$ANOSIM_pair_title_demo <- renderText({
+        
+        if(is.null(ANOSIM_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise ANOSIM")
+        }
+      })
+      
+      output$ANOSIM_pair_table_demo <- renderTable({
+        
+        return(ANOSIM_pair_table_demo())
+      })
+      
+      # download ANOSIM pair table
+      output$download_ANOSIM_pair_demo <- downloadHandler(
+        
+        filename = "ANOSIM_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(ANOSIM_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      MRPP_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(asv_table_demo()[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            MRPP_result_pair <- mrpp(bray_df_pair, metadata_pair[,input$metadata_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5,6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$MRPP_pair_title_demo <- renderText({
+        
+        if(is.null(MRPP_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise MRPP")
+        }
+      })
+      
+      output$MRPP_pair_table_demo <- renderTable({
+        
+        return(MRPP_pair_table_demo())
+        
+      })
+      
+      output$download_MRPP_pair_demo <- downloadHandler(
+        
+        filename = "MRPP_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(MRPP_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_beta_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        # nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        # group_names <- unique(select(nonNA_metadata, colnames(Metadata_stats()[selection_position])))
+        
+        if(length(group_names)<=2){
+          shinyjs::hide("download_permanova_pair_demo")
+          shinyjs::hide("download_ANOSIM_pair_demo")
+          shinyjs::hide("download_MRPP_pair_demo")
+        }else{
+          shinyjs::show("download_permanova_pair_demo")
+          shinyjs::show("download_ANOSIM_pair_demo")
+          shinyjs::show("download_MRPP_pair_demo")
+        }
+        
+      })
+      
+      # phylogenetic diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_phylo_alpha_demo",
+                         choices = "Collection_Date",
+                         inline = T
+      )
+      
+      updateRadioButtons(session, 
+                         inputId = "metadata_phylo_beta_demo",
+                         choices = "Collection_Date",
+                         inline = T
+      )
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_phylo_beta_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)<=2){
+          shinyjs::hide("download_permanova_pair_phylo_demo")
+          shinyjs::hide("download_ANOSIM_pair_phylo_demo")
+          shinyjs::hide("download_MRPP_pair_phylo_demo")
+        }else{
+          shinyjs::show("download_permanova_pair_phylo_demo")
+          shinyjs::show("download_ANOSIM_pair_phylo_demo")
+          shinyjs::show("download_MRPP_pair_phylo_demo")
+        }
+        
+      })
+      
+      
+      faith_PD_demo <- reactive({
+        read_qza("/home/imuser/example_files/paired/faith_pd_vector.qza")[["data"]]
+      })
+      
+      output$contents4_demo <- renderDataTable({
+        a <- faith_PD_demo()
+        b <- data.frame(SampleID=rownames(a),
+                        FaithPD=a[,1])
+        return(b)
+      })
+      
+      
+      output$download_faithPD_table_demo <- downloadHandler(
+        filename = "faithPD_table_demo.csv",
+        content = function(file){
+          a <- faith_PD_demo()
+          b <- data.frame(SampleID=rownames(a),
+                          FaithPD=a[,1])
+          write.csv(b, file, row.names = FALSE)
+        }
+      )
+      
+      faithPD_boxplot_anova_demo <- reactive({
+        
+        as_faithPD_boxplot <- function(metadata, feature)
+          
+        {
+          
+          A_diversity <- faith_PD_demo()
+          
+          A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+          colnames(A_diversity)[1] <- colnames(metadata)[1]
+          A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+          
+          A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+            
+            A_diversity_metadata_merge <- merge(A_diversity, 
+                                                metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                                by= colnames(metadata)[1])
+          })
+          
+          names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+          
+          for (i in 1:length(A_diversity_metadata_list)) {
+            
+            colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+          }
+          
+          A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name != "NA")
+          
+          anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+          anova_summary <- summary(anova_result)
+          # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+          # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+          options(scipen=999)
+          
+          stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+            return( 
+              data.frame(
+                y = 0.95 * upper_limit,
+                label = paste('n =', length(y))
+              )
+            )
+          }
+          
+          ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+            # geom_text(data = data.frame(),
+            #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list[[feature]]$faith_pd) + 1, label = group_data$groups),
+            #           col = 'black',
+            #           size = 5) +
+            geom_boxplot() +
+            ggtitle("Phylogenetic Alpha diversity") +
+            xlab(input$metadata_phylo_alpha_demo) +
+            ylab("Faith_PD")+
+            labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                     geom = "text", 
+                                                                                                                                                     hjust = 0.5,
+                                                                                                                                                     vjust = 0.9)
+          
+        }
+        
+        
+        
+        return(as_faithPD_boxplot(Metadata_stats_demo(), input$metadata_phylo_alpha_demo
+        )
+        )
+        
+        
+      })
+      
+      faithPD_boxplot_KWtest_demo <- reactive({
+        
+        as_faithPD_boxplot <- function(metadata, feature)
+          
+        {
+          
+          A_diversity <- faith_PD_demo()
+          
+          A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+          colnames(A_diversity)[1] <- colnames(metadata)[1]
+          A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+          
+          A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+            
+            A_diversity_metadata_merge <- merge(A_diversity, 
+                                                metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                                by= colnames(metadata)[1])
+          })
+          
+          names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+          
+          for (i in 1:length(A_diversity_metadata_list)) {
+            
+            colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+          }
+          
+          A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name!="NA")
+          
+          KW_result <- kruskal.test(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+          # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+          # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+          options(scipen=999)
+          
+          stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+            return( 
+              data.frame(
+                y = 0.95 * upper_limit,
+                label = paste('n =', length(y))
+              )
+            )
+          }
+          
+          ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+            
+            geom_boxplot() +
+            ggtitle("Phylogenetic Alpha diversity") +
+            xlab(input$metadata_phylo_alpha_demo) +
+            ylab("Faith_PD")+
+            labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                              geom = "text", 
+                                                                                                                                              hjust = 0.5,
+                                                                                                                                              vjust = 0.9) 
+          
+        }
+        
+        
+        
+        return(as_faithPD_boxplot(Metadata_stats_demo(), input$metadata_phylo_alpha_demo
+        )
+        )
+        
+        
+      })
+      
+      
+      
+      output$faith_PD_boxplot_demo <- renderPlot({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return(faithPD_boxplot_anova_demo())
+        }else{
+          return(faithPD_boxplot_KWtest_demo())
+        }
+        
+      })
+      
+      output$download_faithPD_boxplot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("faithPD_boxplot_", input$select_stat_phylo_demo, "_", input$metadata_phylo_alpha_demo, "_demo.jpg")
+        },
+        content = function(file){
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            ggsave(file, plot = faithPD_boxplot_anova_demo())
+          }else{
+            ggsave(file, plot = faithPD_boxplot_KWtest_demo())
+          }
+          
+        })
+      
+      output$post_test_type_phylo_demo <- renderText({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return("Tukey test")
+        }else{
+          return("Dunn test")
+        }
+      })
+      
+      faith_PD_post_test_tukey_demo <- reactive({
+        
+        A_diversity <- faith_PD_demo()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]], feature_name != "NA")
+        
+        anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]])
+        tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+        tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+        tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+        tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+        tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+        colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+        return(tukey_result_table_separate_order[,c(1,2,3,6)])
+      })
+      
+      faith_PD_post_test_Dunn_demo <- reactive({
+        
+        A_diversity <- faith_PD_demo()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]], feature_name!="NA")
+        
+        Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$faith_pd, A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$feature_name)
+        Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                                 Z=Dunn_result$Z,
+                                 Pvalue= Dunn_result$P)
+        Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+        Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+        Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+        colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+        return(Dunn_table_separate_order)
+      })
+      
+      output$post_test_phylo_demo <- renderTable({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return(faith_PD_post_test_tukey_demo())
+        }else{
+          return(faith_PD_post_test_Dunn_demo())
+        }
+      })
+      
+      output$download_faithPD_posttest_demo <- downloadHandler(
+        filename = function(){
+          
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            paste0("faithPD_Tukey_", input$metadata_phylo_alpha_demo,"_demo.csv")
+          }else{
+            paste0("faithPD_diversity_Dunn_", input$metadata_phylo_alpha_demo, "_demo.csv")
+          }
+          
+        },
+        content = function(file){
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            write.csv(faith_PD_post_test_tukey_demo(), file, row.names = F)
+          }else{
+            write.csv(faith_PD_post_test_Dunn_demo(), file, row.names = F)
+          }
+          
+        }
+      )
+      
+      
+      output$unif_dm_hm_demo <- renderPlotly({
+        
+        if(input$UnW_or_W_demo=="Unweighted"){
+          unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix()
+          plot_ly(x=colnames(unW_unifrac_dm),
+                  y=rownames(unW_unifrac_dm),
+                  z=unW_unifrac_dm,
+                  # colors = palette(50),
+                  colors = colorRamp(c("green", "red")),
+                  type = "heatmap") %>% layout(title="Unweighted unifrac distance matrix heatmap", xaxis=list(tickangle=45))
+        }else{
+          W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix()
+          plot_ly(x=colnames(W_unifrac_dm),
+                  y=rownames(W_unifrac_dm),
+                  z=W_unifrac_dm,
+                  # colors = palette(50),
+                  colors = colorRamp(c("green", "red")),
+                  type = "heatmap") %>% layout(title="Weighted unifrac distance matrix heatmap", xaxis=list(tickangle=45)) 
+        }
+      })
+      
+      
+      output$download_unif_dm_demo<-downloadHandler(
+        
+        filename = "unifrac_distance_matrix_demo.csv",
+        content = function(file) {
+          if(input$UnW_or_W_demo=="Unweighted"){
+            write.csv(as.matrix(read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
+          }else if(input$UnW_or_W_demo=="weighted"){
+            write.csv(as.matrix(read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
+          }
+        }
+      )
+      
+      unW_unif_pcoa_plot_demo <- reactive({
+        
+        unW_unifrac_dm_pcoa_qiime <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_pcoa_results.qza")[["data"]]
+        unW_unifrac_dm_pcoa_qiime_forplot <- unW_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+        unW_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats_demo(), unW_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+        
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+          
+          unW_unifrac_dm_pcoa_qiime_forplot_table <- unW_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats_demo())
+        
+        # Make all feature name to "feature"
+        for (i in 1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+          names(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+        }
+        
+        
+        unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+            geom_point(size=1.5)+
+            ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Unweighted unifrac PCoA plot")+
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
+        
+        
+        unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, color=feature))+
+            geom_point(size=1.5)+
+            # ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Unweighted unifrac PCoA plot")+
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
+        
+        if(input$phylo_showID_demo){
+          return(unW_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta_demo]])
+        }else{
+          return(unW_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta_demo]])
+        }
+        
+        
+      })
+      
+      unW_unif_nmds_plot_demo <- reactive({
+        
+        #NMDS
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        colnames(metadata_beta)[1] <- "SampleID"
+        
+        # unW_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                         job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+        unW_unifrac_dm_qiime <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]
+        sample_original_names <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+        
+        metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+        
+        NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta_demo]
+        
+        metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
+        NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        # NMDS_rowname <- NMDS_rowname_arrange
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        if(input$phylo_showID_demo){
+          return(NMDS_beta_df_data_plot_gg)
+        }else{
+          return(NMDS_beta_df_data_plot_gg_noID)
+        }
+        
+      })
+      
+      W_unif_pcoa_plot_demo <- reactive({
+        
+        W_unifrac_dm_pcoa_qiime <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_pcoa_results.qza")[["data"]]
+        W_unifrac_dm_pcoa_qiime_forplot <- W_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+        W_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats_demo(), W_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+        
+        W_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+          
+          W_unifrac_dm_pcoa_qiime_forplot_table <- W_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats_demo())
+        
+        # Make all feature name to "feature"
+        for (i in 1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+          names(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+        }
+        
+        
+        W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+            geom_point(size=1.5)+
+            ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Weighted unifrac PCoA plot")+
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
+        
+        W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, color=feature))+
+            geom_point(size=1.5)+
+            # ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Weighted unifrac PCoA plot")+
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
+        
+        if(input$phylo_showID_demo){
+          return(W_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta_demo]])
+        }else{
+          return(W_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta_demo]])
+        }
+        
+        
+        
+      })
+      
+      W_unif_nmds_plot_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        colnames(metadata_beta)[1] <- "SampleID"
+        
+        # W_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                       job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+        W_unifrac_dm_qiime <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]
+        sample_original_names <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+        
+        metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+        
+        NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta_demo]
+        
+        
+        metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
+        NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15))
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15))
+        
+        if(input$phylo_showID_demo){
+          return(NMDS_beta_df_data_plot_gg)
+        }else{
+          return(NMDS_beta_df_data_plot_gg_noID)
+        }
+        
+        
+      })
+      
+      output$unW_unif_ordination_demo <- renderPlot({
+        
+        if(input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == F & input$ordination_phylo_demo == "PCoA"){
+          
+          return(unW_unif_pcoa_plot_demo())
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == F & input$ordination_phylo_demo == "NMDS"){
+          
+          return(unW_unif_nmds_plot_demo())
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == T & input$ordination_phylo_demo == "PCoA"){
+          
+          return(unW_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == T & input$ordination_phylo_demo == "NMDS"){
+          
+          return(unW_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==F & input$ordination_phylo_demo == "PCoA"){
+          
+          return(W_unif_pcoa_plot_demo())
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==F & input$ordination_phylo_demo == "NMDS"){
+          
+          return(W_unif_nmds_plot_demo())
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==T & input$ordination_phylo_demo == "PCoA"){
+          
+          return(W_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else{
+          
+          return(W_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+          
+        }
+        
+      })
+      
+      output$download_unif_plot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_plot_", input$UnW_or_W_phylo_demo, "_", input$ordination_phylo_demo,"_", input$metadata_phylo_beta_demo, "_demo.jpg")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            
+            if(input$ordination_phylo_demo=="PCoA"){
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = unW_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = unW_unif_pcoa_plot_demo())
+              }
+              
+            }else{
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = unW_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = unW_unif_nmds_plot_demo())
+              }
+              
+            }
+            
+          }else{
+            if(input$ordination_phylo_demo=="PCoA"){
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = W_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = W_unif_pcoa_plot_demo())
+              }
+              
+            }else{
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = W_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = W_unif_nmds_plot_demo())
+              }
+              
+            }
+            
+          }
+          
+        }
+        
+      )
+      
+      
+      Permanova_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(unW_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      Permanova_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(W_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      output$Permanova_title_phylo_demo <- renderText({
+        
+        if(is.null(Permanova_table_phylo_unW_demo()) && is.null(Permanova_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("PERMANOVA")
+        }
+        
+      })
+      
+      output$permanova_table_phylo_demo <- renderTable({
+        
+        permanova_table_phylo_list <- list(Permanova_table_phylo_unW_demo(), Permanova_table_phylo_W_demo())
+        names(permanova_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(permanova_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      output$download_permanova_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("UniFrac_PerMANOVA_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo == "Unweighted"){
+            write_csv(Permanova_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(Permanova_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      ANOSIM_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        # unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame() # web version
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      ANOSIM_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      # Show ANOSIM title
+      output$ANOSIM_title_phylo_demo <- renderText({
+        
+        if(is.null(ANOSIM_table_phylo_unW_demo()) && is.null(ANOSIM_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("ANOSIM")
+        }
+        
+      })
+      
+      # Show ANOSIM table
+      output$ANOSIM_table_phylo_demo <- renderTable({
+        
+        ANOSIM_table_phylo_list <- list(ANOSIM_table_phylo_unW_demo(), ANOSIM_table_phylo_W_demo())
+        names(ANOSIM_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(ANOSIM_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download ANOSIM table
+      output$download_ANOSIM_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_ANOSIM_table_", input$UnW_or_W_phylo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(ANOSIM_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(ANOSIM_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      
+      
+      MRPP_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        mrpp_result <- mrpp(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      MRPP_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        mrpp_result <- mrpp(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      output$MRPP_title_phylo_demo <- renderText({
+        
+        if(is.null(MRPP_table_phylo_unW_demo()) && is.null(MRPP_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("MRPP")
+        }
+        
+      })
+      
+      # Show MRPP table
+      output$MRPP_table_phylo_demo <- renderTable({
+        
+        MRPP_table_phylo_list <- list(MRPP_table_phylo_unW_demo(), MRPP_table_phylo_W_demo())
+        names(MRPP_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(MRPP_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download MRPP table
+      output$download_MRPP_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_MRPP_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(MRPP_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(MRPP_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      # pairwise test
+      Permanova_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        # unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            adonis_result_pair <- adonis(unW_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7, 8)]))
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      Permanova_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            adonis_result_pair <- adonis(W_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7,8)]))
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      # Show permanova pair title
+      output$Permanova_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(Permanova_pair_table_phylo_unW_demo()) && is.null(Permanova_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise PERMANOVA")
+        }
+        
+      })
+      
+      # Show permanova pair table
+      output$permanova_pair_table_phylo_demo <- renderTable({
+        
+        permanova_pair_table_phylo_list <- list(Permanova_pair_table_phylo_unW_demo(), Permanova_pair_table_phylo_W_demo())
+        names(permanova_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(permanova_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download permanova pair table
+      output$download_permanova_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_PerMANOVA_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(Permanova_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(Permanova_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      ANOSIM_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            adonis_result_pair <- anosim(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      ANOSIM_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            anosim_result_pair <- anosim(W_unifrac_dm_pair, metadata_pair[,input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      # Show ANOSIM pair title
+      output$ANOSIM_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(ANOSIM_pair_table_phylo_unW_demo()) && is.null(ANOSIM_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise ANOSIM")
+        }
+        
+      })
+      
+      # Show ANOSIM pair table
+      output$ANOSIM_pair_table_phylo_demo <- renderTable({
+        
+        ANOSIM_pair_table_phylo_list <- list(ANOSIM_pair_table_phylo_unW_demo(), ANOSIM_pair_table_phylo_W_demo())
+        names(ANOSIM_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(ANOSIM_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      
+      
+      
+      # Download ANOSIM pair table
+      output$download_ANOSIM_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_ANOSIM_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(ANOSIM_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(ANOSIM_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      
+      
+      MRPP_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            MRPP_result_pair <- mrpp(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5,6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      MRPP_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/paired//weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            MRPP_result_pair <- mrpp(W_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5, 6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      # Show MRPP pair title
+      output$MRPP_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(MRPP_pair_table_phylo_unW_demo()) && is.null(MRPP_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise MRPP")
+        }
+        
+        
+      })
+      
+      # Show MRPP pair table
+      output$MRPP_pair_table_phylo_demo <- renderTable({
+        
+        MRPP_pair_table_phylo_list <- list(MRPP_pair_table_phylo_unW_demo(), MRPP_pair_table_phylo_W_demo())
+        names(MRPP_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(MRPP_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download MRPP pair table
+      output$download_MRPP_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_MRPP_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(MRPP_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(MRPP_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      # ANCOM demo
+      updateRadioButtons(session, 
+                         inputId = "metadata_ANCOM_demo",
+                         choices = "Collection_Date",
+                         inline = T
+      )
+      
+      output$word_ancom_plotly_demo <- renderUI({
+        
+        h3("ANCOM Volcano Plot", 
+           style = "color: black;top: 10px;")
+      })
+      
+      
+      output$ancom_plotly_demo <- renderPlotly({
+        
+        ancom_data <- read.table("/home/imuser/example_files/paired/data.tsv", sep = "\t", header = T)
+        ancom_sig <- read.table("/home/imuser/example_files/paired/ancom.tsv", sep = "\t", header = T)
+        names(ancom_sig)[1] <- "id" 
+        
+        ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+        ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+        ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+        ancom_merge$id <- gsub("__", "", ancom_merge$id)
+        
+        plot_ly(data = ancom_merge,
+                x = ~ clr,
+                y = ~ W,
+                color = ~ Reject.null.hypothesis,
+                colors = c("grey","red")[1:length(unique(ancom_sig$Reject.null.hypothesis))],
+                type = "scatter",
+                hoverinfo = "text",
+                hovertext = paste("Species:", ancom_merge$id,
+                                  "<br> clr:", round(ancom_merge$clr, digits = 4),
+                                  "<br> W:", ancom_merge$W) 
+        ) %>% layout(showlegend = T)
+        
+      })
+      
+      output$annotation_ancom_demo <- renderUI({
+        HTML("<p>The W value is the number of sub-hypotheses that have rejected for a given taxon in ANCOM analysis.<br>The clr represents log-fold change relative to the average microbe.</p>")
+      })
+      
+      output$word_ancom_table_demo <- renderUI({
+        
+        h3("ANCOM results (Taxa with significant W value)", 
+           style = "color: black;top: 10px;")
+      })
+      
+      output$ancom_sig_demo <- renderDataTable({
+        
+        ancom_sig <- read.table("/home/imuser/example_files/paired/ancom.tsv", sep = "\t", header = T)
+        names(ancom_sig)[1] <- "Species"
+        
+        ancom_sig_true <- filter(ancom_sig, Reject.null.hypothesis == "True")
+        ancom_sig_true$Species <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_sig_true$Species)
+        ancom_sig_true$Species <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_sig_true$Species)
+        ancom_sig_true$Species <- gsub("__", "", ancom_sig_true$Species)
+        
+        ancom_sig_true <- separate(ancom_sig_true, col = "Species", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
+        
+        return(ancom_sig_true[,1:8])
+        
+      })
+      
+      output$ancom_table_download_demo <- downloadHandler(
+        
+        filename = "ANCOM_table_demo.csv",
+        content = function(file){
+          
+          ancom_data <- read.table("/home/imuser/example_files/paired/data.tsv", sep = "\t", header = T)
+          ancom_sig <- read.table("/home/imuser/example_files/paired/ancom.tsv", sep = "\t", header = T)
+          names(ancom_sig)[1] <- "id"
+          
+          ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+          ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+          ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+          ancom_merge$id <- gsub("__", "", ancom_merge$id)
+          ancom_merge <- separate(ancom_merge, col = "id", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
+          write_csv(ancom_merge, file, col_names = T)
+        }
+      )
+      
+      # Function analysis
+      Metadata_FA_demo <- reactive({
+        
+        metadata <- read.table("/home/imuser/example_files/paired/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        colnames(metadata)[1] <- "SampleID"
+        taxatable_FA <- read_qza("/home/imuser/example_files/paired/taxatable7_paired.qza")[["data"]]
+        metadata <- filter(metadata, SampleID %in% colnames(taxatable_FA))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)==0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        metadata <- metadata[, c("SampleID", OKstats_col)]
+        
+        return(metadata)
+        
+        
+      })
+      
+      
+      observe({
+        newchoices_FA <- colnames(Metadata_FA_demo())
+        updateRadioButtons(session, "metadata_FA_demo", choices = newchoices_FA[-1], inline = T)
+      })
+      
+      output$function_report_demo <- renderUI({
+        
+        a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
+        a_report <- a[104:106,2]
+        a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
+        a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_remove(a_report[2], pattern = "\\(leftovers\\)")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "record", replacement = "taxa")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "group", replacement = "function type")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "taxa", replacement = "taxon.")
+        
+        HTML(paste(a_report[1], a_report[2] ,a_report[3], sep = "<br/>"))
+        
+        
+      })
+      
+      output$func_table_BY_sampleid_demo <- renderDataTable({
+        
+        func_table_BY_sampleid <- read_qza("/home/imuser/example_files/paired/func-table7.qza")[["data"]]
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        return(func_table_BY_sampleid_filtered_tibble)
+        
+      })
+      
+      output$func_table_ID<-downloadHandler(
+        
+        filename = "function_table_demo.csv",
+        content = function(file) {
+          
+          func_table_BY_sampleid <- read_qza("/home/imuser/example_files/paired/func-table7.qza")[["data"]]
+          
+          TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+          
+          func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+          
+          func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+          
+          write.csv(func_table_BY_sampleid_filtered_tibble, file, row.names = F)
+          
+        }
+      )
+      
+      output$Function_barplot_demo <- renderPlotly({
+        
+        
+        func_table_BY_sampleid <- read_qza("/home/imuser/example_files/paired/func-table7.qza")[["data"]]
+        taxa_table <- read_qza("/home/imuser/example_files/paired/taxatable7_paired.qza")$data
+        reads_persample <- colSums(taxa_table)
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        for (i in 1:length(reads_persample)) {
+          for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+            func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+          }
+          
+        }
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+        
+        df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
+        
+        df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                        from = Metadata_FA_demo()[,1],
+                                        to = as.character(Metadata_FA_demo()[, input$metadata_FA_demo]))
+        
+        
+        df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
+        colnames(df_barplot_ag_mean)[3] <- "mean"
+        df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
+        colnames(df_barplot_ag_sd)[3] <- "sd"
+        
+        df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+        
+        FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+          geom_bar(stat="identity", color="black", 
+                   position=position_dodge()) +
+          geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+          labs(x="Function types", y="Relative abundance")+
+          theme(axis.title.x = element_text(color="black", size=16))+
+          theme(axis.title.y = element_text(color="black", size=16))
+        
+        
+        y <- list(
+          title = list(text="Function types",standoff=20)
+        )
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y)
+        
+      })
+      
+      output$FA_plot_download_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Functional_analysis_plot_", input$metadata_FA_demo, "_demo.jpg")
+        },
+        
+        content = function(file){
+          
+          
+          func_table_BY_sampleid <- read_qza("/home/imuser/example_files/paired/func-table7.qza")[["data"]]
+          taxa_table <- read_qza("/home/imuser/example_files/paired/taxatable7_paired.qza")$data
+          reads_persample <- colSums(taxa_table)
+          
+          TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+          
+          func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+          
+          for (i in 1:length(reads_persample)) {
+            for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+              func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+            }
+            
+          }
+          
+          func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+          
+          func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+          
+          
+          df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
+          
+          df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                          from = Metadata_FA_demo()[,1],
+                                          to = as.character(Metadata_FA_demo()[, input$metadata_FA_demo]))
+          
+          
+          df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
+          colnames(df_barplot_ag_mean)[3] <- "mean"
+          df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
+          colnames(df_barplot_ag_sd)[3] <- "sd"
+          
+          df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+          
+          FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+            geom_bar(stat="identity", color="black", 
+                     position=position_dodge()) +
+            geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                          position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+            labs(x="Function types", y="Relative abundance")+
+            theme(axis.title.x = element_text(color="black", size=16))+
+            theme(axis.title.y = element_text(color="black", size=16))
+          
+          ggsave(file, plot = FA_ggplot, width = 80, height = 40, units = "cm")
+        }
+      )
+      
+      
+      
     }else if(input$select_dataset == "Long read"){
+      
+      
+      # Taxonomic table
+      updateRadioButtons(session, 
+                         inputId = "metadata1_demo",
+                         choices = c("SampleID", "facility", "days"),
+                         inline = T
+      )
+      
+      Metadata_demo <- reactive({
+        
+        
+        metadata <- read.table("/home/imuser/example_files/Pacbio/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        
+        asv_table <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        return(metadata)
+        
+        
+      }) # read the input sample data file
+      
+      TaxaTable_demo <- reactive({
+        
+        read_qza("/home/imuser/example_files/Pacbio/taxatable7_Pacbio.qza")$data
+        
+      }) # read the input file (.qza)
+      
+      TaxaTable_output_demo <- reactive({
+        
+        # revise the species names 
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        }
+        
+        
+        as_taxtable_perFeature<-function(taxatable_data, metadata_data){
+          
+          
+          metadata_feature_name <- colnames(metadata_data)
+          
+          
+          
+          metadata_feature_summary <- lapply(1:length(metadata_data), function(i){
+            metadata_data[,i] %>% unique() %>% as.character()
+          })
+          names(metadata_feature_summary) <- metadata_feature_name
+          
+          
+          k<-function(x, taxatable_data_k, metadata_data_k){
+            
+            sample_<-lapply(1:length(metadata_feature_summary[[x]]), function(i){
+              
+              metadata_data_k[,1][which(metadata_data_k[,x]==metadata_feature_summary[[x]][i])] %>% as.character()
+              
+            })
+            
+            names(sample_) <- metadata_feature_summary[[x]]
+            
+            
+            taxatable_data_ <- lapply(1:length(metadata_feature_summary[[x]]), function(i){
+              
+              rowSums(as.data.frame(taxatable_data_k[,sample_[[i]]]))
+              
+            })
+            
+            taxatable_data_<-as.data.frame(taxatable_data_)
+            colnames(taxatable_data_)<-names(sample_)
+            
+            return(taxatable_data_)
+          }
+          
+          
+          all_taxatable_perFeature <- sapply(1:length(metadata_feature_name), function(i){
+            
+            k(i, taxatable_data, metadata_data)
+            
+          })
+          
+          names(all_taxatable_perFeature) <- metadata_feature_name
+          return(all_taxatable_perFeature)
+          
+        }
+        
+        
+        TaxaTable_data_list <- as_taxtable_perFeature(TaxaTable_demo(), Metadata_demo())
+        
+        TaxaTable_data_list_output <- as_output_taxtable(TaxaTable_data_list[[input$metadata1_demo]])
+        
+        
+        colnames(TaxaTable_data_list_output)[1:7] <- c(
+          paste0('Kingdom', " (K=", length(unique(TaxaTable_data_list_output[, 1])), ")"),
+          paste0('Phylum', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:2])), ")"),
+          paste0('Class', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:3])), ")"),
+          paste0('Order', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:4])), ")"),
+          paste0('Family', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:5])), ")"),
+          paste0('Genus', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:6])), ")"),
+          paste0('Species', " (K=", nrow(unique(TaxaTable_data_list_output[, 1:7])), ")")
+        )
+        
+        
+        
+        a <- as_output_taxtable(TaxaTable_demo())
+        ft_names <- input$metadata1_demo 
+        b <- list()
+        b <- lapply(as.character(unique(Metadata_demo()[, ft_names])), function(i){
+          
+          b_metadata_select <- Metadata_demo()[Metadata_demo()[, ft_names] %in% i,] %>% select("SampleID") 
+          b_metadata_select <- b_metadata_select[, "SampleID"] %>% as.character()
+          b_select <- a %>% select(b_metadata_select)
+          
+        })
+        
+        k <- a[, 1:7]
+        for (i in 1:length(unique(Metadata_demo()[, ft_names]))) {
+          
+          k <- cbind(k, b[[i]])
+          
+        }
+        
+        
+        c <- list()
+        c <- lapply(unique(Metadata_demo()[, ft_names]), function(i){
+          
+          c_metadata_select <- Metadata_demo()[Metadata_demo()[, ft_names] %in% i,] %>% select("SampleID") 
+          c_metadata_select_length <- c_metadata_select[, "SampleID"] %>% as.character() %>% length()
+          
+        })
+        
+        names(c) <- unique(Metadata_demo()[, ft_names])
+        
+        
+        sketch = htmltools::withTags(table(style="text-align:center;",
+                                           class = 'display',
+                                           col(style="width:50%"),
+                                           thead(
+                                             tr(
+                                               th(rowspan = 2, paste0('Kingdom', " (K=", length(unique(k[, 1])), ")")),
+                                               th(rowspan = 2, paste0('Phylum', " (K=", nrow(unique(k[, 1:2])), ")")),
+                                               th(rowspan = 2, paste0('Class', " (K=", nrow(unique(k[, 1:3])), ")")),
+                                               th(rowspan = 2, paste0('Order', " (K=", nrow(unique(k[, 1:4])), ")")),
+                                               th(rowspan = 2, paste0('Family', " (K=", nrow(unique(k[, 1:5])), ")")),
+                                               th(rowspan = 2, paste0('Genus', " (K=", nrow(unique(k[, 1:6])), ")")),
+                                               th(rowspan = 2, paste0('Species', " (K=", nrow(unique(k[, 1:7])), ")")),
+                                               # th(colspan = 8, 'gut'),
+                                               # th(colspan = 8, 'left palm'),
+                                               # th(colspan = 9, 'right palm'),
+                                               # th(colspan = 9, 'tongue')
+                                               lapply(1:length(unique(Metadata_demo()[, ft_names])), function(i){
+                                                 
+                                                 th(colspan = c[[i]], paste0(unique(Metadata_demo()[, ft_names])[i]), " ( N=", c[[i]], ")")
+                                               })
+                                             ),
+                                             tr(
+                                               lapply(colnames(k)[-(1:7)], th)
+                                             )
+                                           )
+        ))
+        
+        
+        
+        
+        
+        
+        if(input$metadata1_demo=="SampleID"){
+          
+          return(DT::datatable(TaxaTable_data_list_output, rownames = F))
+        }else{
+          # use rownames = FALSE here because we did not generate a cell for row names in the header
+          return(DT::datatable(k, container = sketch, rownames = F))
+        }
+        
+      }) # show the taxatable in Data analysis
+      
+      output$contents_demo <- renderDataTable({
+        return(TaxaTable_output_demo())
+      })
+      
+      TaxaTable_forDL_demo <- reactive({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          return(as.data.frame(df_data))
+        }
+        a <- TaxaTable_demo() %>% as_output_taxtable
+        return(a)
+      })
+      
+      output$downloadTaxaTable_demo<-downloadHandler(
+        
+        filename = "TaxaTable_result.csv",
+        content = function(file) {
+          
+          write.csv(TaxaTable_forDL_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      # Taxanomic barplot
+      # update metadata selection
+      updateRadioButtons(session, 
+                         inputId = "metadata_barplot_demo",
+                         choices = c("SampleID", "facility", "days"),
+                         inline = T
+      )
+      
+      # update top N
+      observe({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        } # clean the taxatable 
+        
+        taxatable <- as_output_taxtable(TaxaTable_demo())
+        
+        level_position <- which(level_group_demo()==input$select_level_bar_demo)
+        val <- length(unique(taxatable[, level_position]))
+        # Control the value, min, max, and step.
+        # Step size is 2 when input value is even; 1 when value is odd.
+        updateSliderInput(session, "integer_demo", value = val,
+                          min = 1, max = val, step = 1)
+      })
+      
+      Metadata_stats_demo <- reactive({
+        
+        metadata <- read.table("/home/imuser/example_files/Pacbio/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        
+        asv_table <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+        
+        colnames(metadata)[1] <- "SampleID"
+        metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)==0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        metadata <- metadata[, c("SampleID", OKstats_col)]
+        
+        return(metadata)
+        
+      })
+      
+      level_group_demo <- reactive({
+        
+        return(c("Kingdom","Phylum","Class","Order","Family","Genus","Species"))
+        
+      })
+      
+      output$barplot_demo <- renderPlotly({
+        
+        plot_LeveltoSamples<-function(taxtable, Level=level_group_demo(), topN){
+          
+          species_taxtable<-row.names(taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          #factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[-c(1:topN)]
+            return(species_name_topN)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]])
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,3]))
+          })
+          
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+            Samples_ID <- append_taxtable_list_all$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+          }
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          number_nameslist <- Metadata_stats_demo()[, 1] %>% length()
+          
+          append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100 %>% round(2)
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                             y="Relative abundance (%)",
+                                                                                                             fill="")
+          
+          library("plotly")
+          ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+        }
+        
+        plot_LeveltoSamples_noUnassigned<-function(taxtable, Level=level_group_demo(), topN){
+          
+          topN_species_list <- lapply(1:ncol(taxtable), function(i){
+            
+            sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+          })
+          
+          topN_species_union <- unique(unlist(topN_species_list))
+          
+          new_taxtable <- taxtable[topN_species_union,]
+          
+          species_taxtable<-row.names(new_taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(new_taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[, 2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          # factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID, barplot_taxa_table_data_percent_Level, FUN = sum)
+          
+          # remove unassigned
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+          
+          # compute percentage again
+          h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+            
+            filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+            
+          })
+          
+          for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+            
+            h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+            
+          }
+          
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+          
+          
+          y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+          
+          sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID == y_name)) {
+            Samples_ID <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__", barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID)
+          }
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage$read_percentage <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$read_percentage %>% round(2)
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_noUnassigned_percentage,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())
+          # + scale_y_continuous(labels = scales::percent_format())
+          
+          library("plotly")
+          ggplotly(p_Level) %>% layout(xaxis=list(tickangle=45))
+        }
+        
+        plot_LeveltoSamples_sub<-function(taxtable, metadata,features, Level=level_group_demo(), topN){
+          
+          
+          species_taxtable<-row.names(taxtable) 
+          barplot_taxa_table_data<-as_tibble(taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          species_union <- unique(unlist(TopN_list))
+          species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+          species_diff <- setdiff(species_Levels, species_union)
+          
+          
+          '%!in%' <- function(x,y)!('%in%'(x,y))
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            b <- filter(a, Levels %!in% species_union)
+            b$Levels <- as.character(b$Levels)
+            return(b)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]]$Levels)
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+          })
+          
+          # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+          #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          # })
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            lapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+            
+            
+            # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+            sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                              y="Relative abundance (%)",
+                                                                                                                                              fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(append_taxtable_list_all, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 2:length(p_Level_plot_list[[features]])) {
+            
+            p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          subplot(p_Level_plot_list[[features]],
+                  shareY = T,
+                  titleX = T)
+          
+        }
+        
+        plot_LeveltoSamples_sub_noUnassigned<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
+          
+          topN_species_list <- lapply(1:ncol(taxtable), function(i){
+            
+            sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
+          })
+          
+          topN_species_union <- unique(unlist(topN_species_list))
+          
+          new_taxtable <- taxtable[topN_species_union,]
+          
+          species_taxtable<-row.names(new_taxtable) 
+          barplot_taxa_table_data<-as_tibble(new_taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          # remove unassigned
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels!="Unassigned")
+          
+          # compute percentage again
+          h_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(i){
+            
+            filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == i)
+            
+          })
+          
+          for (i in 1:length(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID))) {
+            
+            h_list[[i]][, "read_percentage"] <- h_list[[i]][, "read_percentage"]/sum(h_list[[i]][, "read_percentage"])
+            
+          }
+          
+          
+          barplot_taxa_table_data_percent_Level_noUnassigned_percentage <- bind_rows(h_list)
+          
+          
+          y_name <-barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID 
+          
+          sample_original_names <- barplot_taxa_table_data_percent_Level_noUnassigned_percentage$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            sapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, features, features_sub){
+            
+            barplot_taxa_table_data_percent_Level_sub <- subset(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, Sample_ID %in% names_list[[features]][[features_sub]])  
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=features_sub, fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(barplot_taxa_table_data_percent_Level_noUnassigned_percentage, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 2:length(p_Level_plot_list[[features]])) {
+            
+            p_Level_plot_list[[features]][[i]] <- style(p_Level_plot_list[[features]][[i]], showlegend = F)
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          subplot(p_Level_plot_list[[features]],
+                  shareY = T,
+                  titleX = T)
+          
+        }
+        
+        
+        if (input$metadata_barplot_demo == "SampleID"){
+          
+          # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+          return(plot_LeveltoSamples(TaxaTable_demo(), input$select_level_bar_demo, input$integer_demo))
+          
+        }else{
+          
+          # taxtable <- read_qza(input$taxonomic_table$datapath)[["data"]]
+          return(plot_LeveltoSamples_sub(TaxaTable_demo(), Metadata_stats_demo(),input$metadata_barplot_demo, input$select_level_bar_demo, input$integer_demo))
+          
+        }
+        
+      })
+      
+      # download
+      TaxaTable_merge_demo <- reactive({
+        
+        as_output_taxtable <- function(df_data){
+          
+          df_data_rownames<-row.names(df_data)
+          
+          df_data <- cbind(Species=df_data_rownames, df_data) %>% as.data.frame()
+          
+          row.names(df_data) <- NULL
+          
+          # remove the non-sense string
+          df_data$Species<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", df_data$Species)
+          df_data$Species<-gsub("k__|p__|c__|o__|f__|g__|s__", "", df_data$Species)
+          
+          
+          library(tidyr)
+          df_data <- df_data %>%
+            separate(
+              col = Species,
+              into = level_group(),
+              sep = ";"
+            )
+          
+          # replace "__" to "Unassigned"
+          df_data<-replace(df_data, df_data=="", "Unassigned")
+          df_data<-replace(df_data, df_data=="__", "Unassigned")
+          
+          return(as.data.frame(df_data))
+        } # clean the taxatable 
+        
+        taxatable <- as_output_taxtable(TaxaTable_demo())
+        
+        if(input$`18S`){
+          taxatable$Level <- paste(taxatable$`Level 1`,
+                                   taxatable$`Level 2`,
+                                   taxatable$`Level 3`,
+                                   taxatable$`Level 4`,
+                                   taxatable$`Level 5`,
+                                   taxatable$`Level 6`,
+                                   taxatable$`Level 7`,
+                                   sep = ";")
+        }else{
+          taxatable$Level <- paste(taxatable$Kingdom,
+                                   taxatable$Phylum,
+                                   taxatable$Class,
+                                   taxatable$Order,
+                                   taxatable$Family,
+                                   taxatable$Genus,
+                                   taxatable$Species,
+                                   sep = ";")
+        }
+        
+        
+        taxatable_merge <- taxatable[, -(1:7)]
+        taxatable_merge[,-ncol(taxatable_merge)] <- data.frame(sapply(taxatable_merge[,-ncol(taxatable_merge)], function(x){
+          as.character(x) %>% as.numeric()
+        }))
+        
+        taxatable_merge_result <- taxatable_merge %>% group_by(Level) %>% summarise_all(funs(sum)) %>% as.data.frame()
+        rownames(taxatable_merge_result) <- taxatable_merge_result$Level
+        taxatable_merge_result <- taxatable_merge_result[, -1]
+        
+        return(taxatable_merge_result)
+      }) # Some OTUs may be unassigned or multi-matched, in this object, both are considered as unassigned
+      
+      barplot_download_demo <- reactive({
+        
+        plot_LeveltoSamples_save<-function(taxtable, Level=level_group_demo(), topN){
+          
+          species_taxtable<-row.names(taxtable) # get rowname
+          barplot_taxa_table_data<-as_tibble(taxtable) # rawnames will be removed after transform to tibble
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) # Add new column
+          # Percentage
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          # To make data tidy
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          # Seperate Species names by taxon
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          # Replace "__" to "Unassigned"
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          # Get Level
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          # it's convinient to make function by change column
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          #factor
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[-c(1:topN)]
+            return(species_name_topN)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]])
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,3]))
+          })
+          
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          for (k in 1:length(names(names_list[[input$metadata_barplot_demo]]))) {
+            
+            
+            y_name <- mapvalues(y_name, 
+                                from = names_list[[input$metadata_barplot_demo]][[k]], 
+                                to = as.character(
+                                  rep(
+                                    unique(
+                                      Metadata_stats_demo()[, input$metadata_barplot_demo])[k], 
+                                    length(names_list[[input$metadata_barplot_demo]][[k]])
+                                  )
+                                )
+            )}
+          
+          if (unique(append_taxtable_list_all$Sample_ID == y_name)) {
+            Samples_ID <- append_taxtable_list_all$Sample_ID
+          }else{
+            Samples_ID <- paste0( y_name, "__",append_taxtable_list_all$Sample_ID)
+          }
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          number_nameslist <- Metadata_stats_demo()[, 1] %>% length()
+          
+          append_taxtable_list_all$read_percentage <- append_taxtable_list_all$read_percentage*100 %>% round(2)
+          
+          # col_names <- colnames(append_taxtable_list_all)
+          # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+          # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+          # colnames(append_taxtable_list_all) <- col_names_new
+          
+          # plot
+          library(viridis)
+          p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
+                                     aes(x=Sample_ID,
+                                         y=read_percentage,
+                                         fill=Levels),
+                                     colour="White",
+                                     size=0.1,
+                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
+                                                                                                             y="Relative abundance (%)",
+                                                                                                             fill="")
+          
+          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+        }
+        
+        return(plot_LeveltoSamples_save(TaxaTable_merge_demo(), input$select_level_bar_demo, input$integer_demo))
+        
+      })
+      
+      barplot_sub_download_demo <- reactive({
+        
+        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
+          
+          
+          species_taxtable<-row.names(taxtable) 
+          barplot_taxa_table_data<-as_tibble(taxtable) 
+          barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
+          
+          barplot_taxa_table_data_percent<-t(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)])/
+                                               rowSums(t(barplot_taxa_table_data[,-ncol(barplot_taxa_table_data)]))) %>% as_tibble()
+          barplot_taxa_table_data_percent<-add_column(barplot_taxa_table_data_percent, Species_name=barplot_taxa_table_data$Species, .before = 1)
+          
+          
+          library(tidyr)
+          barplot_taxa_table_data_percent<-gather(barplot_taxa_table_data_percent,
+                                                  key = "Sample_ID",
+                                                  value = "read_percentage",
+                                                  colnames(barplot_taxa_table_data_percent[,2:ncol(barplot_taxa_table_data_percent)]))
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          barplot_taxa_table_data_percent$Species_name<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                             "", 
+                                                             barplot_taxa_table_data_percent$Species_name)
+          
+          
+          
+          barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
+                                                    col = "Species_name",
+                                                    into = level_group(),
+                                                    sep = ";")
+          
+          
+          
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="__",
+                                                   "Unassigned")
+          
+          barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
+                                                   barplot_taxa_table_data_percent=="",
+                                                   "Unassigned")
+          
+          
+          barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
+          
+          
+          colnames(barplot_taxa_table_data_percent_Level)[1]<-"Levels"
+          
+          
+          barplot_taxa_table_data_percent_Level$Levels<-factor(barplot_taxa_table_data_percent_Level$Levels,
+                                                               levels = unique(c("Unassigned",barplot_taxa_table_data_percent_Level$Levels))
+          )
+          
+          barplot_taxa_table_data_percent_Level<-aggregate(read_percentage~Levels+Sample_ID,barplot_taxa_table_data_percent_Level,FUN = sum)
+          
+          #
+          barplot_taxa_table_data_percent_Level_noUnassigned <- filter(barplot_taxa_table_data_percent_Level, Levels != "Unassigned")
+          
+          TopN_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            topN <- topN
+            species_name <- a$Levels %>% as.character()
+            species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+            species_name_topN <- species_name_sort[1:topN]
+            return(species_name_topN)
+          })
+          
+          names(TopN_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          species_union <- unique(unlist(TopN_list))
+          species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
+          species_diff <- setdiff(species_Levels, species_union)
+          
+          
+          '%!in%' <- function(x,y)!('%in%'(x,y))
+          others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+            a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+            b <- filter(a, Levels %!in% species_union)
+            b$Levels <- as.character(b$Levels)
+            return(b)
+          })
+          names(others_list) <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID)
+          
+          others_list_1 <- lapply(1:length(others_list), function(i){
+            c("Unassigned", others_list[[i]]$Levels)
+          })
+          names(others_list_1) <- names(others_list)
+          
+          others_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% others_list_1[[i]]) %>% filter(Sample_ID==names(others_list_1)[i])
+          })
+          names(others_taxtable_list) <- names(others_list_1)
+          
+          others_taxtable_list_sum <- lapply(1:length(others_taxtable_list), function(i){
+            data.frame(Levels = "Others", 
+                       Sample_ID = names(others_taxtable_list)[i], 
+                       read_percentage = sum(others_taxtable_list[[i]][,"read_percentage"]))
+          })
+          
+          # topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+          #   filter(barplot_taxa_table_data_percent_Level, Levels %in% TopN_list[[i]]) %>% filter(Sample_ID==names(TopN_list)[i])
+          # })
+          topN_taxtable_list <- lapply(1:length(others_list_1), function(i){
+            filter(barplot_taxa_table_data_percent_Level, Levels %in% species_union) %>% filter(Sample_ID==names(TopN_list)[i])
+          })
+          
+          append_taxtable_list <- lapply(1:length(others_taxtable_list_sum), function(i){
+            bind_rows(topN_taxtable_list[[i]], others_taxtable_list_sum[[i]])
+          })
+          
+          append_taxtable_list_all <- bind_rows(append_taxtable_list)
+          #
+          
+          
+          y_name <-append_taxtable_list_all$Sample_ID 
+          
+          sample_original_names <- append_taxtable_list_all$Sample_ID
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
+            
+            sapply(1:length(unique(metadata[, i])), function(j){
+              
+              update_rownames(i, metadata,j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(metadata[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          factor_levels <- append_taxtable_list_all$Levels %>% unique()
+          others_position <- which(factor_levels=="Others")
+          factor_levels_new <- c(as.character(factor_levels[others_position]), as.character(factor_levels[-others_position]))
+          factor_levels_new <- factor(factor_levels_new, levels = factor_levels_new)
+          append_taxtable_list_all$Levels <- factor(append_taxtable_list_all$Levels,
+                                                    levels = factor_levels_new
+          )
+          
+          
+          p_Level_plot_sub <- function(barplot_taxa_table_data_percent_Level, features, features_sub){
+            
+            
+            # barplot_taxa_table_data_percent_Level_sub <- filter(barplot_taxa_table_data_percent_Level, Sample_ID %in% names_list[[features]][[features_sub]]) 
+            sub_position <- which(barplot_taxa_table_data_percent_Level[, "Sample_ID"] %in% names_list[[features]][[features_sub]])
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level[sub_position,]
+            
+            barplot_taxa_table_data_percent_Level_sub <- barplot_taxa_table_data_percent_Level_sub %>% group_by(Levels)
+            
+            number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
+            
+            barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
+            
+            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
+            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
+            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
+            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
+            
+            library(viridis)
+            
+            p_Level_plot<-ggplot()+geom_bar(data = barplot_taxa_table_data_percent_Level_sub,
+                                            aes(x=Sample_ID,
+                                                y=read_percentage,
+                                                fill=Levels),
+                                            colour="White",
+                                            size=0.1,
+                                            # show.legend = T,
+                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
+                                                                                                                                              y="Relative abundance (%)",
+                                                                                                                                              fill="")
+            
+            
+          }
+          
+          p_Level_plot_list <- list()
+          p_Level_plot_list <- lapply(names(names_list), function(i){
+            lapply(names(names_list[[i]]), function(j){
+              
+              p_Level_plot_sub(append_taxtable_list_all, i, j) 
+              
+            })
+            
+          })
+          
+          names(p_Level_plot_list) <- colnames(metadata)[1:ncol(metadata)]
+          
+          for (i in 1:length(names(p_Level_plot_list))) {
+            names(p_Level_plot_list[[i]]) <- unique(metadata[,names(p_Level_plot_list)[i]]) %>% as.character()
+          }
+          
+          for (i in 1:length(names(names_list))) {
+            for (j in 2:length(names(names_list[[i]]))) {
+              p_Level_plot_list[[i]][[j]] <- p_Level_plot_list[[i]][[j]]
+            }
+            
+          }
+          
+          for (i in 1:(length(p_Level_plot_list[[features]])-1)) {
+            
+            p_Level_plot_list[[features]][[i]] <- p_Level_plot_list[[features]][[i]] + theme(legend.position="none")
+            
+          }
+          
+          nonNA_position <- which(names(p_Level_plot_list[[features]])!="NA")
+          p_Level_plot_list[[features]] <- p_Level_plot_list[[features]][nonNA_position]
+          
+          egg::ggarrange(plots = p_Level_plot_list[[features]], nrow=1)
+          
+        }
+        
+        return(plot_LeveltoSamples_sub(taxtable = TaxaTable_merge_demo(), metadata = Metadata_stats_demo(), features = input$metadata_barplot_demo, Level = input$select_level_bar_demo, topN = input$integer_demo))
+      })
+      
+      output$download_barplot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("barplot_", input$metadata_barplot_demo, "_", input$select_level_bar_demo, "_demo.jpg")
+        },
+        content = function(file){
+          
+          if (input$metadata_barplot_demo=="SampleID"){
+            
+            ggsave(file, 
+                   plot = barplot_download_demo() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                   , width = 80, height = 40, units = "cm")
+            
+          }else{
+            
+            ggsave(file, plot = barplot_sub_download_demo(), width = 80, height = 40, units = "cm")
+            
+            
+          }
+        }
+      )
+      
+      # heatmap
+      
+      updateRadioButtons(session, 
+                         inputId = "metadata_hm_demo",
+                         choices = c("SampleID", "facility", "days"),
+                         inline = T
+      )
+      
+      
+      output$crimeplot_demo <- renderPlotly({
+        
+        options(scipen=999)# not shown by scientific sign
+        
+        microbioHeatmap_ly<-function(taxtable_data, Level=level_group_demo()){
+          
+          library(tidyr)
+          species_taxtable_data<-row.names(taxtable_data) 
+          taxtable_data<-as_tibble(taxtable_data) 
+          taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+          
+          taxtable_data<-gather(taxtable_data,
+                                key = "Sample_ID",
+                                value = "read_count",
+                                colnames(taxtable_data[,-1]))
+          
+          taxtable_data<-separate(data = taxtable_data,
+                                  col = "Species",
+                                  into = level_group_demo(),
+                                  sep = ";")
+          
+          taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+          
+          colnames(taxtable_data_Level)[1]<-"Levels"
+          
+          taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+          
+          taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+          
+          row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+          taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+          
+          taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+          taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+          taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+          
+          #去除物種前面的代碼
+          rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          #將"__"變為"Unassigned"
+          rownames(taxtable_data_Level_spread_prop)<-
+            replace(rownames(taxtable_data_Level_spread_prop), 
+                    rownames(taxtable_data_Level_spread_prop)=="__", 
+                    "Unassigned")
+          
+          taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+          
+          #使sample_ID隨按鈕變動
+          y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            library(dplyr)
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          library('plotly')
+          plot_ly(x = Metadata_stats_demo()[,input$metadata_hm_demo],
+                  y = rownames(taxtable_data_Level_spread_prop_logtrf),
+                  z = taxtable_data_Level_spread_prop_logtrf,
+                  type = "heatmap",
+                  colors = colorRamp(c("green", "red")),
+          ) %>% layout(xaxis=list(tickangle=45))
+          
+          
+          
+        }
+        
+        microbioHeatmap_subly<-function(taxtable_data, Level=level_group_demo()){
+          
+          library(tidyr)
+          species_taxtable_data<-row.names(taxtable_data) 
+          taxtable_data<-as_tibble(taxtable_data) 
+          taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+          
+          taxtable_data<-gather(taxtable_data,
+                                key = "Sample_ID",
+                                value = "read_count",
+                                colnames(taxtable_data[,-1]))
+          
+          taxtable_data<-separate(data = taxtable_data,
+                                  col = "Species",
+                                  into = level_group(),
+                                  sep = ";")
+          
+          taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+          
+          colnames(taxtable_data_Level)[1]<-"Levels"
+          
+          taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+          
+          taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+          
+          row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+          taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+          
+          taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+          taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+          taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+          
+          # remove non-sense string 
+          rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                          "", 
+                                                          rownames(taxtable_data_Level_spread_prop))
+          
+          
+          
+          # replace "__" to "Unassigned"
+          rownames(taxtable_data_Level_spread_prop)<-
+            replace(rownames(taxtable_data_Level_spread_prop), 
+                    rownames(taxtable_data_Level_spread_prop)=="__", 
+                    "Unassigned")
+          
+          taxtable_data_Level_spread_prop_logtrf<-log(taxtable_data_Level_spread_prop+0.01)
+          
+          #  Make sample_ID change by button
+          y_name <-taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          sample_original_names <- taxtable_data_Level_spread_prop_logtrf %>% colnames()
+          
+          update_rownames <- function(feature_name, metadata, i){
+            
+            names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+            names_order <- which(names_TF==T)
+            library(dplyr)
+            sample_names <- metadata[,1][names_order] %>% as.character()
+            return(sample_names)
+          }
+          
+          names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
+            
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              
+              update_rownames(i, Metadata_stats_demo(),j)
+              
+              
+            })
+            
+          })
+          
+          names(names_list) <- colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())]
+          
+          for (i in 1:length(names(names_list))) {
+            names(names_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          
+          taxtable_data_Level_spread_prop_logtrf_list <- list()
+          taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+            })
+            
+          })
+          
+          for (i in 1:length(names(names_list))) {
+            names(taxtable_data_Level_spread_prop_logtrf_list[[i]]) <- unique(Metadata_stats_demo()[,names(names_list)[i]]) %>% as.character()
+          }
+          
+          names(taxtable_data_Level_spread_prop_logtrf_list) <- names(names_list)
+          
+          Heatmap_plotly <- function(heatmap_list, feature) {
+            library('plotly')
+            heatmap_plot_list <- list()
+            heatmap_plot_list <- lapply(1:length(heatmap_list[[feature]]), function(i){
+              
+              if(i==1){
+                
+                plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                        y= rownames(heatmap_list[[feature]][[i]]),
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
+                        zmin = min(unlist(heatmap_list[[feature]])),
+                        zmax = max(unlist(heatmap_list[[feature]])),
+                        type = "heatmap",
+                        colors = colorRamp(c("green", "red")),
+                        colorbar=list(title="scale")
+                ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+                
+              }else{
+                
+                plot_ly(x= colnames(heatmap_list[[feature]][[i]]),
+                        y= rownames(heatmap_list[[feature]][[i]]),
+                        z = heatmap_list[[feature]][[i]] %>% as.matrix(),
+                        type = "heatmap",
+                        colors = colorRamp(c("green", "red")),
+                        showscale = F,
+                        colorbar=list(title=names(heatmap_list[[feature]])[i])
+                ) %>% layout(title=feature,xaxis=list(title=names(heatmap_list[[feature]])[i], tickangle=45)) %>% add_trace(name=names(names_list[[feature]])[i], showscale=F)
+              }
+              
+            })
+            
+            return(heatmap_plot_list)
+          }
+          
+          z_heatmap_plotly <- Heatmap_plotly(taxtable_data_Level_spread_prop_logtrf_list, input$metadata_hm_demo)
+          
+          nonNA_position <- which(unique(Metadata_stats_demo()[, input$metadata_hm_demo])!="NA")
+          z_heatmap_plotly <- z_heatmap_plotly[nonNA_position]
+          
+          return(subplot(z_heatmap_plotly, shareY = T, titleX = T))
+          
+        }
+        
+        if (input$metadata_hm_demo=="SampleID"){
+          return(microbioHeatmap_ly(TaxaTable_merge_demo(), input$select_level_hm_demo))
+        }
+        return(microbioHeatmap_subly(TaxaTable_merge_demo(), input$select_level_hm_demo))
+        
+        
+      })
+      
+      # download
+      output$downloadHMmatrix_demo<-downloadHandler(
+        
+        filename = "Heatmap_matrix_demo.csv",
+        content = function(file) {
+          
+          options(scipen=999)# not shown by scientific sign
+          
+          microbioHeatmap_matrix <- function(taxtable_data, Level=level_group_demo()){
+            
+            library(tidyr)
+            species_taxtable_data<-row.names(taxtable_data) 
+            taxtable_data<-as_tibble(taxtable_data) 
+            taxtable_data<-add_column(taxtable_data,Species=species_taxtable_data , .before = 1) 
+            
+            taxtable_data<-gather(taxtable_data,
+                                  key = "Sample_ID",
+                                  value = "read_count",
+                                  colnames(taxtable_data[,-1]))
+            
+            taxtable_data<-separate(data = taxtable_data,
+                                    col = "Species",
+                                    into = level_group_demo(),
+                                    sep = ";")
+            
+            taxtable_data_Level<-taxtable_data[, c(Level,"Sample_ID","read_count")]
+            
+            colnames(taxtable_data_Level)[1]<-"Levels"
+            
+            taxtable_data_Level<-aggregate(read_count~Levels+Sample_ID,taxtable_data_Level,FUN = sum)
+            
+            taxtable_data_Level_spread<-spread(taxtable_data_Level,key = Sample_ID,value = read_count)
+            
+            row.names(taxtable_data_Level_spread)<-taxtable_data_Level_spread$Levels
+            taxtable_data_Level_spread<-taxtable_data_Level_spread[,-1]
+            
+            taxtable_data_Level_spread<-t(taxtable_data_Level_spread) 
+            taxtable_data_Level_spread_prop<-taxtable_data_Level_spread/rowSums(taxtable_data_Level_spread)
+            taxtable_data_Level_spread_prop<-t(taxtable_data_Level_spread_prop)
+            
+            # remove non-sense string
+            rownames(taxtable_data_Level_spread_prop)<-gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", 
+                                                            "", 
+                                                            rownames(taxtable_data_Level_spread_prop))
+            
+            
+            
+            rownames(taxtable_data_Level_spread_prop)<-gsub("k__|p__|c__|o__|f__|g__|s__", 
+                                                            "", 
+                                                            rownames(taxtable_data_Level_spread_prop))
+            
+            
+            
+            # replace "__" to "Unassigned"
+            rownames(taxtable_data_Level_spread_prop)<-
+              replace(rownames(taxtable_data_Level_spread_prop), 
+                      rownames(taxtable_data_Level_spread_prop)=="__", 
+                      "Unassigned")
+            
+            
+            return(taxtable_data_Level_spread_prop)
+          }
+          
+          if(input$select_level_hm_demo == "Kingdom") {
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Kingdom"), file, row.names = T)
+          } else if (input$select_level_hm_demo == "Phylum"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Phylum"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Class"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Class"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Order"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Order"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Family"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Family"), file, row.names = T)
+          } else if(input$select_level_hm_demo == "Genus"){
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Genus"), file, row.names = T)
+          }
+          else {
+            write.csv(microbioHeatmap_matrix(TaxaTable_merge_demo(),"Species"), file, row.names = T)
+          }
+        }
+        
+        
+      )
+      
+      # Krona
+      output$krona_output_demo <- renderUI({
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_example_Pacbio.html")
+        # includeHTML(path = "/home/imuser/example_files/Pacbio/iframe_krona.html")
+      })
+      
+      # download
+      output$download_krona_demo <- downloadHandler(
+        
+        filename = "Krona_results_demo.zip",
+        
+        content = function(file){
+          
+          file.copy("/home/imuser/example_files/Pacbio/Krona.zip", file)
+          
+        }
+      )
+      
+      
+      # Alpha diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_alpha_demo",
+                         choices = c("facility", "days"),
+                         inline = T
+      )
+      
+      asv_table_demo <- reactive({
+        asv_table <- read_qza("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza")[["data"]]
+        return(asv_table)
+      })
+      
+      alpha_diversity_table_demo <- reactive({
+        
+        as_alpha_diversity_table <- function(taxatable_data){
+          
+          alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+            nrow(subset(as.data.frame(taxatable_data), 
+                        as.data.frame(taxatable_data)[,i]>0))
+          })
+          
+          library(fossil)
+          alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
+            chao1(taxatable_data[,i])
+          })
+          
+          alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
+            ACE(taxatable_data[,i])
+          })
+          
+          library(vegan)
+          alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "shannon")
+          })
+          
+          alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "simpson")
+          })
+          
+          alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
+            diversity(taxatable_data[,i], index = "invsimpson")
+          })
+          
+          
+          ShannonEvenness<-function(data_vector){
+            
+            shannon_diversity<-diversity(data_vector, index = "shannon")
+            species_number<-length(data_vector)
+            Hmax<-log(species_number)
+            J<-shannon_diversity/Hmax
+            print(J)
+            
+          }
+          
+          alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+            ShannonEvenness(taxatable_data[,i])
+          })
+          
+          
+          SimpsonEvenness<-function(data_vector){
+            
+            D<-diversity(data_vector, index = "simpson")
+            species_number<-length(data_vector)
+            E<-(1/(1-D))/species_number
+            print(E)
+            
+          }
+          
+          alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+            SimpsonEvenness(taxatable_data[,i])
+          })
+          
+          GoodCoverage<-function(data_vector){
+            
+            n<-length(which(data_vector==1))
+            N<-length(which(data_vector!=0))
+            C<-(1-(n/N))
+            print(C)
+            
+          }
+          
+          alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+            GoodCoverage(taxatable_data[,i])
+          })
+          
+          
+          alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
+                                            Richness=alpha_diversity_richness,
+                                            Chao1=alpha_diversity_Choa1,
+                                            ACE=alpha_diversity_ACE,
+                                            Shannon_diverstiy=alpha_diversity_Shannon,
+                                            Simpson_diversity=alpha_diversity_Simpson,
+                                            InvSimpson_diversity=alpha_diversity_InvSimpson,
+                                            Shannon_evenness=alpha_diversity_ShannonEvenness,
+                                            Simpson_evenness=alpha_diversity_SimpsonEveness,
+                                            Goods_coverage=alpha_diversity_GoodCoverage
+          )
+          
+          
+          alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
+            round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
+          
+          return(alpha_diversity_table)
+        }
+        
+        return(as_alpha_diversity_table(asv_table_demo()))
+        
+      })
+      
+      
+      
+      alpha_anova_boxplot_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        anova_summary <- summary(anova_result)
+        # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+        # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Alpha diversity") +
+          xlab(input$metadata_alpha_demo) +
+          ylab(input$select_diversity_demo)+
+          labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                     geom = "text", 
+                                                                                                                                                     hjust = 0.5,
+                                                                                                                                                     vjust = 0.9)
+      })
+      
+      alpha_anova_tukey_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index) 
+        
+        anova_result <- aov(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        
+        tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+        tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+        tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+        tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+        tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+        colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+        return(tukey_result_table_separate_order[, c(1,2,3,6)])
+        
+      })
+      
+      alpha_KW_boxplot_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        KW_result <- kruskal.test(value ~ feature_name, A_diversity_metadata_list_melt_forplot)
+        
+        stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list_melt_forplot$value) * 1.15) {
+          return( 
+            data.frame(
+              y = 0.95 * upper_limit,
+              label = paste('n =', length(y))
+            )
+          )
+        }
+        
+        ggplot(A_diversity_metadata_list_melt_forplot, aes(x = feature_name, y = value)) +
+          # geom_text(data = data.frame(),
+          #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list_melt_forplot$value) + 1, label = group_data$groups),
+          #           col = 'black',
+          #           size = 5) +
+          geom_boxplot() +
+          ggtitle("Alpha diversity") +
+          xlab(input$metadata_alpha_demo) +
+          ylab(input$select_diversity_demo)+
+          labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                            geom = "text", 
+                                                                                                                                            hjust = 0.5,
+                                                                                                                                            vjust = 0.9)
+      })
+      
+      alpha_KW_Dunn_demo <- reactive({
+        
+        A_diversity <- alpha_diversity_table_demo()
+        
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity,
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        
+        library(reshape2)
+        i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
+        A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
+                                               id.vars=c("SampleID",
+                                                         names(A_diversity_metadata_list)[i]))
+        
+        colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
+        
+        A_diversity_metadata_list_melt <- filter(A_diversity_metadata_list_melt, feature_name != "NA")
+        
+        index <- input$select_diversity_demo
+        A_diversity_metadata_list_melt_forplot <- subset(A_diversity_metadata_list_melt,
+                                                         variable==index)
+        
+        Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list_melt_forplot$value, A_diversity_metadata_list_melt_forplot$feature_name)
+        Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                                 Z=Dunn_result$Z,
+                                 Pvalue= Dunn_result$P)
+        Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+        Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+        Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+        colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+        return(Dunn_table_separate_order)
+        
+      })
+      
+      output$contents2_demo<-renderDataTable({
+        
+        return(alpha_diversity_table_demo())
+        
+      })
+      
+      output$downloadAlpha_demo<-downloadHandler(
+        
+        filename = "AlphaDiversityTable_result_demo.csv",
+        content = function(file) {
+          
+          write.csv(alpha_diversity_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      output$alpha_boxplot_demo <- renderPlot({
+        
+        if(input$select_stat_demo=="ANOVA"){
+          return(alpha_anova_boxplot_demo())
+        }else{
+          return(alpha_KW_boxplot_demo())
+        }
+        
+        
+      })
+      
+      output$word_metadata_NA_3_demo <- renderText({
+        
+        if("NA" %in% Metadata_demo()[,input$metadata_alpha_demo]){
+          NA_position <- which(Metadata_demo()[,input$metadata_alpha_demo]=="NA")
+          NA_sampleid <- Metadata_demo()[,1][NA_position]
+          print(paste("Your sample id", NA_sampleid, "has missing value and therefore could be removed."))
+        }
+      })
+      
+      output$downloadAlphaBoxPlot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Alpha_diversity_boxplot_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.jpg")
+        },
+        content = function(file){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            ggsave(file, plot = alpha_anova_boxplot_demo())
+          }else{
+            ggsave(file, plot = alpha_KW_boxplot_demo())
+          }
+          
+        }
+      )
+      
+      output$post_test_type_demo <- renderText({
+        
+        if(input$select_stat_demo=="ANOVA"){
+          return("Tukey test")
+        }else{
+          return("Dunn test")
+        } 
+        
+      })
+      
+      output$post_test_demo <- renderTable({
+        
+        if(input$select_stat_demo == "ANOVA"){
+          return(alpha_anova_tukey_demo())
+        }else{
+          return(alpha_KW_Dunn_demo())
+        }
+        
+      })
+      
+      output$Alpha_posttest_DL_demo <- downloadHandler(
+        
+        filename = function(){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            paste0("Alpha_diversity_Tukey_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.csv")
+          }else{
+            paste0("Alpha_diversity_Dunn_", input$metadata_alpha_demo, "_",input$select_diversity_demo,"_demo.csv")
+          }
+          
+        },
+        
+        content = function(file){
+          
+          if(input$select_stat_demo=="ANOVA"){
+            write.csv(alpha_anova_tukey_demo(), file, row.names = F)
+          }else{
+            write.csv(alpha_KW_Dunn_demo(), file, row.names = F)
+          }
+          
+        }
+      )
+      
+      # Beta diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_beta_demo",
+                         choices = c("facility", "days"),
+                         inline = T
+      )
+      
+      BetaTable_bray_demo <- reactive({
+        
+        Bray_df_data<-vegan::vegdist(t(asv_table_demo()), method = "bray") %>% as.matrix() %>% as.data.frame()
+        return(Bray_df_data)
+        
+      })
+      
+      Beta_dsmx_heatmap_demo <- reactive({
+        
+        beta_dsmx <- BetaTable_bray_demo() %>% as.matrix()
+        plot_ly(x=colnames(beta_dsmx),
+                y=rownames(beta_dsmx),
+                z=beta_dsmx,
+                # colors = palette(50),
+                colors = colorRamp(c("green", "red")),
+                type = "heatmap") %>% layout(title="Beta diversity distance matrix heatmap", xaxis=list(tickangle=45))
+      })
+      
+      BetaPlot_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        
+        library(vegan)
+        Bray_df_data<-vegdist(t(taxatable_beta), method = "bray")
+        
+        
+        # PCA
+        taxatable_beta_percent <- t(t(taxatable_beta)/rowSums(t(taxatable_beta)))
+        pca_Bray_df_data <- prcomp(t(taxatable_beta_percent))
+        PCA_rowname <- pca_Bray_df_data$x %>% row.names()
+        sample_original_names <- pca_Bray_df_data$x %>% row.names()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+        
+        PCA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta_demo]
+        
+        
+        library(ggplot2)
+        pca_Bray_df_data_plot <- data.frame(sample=PCA_rowname_arrange, 
+                                            PC1=pca_Bray_df_data$x[,1],
+                                            PC2=pca_Bray_df_data$x[,2])
+        pc_prop <- pca_Bray_df_data$sdev^2/sum(pca_Bray_df_data$sdev^2)
+        
+        library(ggrepel)
+        pca_Bray_df_data_plot_gg <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pc_prop[1], 2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pc_prop[2], 2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        
+        # PCoA
+        library(ape)
+        pcoa_Bray_df_data<-pcoa(Bray_df_data)
+        
+        # Get the name of every point in PCoA
+        # Change the names by features
+        PCoA_rowname <- pcoa_Bray_df_data$vectors %>% row.names()
+        
+        sample_original_names <- pcoa_Bray_df_data$vectors %>% row.names()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_arrange <- arrange(metadata_beta, SampleID)
+        
+        PCoA_rowname_arrange <- metadata_beta_arrange[, input$metadata_beta_demo]
+        
+        
+        
+        library(ggplot2)
+        pcoa_Bray_df_data_plot <- data.frame(sample=PCoA_rowname_arrange, 
+                                             PC1=pcoa_Bray_df_data$vectors[,1],
+                                             PC2=pcoa_Bray_df_data$vectors[,2])
+        
+        library(ggrepel)
+        pcoa_Bray_df_data_plot_gg<-ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCoA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
+          ylab(paste("PC2 (", round(pcoa_Bray_df_data$values[2,2],2)*100, "%", ")", sep = ""))+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          ggtitle("PCoA plot")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        # NMDS
+        comm_bray <- vegdist(t(taxatable_beta))
+        metaMDS_beta_df_data<-metaMDS(comm_bray, distance = "bray")
+        NMDS_beta_df_data<-data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        NMDS_rowname <- PCoA_rowname_arrange
+        NMDS_beta_df_data_plot<-data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg<-ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept =0, linetype="dotted")+
+          geom_hline(yintercept = 0, linetype="dotted")+
+          theme_bw()+
+          labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        
+        if(input$sep_demo == "PCoA" & input$beta_cluster_demo == F) {
+          
+          if(input$beta_showID_demo == T){
+            return(pcoa_Bray_df_data_plot_gg)
+          }else{
+            return(pcoa_Bray_df_data_plot_gg_noID)
+          }
+          
+        }
+        else if(input$sep_demo == "PCoA" & input$beta_cluster_demo == T){
+          
+          if(input$beta_showID_demo == T){
+            return(pcoa_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(pcoa_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+        }
+        else if(input$sep_demo == "NMDS" & input$beta_cluster_demo == F){
+          
+          if(input$beta_showID_demo == T){
+            return(NMDS_beta_df_data_plot_gg)
+          }else{
+            return(NMDS_beta_df_data_plot_gg_noID)
+          }
+          
+        }
+        else if(input$sep_demo == "NMDS" & input$beta_cluster_demo == T){
+          
+          if(input$beta_showID_demo == T){
+            return(NMDS_beta_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(NMDS_beta_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+        }
+        else if(input$sep_demo == "PCA" & input$beta_cluster_demo == F){
+          
+          if(input$beta_showID_demo == T){
+            return(pca_Bray_df_data_plot_gg)
+          }else{
+            return(pca_Bray_df_data_plot_gg_noID)
+          }
+          
+        }else{
+          
+          if(input$beta_showID_demo == T){
+            return(pca_Bray_df_data_plot_gg + stat_ellipse(type = "t"))
+          }else{
+            return(pca_Bray_df_data_plot_gg_noID + stat_ellipse(type = "t"))
+          }
+          
+          
+        }
+        
+        
+      })
+      
+      output$NMDS_stress_demo <- renderText({
+        
+        if(input$sep_demo=="NMDS"){
+          return("A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, > 0.2 is good/ok, and stress > 0.3 provides a poor representation.")
+        }
+        
+      })
+      
+      output$beta_dsmx_hm_demo <- renderPlotly({
+        
+        return(Beta_dsmx_heatmap_demo())
+      })
+      
+      output$download_beta_dsmx_hm_demo <- downloadHandler(
+        
+        filename = "Beta_dsmx_data_demo.csv",
+        content = function(file){
+          write.csv(BetaTable_bray_demo(), file, row.names = T)
+        }
+      )
+      
+      output$betaplot_demo<-renderPlot({
+        
+        return(BetaPlot_demo())
+        
+      })
+      
+      output$downloadBetaPlot_demo <- downloadHandler(
+        
+        filename = function(){
+          if(input$sep_demo == "PCA"){
+            paste0("BetaPlot_PCA_", input$metadata_beta_demo,"_demo.jpg")
+          }
+          else if(input$sep == "PCoA") {
+            paste0("BetaPlot_PCoA_", input$metadata_beta_demo,"_demo.jpg")
+          }
+          else {
+            paste0("BetaPlot_NMDS_", input$metadata_beta_demo, "_demo.jpg")
+          }
+        },
+        content = function(file){
+          
+          return(ggsave(file, plot = BetaPlot_demo()))
+          
+        }
+      )
+      
+      Permanova_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(bray_df~nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      output$Permanova_title_demo <- renderText({
+        
+        if(is.data.frame(Permanova_table_demo())){
+          
+          return("PERMANOVA")
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$permanova_table_demo <- renderTable({
+        
+        return(Permanova_table_demo())
+        
+      })
+      
+      output$download_permanova_demo <- downloadHandler(
+        
+        filename = "PERMANOVA_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(Permanova_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      ANOSIM_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(bray_df, nonNA_metadata[, input$metadata_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      output$ANOSIM_title_demo <- renderText({
+        
+        if(is.data.frame(ANOSIM_table_demo())){
+          
+          return("ANOSIM")
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$ANOSIM_table_demo <- renderTable({
+        
+        return(ANOSIM_table_demo())
+      })
+      
+      # download ANOSIM table
+      output$download_ANOSIM_demo <- downloadHandler(
+        
+        filename = "ANOSIM_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(ANOSIM_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      
+      MRPP_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        mrpp_result <- mrpp(bray_df, nonNA_metadata[, input$metadata_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      output$MRPP_title_demo <- renderText({
+        
+        if(is.data.frame(MRPP_table_demo())){
+          
+          return("MRPP")
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$MRPP_table_demo <- renderTable({
+        
+        return(MRPP_table_demo())
+        
+      })
+      
+      # download MRPP table
+      output$download_MRPP_demo <- downloadHandler(
+        
+        filename = "MRPP_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(MRPP_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      
+      Permanova_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(nonNA_taxtable[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            adonis_result_pair <- adonis(bray_df_pair~metadata_pair[,input$metadata_beta_demo], 
+                                         metadata_pair, permutations = 999) 
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(adonis_result_pair_list_table[, c(1, 6, 7, 8)])
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$Permanova_pair_title_demo <- renderText({
+        
+        if(is.null(Permanova_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise PERMANOVA")
+        }
+        
+        
+      })
+      
+      output$permanova_pair_table_demo <- renderTable({
+        
+        return(Permanova_pair_table_demo())
+      })
+      
+      
+      # download permanova pair table
+      output$download_permanova_pair_demo <- downloadHandler(
+        
+        filename = "PERMANOVA_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(Permanova_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      ANOSIM_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(asv_table_demo()[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            anosim_result_pair <- anosim(bray_df_pair, metadata_pair[,input$metadata_beta_demo],
+                                         metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      output$ANOSIM_pair_title_demo <- renderText({
+        
+        if(is.null(ANOSIM_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise ANOSIM")
+        }
+      })
+      
+      output$ANOSIM_pair_table_demo <- renderTable({
+        
+        return(ANOSIM_pair_table_demo())
+      })
+      
+      # download ANOSIM pair table
+      output$download_ANOSIM_pair_demo <- downloadHandler(
+        
+        filename = "ANOSIM_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(ANOSIM_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      MRPP_pair_table_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        group_names <- unique(nonNA_metadata[,input$metadata_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          taxatable_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            
+            sample_f1_f2 <- sample_list[[input$metadata_beta_demo]] %>% filter(sample_list[[input$metadata_beta_demo]][,input$metadata_beta_demo] %in% feature1_feature2)
+            return(asv_table_demo()[, sample_f1_f2[,"SampleID"]])
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            bray_df_pair <- vegdist(t(taxatable_f1_f2_list[[k]]), method = "bray") %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(bray_df_pair))
+            MRPP_result_pair <- mrpp(bray_df_pair, metadata_pair[,input$metadata_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5,6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      output$MRPP_pair_title_demo <- renderText({
+        
+        if(is.null(MRPP_pair_table_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise MRPP")
+        }
+      })
+      
+      output$MRPP_pair_table_demo <- renderTable({
+        
+        return(MRPP_pair_table_demo())
+        
+      })
+      
+      output$download_MRPP_pair_demo <- downloadHandler(
+        
+        filename = "MRPP_pair_table_demo.csv",
+        content = function(file) {
+          
+          write.csv(MRPP_pair_table_demo(), file, row.names = FALSE)
+          
+        }
+      )
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_beta_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        # nonNA_taxtable <- asv_table()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        # group_names <- unique(select(nonNA_metadata, colnames(Metadata_stats()[selection_position])))
+        
+        if(length(group_names)<=2){
+          shinyjs::hide("download_permanova_pair_demo")
+          shinyjs::hide("download_ANOSIM_pair_demo")
+          shinyjs::hide("download_MRPP_pair_demo")
+        }else{
+          shinyjs::show("download_permanova_pair_demo")
+          shinyjs::show("download_ANOSIM_pair_demo")
+          shinyjs::show("download_MRPP_pair_demo")
+        }
+        
+      })
+      
+      # phylogenetic diversity
+      updateRadioButtons(session, 
+                         inputId = "metadata_phylo_alpha_demo",
+                         choices = c("facility", "days"),
+                         inline = T
+      )
+      
+      updateRadioButtons(session, 
+                         inputId = "metadata_phylo_beta_demo",
+                         choices = c("facility", "days"),
+                         inline = T
+      )
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_phylo_beta_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)<=2){
+          shinyjs::hide("download_permanova_pair_phylo_demo")
+          shinyjs::hide("download_ANOSIM_pair_phylo_demo")
+          shinyjs::hide("download_MRPP_pair_phylo_demo")
+        }else{
+          shinyjs::show("download_permanova_pair_phylo_demo")
+          shinyjs::show("download_ANOSIM_pair_phylo_demo")
+          shinyjs::show("download_MRPP_pair_phylo_demo")
+        }
+        
+      })
+      
+      
+      faith_PD_demo <- reactive({
+        read_qza("/home/imuser/example_files/Pacbio/faith_pd_vector.qza")[["data"]]
+      })
+      
+      output$contents4_demo <- renderDataTable({
+        a <- faith_PD_demo()
+        b <- data.frame(SampleID=rownames(a),
+                        FaithPD=a[,1])
+        return(b)
+      })
+      
+      
+      output$download_faithPD_table_demo <- downloadHandler(
+        filename = "faithPD_table_demo.csv",
+        content = function(file){
+          a <- faith_PD_demo()
+          b <- data.frame(SampleID=rownames(a),
+                          FaithPD=a[,1])
+          write.csv(b, file, row.names = FALSE)
+        }
+      )
+      
+      faithPD_boxplot_anova_demo <- reactive({
+        
+        as_faithPD_boxplot <- function(metadata, feature)
+          
+        {
+          
+          A_diversity <- faith_PD_demo()
+          
+          A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+          colnames(A_diversity)[1] <- colnames(metadata)[1]
+          A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+          
+          A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+            
+            A_diversity_metadata_merge <- merge(A_diversity, 
+                                                metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                                by= colnames(metadata)[1])
+          })
+          
+          names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+          
+          for (i in 1:length(A_diversity_metadata_list)) {
+            
+            colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+          }
+          
+          A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name != "NA")
+          
+          anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+          anova_summary <- summary(anova_result)
+          # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+          # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+          options(scipen=999)
+          
+          stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+            return( 
+              data.frame(
+                y = 0.95 * upper_limit,
+                label = paste('n =', length(y))
+              )
+            )
+          }
+          
+          ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+            # geom_text(data = data.frame(),
+            #           aes(x = rownames(group_data), y = max(A_diversity_metadata_list[[feature]]$faith_pd) + 1, label = group_data$groups),
+            #           col = 'black',
+            #           size = 5) +
+            geom_boxplot() +
+            ggtitle("Phylogenetic Alpha diversity") +
+            xlab(input$metadata_phylo_alpha_demo) +
+            ylab("Faith_PD")+
+            labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                                     geom = "text", 
+                                                                                                                                                     hjust = 0.5,
+                                                                                                                                                     vjust = 0.9)
+          
+        }
+        
+        
+        
+        return(as_faithPD_boxplot(Metadata_stats_demo(), input$metadata_phylo_alpha_demo
+        )
+        )
+        
+        
+      })
+      
+      faithPD_boxplot_KWtest_demo <- reactive({
+        
+        as_faithPD_boxplot <- function(metadata, feature)
+          
+        {
+          
+          A_diversity <- faith_PD_demo()
+          
+          A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+          colnames(A_diversity)[1] <- colnames(metadata)[1]
+          A_diversity_metadata <- merge(A_diversity, metadata, by= colnames(metadata)[1])
+          
+          A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+            
+            A_diversity_metadata_merge <- merge(A_diversity, 
+                                                metadata[, c(colnames(A_diversity_metadata)[1], x)], 
+                                                by= colnames(metadata)[1])
+          })
+          
+          names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+          
+          for (i in 1:length(A_diversity_metadata_list)) {
+            
+            colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+          }
+          
+          A_diversity_metadata_list[[feature]] <- filter(A_diversity_metadata_list[[feature]], feature_name!="NA")
+          
+          KW_result <- kruskal.test(faith_pd ~ feature_name, A_diversity_metadata_list[[feature]])
+          # tukey_result <- agricolae::HSD.test(anova_result, "feature_name", group = T)
+          # group_data <- tukey_result$groups[order(rownames(tukey_result$groups)),]
+          options(scipen=999)
+          
+          stat_box_data <- function(y, upper_limit = max(A_diversity_metadata_list[[feature]]$faith_pd) * 1.15) {
+            return( 
+              data.frame(
+                y = 0.95 * upper_limit,
+                label = paste('n =', length(y))
+              )
+            )
+          }
+          
+          ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
+            
+            geom_boxplot() +
+            ggtitle("Phylogenetic Alpha diversity") +
+            xlab(input$metadata_phylo_alpha_demo) +
+            ylab("Faith_PD")+
+            labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
+                                                                                                                                              geom = "text", 
+                                                                                                                                              hjust = 0.5,
+                                                                                                                                              vjust = 0.9) 
+          
+        }
+        
+        
+        
+        return(as_faithPD_boxplot(Metadata_stats_demo(), input$metadata_phylo_alpha_demo
+        )
+        )
+        
+        
+      })
+      
+      
+      
+      output$faith_PD_boxplot_demo <- renderPlot({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return(faithPD_boxplot_anova_demo())
+        }else{
+          return(faithPD_boxplot_KWtest_demo())
+        }
+        
+      })
+      
+      output$download_faithPD_boxplot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("faithPD_boxplot_", input$select_stat_phylo_demo, "_", input$metadata_phylo_alpha_demo, "_demo.jpg")
+        },
+        content = function(file){
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            ggsave(file, plot = faithPD_boxplot_anova_demo())
+          }else{
+            ggsave(file, plot = faithPD_boxplot_KWtest_demo())
+          }
+          
+        })
+      
+      output$post_test_type_phylo_demo <- renderText({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return("Tukey test")
+        }else{
+          return("Dunn test")
+        }
+      })
+      
+      faith_PD_post_test_tukey_demo <- reactive({
+        
+        A_diversity <- faith_PD_demo()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]], feature_name != "NA")
+        
+        anova_result <- aov(faith_pd ~ feature_name, A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]])
+        tukey_result <- TukeyHSD(anova_result, "feature_name")[[1]]
+        tukey_result_table <- data.frame(comparisons = rownames(tukey_result), tukey_result)
+        tukey_result_table[,"comparisons"] <- stringr::str_replace_all(tukey_result_table[,"comparisons"], "-", " / ")
+        tukey_result_table_separate <- separate(data = tukey_result_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(tukey_result_table_separate[,1]))[,1]
+        tukey_result_table_separate_order <- tukey_result_table_separate[rev(order(factor(tukey_result_table_separate$Group_A, levels = order_by_count))),]
+        colnames(tukey_result_table_separate_order)[c(1,2,3,6)] <- c("Group A", "Group B", "Diff", "P value")
+        return(tukey_result_table_separate_order[,c(1,2,3,6)])
+      })
+      
+      faith_PD_post_test_Dunn_demo <- reactive({
+        
+        A_diversity <- faith_PD_demo()
+        
+        A_diversity <- cbind(sample.id=rownames(A_diversity), A_diversity)
+        colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
+        A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)], function(x){
+          
+          A_diversity_metadata_merge <- merge(A_diversity, 
+                                              Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)], 
+                                              by= colnames(Metadata_stats_demo())[1])
+        })
+        
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[3:ncol(A_diversity_metadata)]
+        
+        for (i in 1:length(A_diversity_metadata_list)) {
+          
+          colnames(A_diversity_metadata_list[[i]])[3] <- "feature_name"
+        }
+        
+        A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]] <- filter(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]], feature_name!="NA")
+        
+        Dunn_result <- dunn.test::dunn.test(A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$faith_pd, A_diversity_metadata_list[[input$metadata_phylo_alpha_demo]]$feature_name)
+        Dunn_table <- data.frame(comparisons=Dunn_result$comparisons,
+                                 Z=Dunn_result$Z,
+                                 Pvalue= Dunn_result$P)
+        Dunn_table[,"comparisons"] <- stringr::str_replace_all(Dunn_table[,"comparisons"], "-", " / ")
+        Dunn_table_separate <- separate(data = Dunn_table, col = "comparisons", into = c("Group_A", "Group_B"), sep = " / ")
+        order_by_count <- as.data.frame(table(Dunn_table_separate[,1]))[,1]
+        Dunn_table_separate_order <- Dunn_table_separate[order(factor(Dunn_table_separate$Group_A, levels = order_by_count)),]
+        colnames(Dunn_table_separate_order) <- c("Group A", "Group B", "Z", "P value")
+        return(Dunn_table_separate_order)
+      })
+      
+      output$post_test_phylo_demo <- renderTable({
+        
+        if(input$select_stat_phylo_demo=="ANOVA"){
+          return(faith_PD_post_test_tukey_demo())
+        }else{
+          return(faith_PD_post_test_Dunn_demo())
+        }
+      })
+      
+      output$download_faithPD_posttest_demo <- downloadHandler(
+        filename = function(){
+          
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            paste0("faithPD_Tukey_", input$metadata_phylo_alpha_demo,"_demo.csv")
+          }else{
+            paste0("faithPD_diversity_Dunn_", input$metadata_phylo_alpha_demo, "_demo.csv")
+          }
+          
+        },
+        content = function(file){
+          if(input$select_stat_phylo_demo=="ANOVA"){
+            write.csv(faith_PD_post_test_tukey_demo(), file, row.names = F)
+          }else{
+            write.csv(faith_PD_post_test_Dunn_demo(), file, row.names = F)
+          }
+          
+        }
+      )
+      
+      
+      output$unif_dm_hm_demo <- renderPlotly({
+        
+        if(input$UnW_or_W_demo=="Unweighted"){
+          unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix()
+          plot_ly(x=colnames(unW_unifrac_dm),
+                  y=rownames(unW_unifrac_dm),
+                  z=unW_unifrac_dm,
+                  # colors = palette(50),
+                  colors = colorRamp(c("green", "red")),
+                  type = "heatmap") %>% layout(title="Unweighted unifrac distance matrix heatmap", xaxis=list(tickangle=45))
+        }else{
+          W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix()
+          plot_ly(x=colnames(W_unifrac_dm),
+                  y=rownames(W_unifrac_dm),
+                  z=W_unifrac_dm,
+                  # colors = palette(50),
+                  colors = colorRamp(c("green", "red")),
+                  type = "heatmap") %>% layout(title="Weighted unifrac distance matrix heatmap", xaxis=list(tickangle=45)) 
+        }
+      })
+      
+      
+      output$download_unif_dm_demo<-downloadHandler(
+        
+        filename = "unifrac_distance_matrix_demo.csv",
+        content = function(file) {
+          if(input$UnW_or_W_demo=="Unweighted"){
+            write.csv(as.matrix(read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
+          }else if(input$UnW_or_W_demo=="weighted"){
+            write.csv(as.matrix(read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
+          }
+        }
+      )
+      
+      unW_unif_pcoa_plot_demo <- reactive({
+        
+        unW_unifrac_dm_pcoa_qiime <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_pcoa_results.qza")[["data"]]
+        unW_unifrac_dm_pcoa_qiime_forplot <- unW_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+        unW_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats_demo(), unW_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+        
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+          
+          unW_unifrac_dm_pcoa_qiime_forplot_table <- unW_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats_demo())
+        
+        # Make all feature name to "feature"
+        for (i in 1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+          names(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+        }
+        
+        
+        unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+            geom_point(size=1.5)+
+            ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Unweighted unifrac PCoA plot")+
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
+        
+        
+        unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, color=feature))+
+            geom_point(size=1.5)+
+            # ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(unW_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Unweighted unifrac PCoA plot")+
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
+        
+        if(input$phylo_showID_demo){
+          return(unW_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta_demo]])
+        }else{
+          return(unW_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta_demo]])
+        }
+        
+        
+      })
+      
+      unW_unif_nmds_plot_demo <- reactive({
+        
+        #NMDS
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        colnames(metadata_beta)[1] <- "SampleID"
+        
+        # unW_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                         job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]
+        unW_unifrac_dm_qiime <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]]
+        sample_original_names <- as.matrix(unW_unifrac_dm_qiime) %>% rownames()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+        
+        metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+        
+        NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta_demo]
+        
+        metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
+        NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        # NMDS_rowname <- NMDS_rowname_arrange
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15)) 
+        
+        if(input$phylo_showID_demo){
+          return(NMDS_beta_df_data_plot_gg)
+        }else{
+          return(NMDS_beta_df_data_plot_gg_noID)
+        }
+        
+      })
+      
+      W_unif_pcoa_plot_demo <- reactive({
+        
+        W_unifrac_dm_pcoa_qiime <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_pcoa_results.qza")[["data"]]
+        W_unifrac_dm_pcoa_qiime_forplot <- W_unifrac_dm_pcoa_qiime$Vectors[,1:3]
+        W_unifrac_dm_pcoa_qiime_forplot <-merge(Metadata_stats_demo(), W_unifrac_dm_pcoa_qiime_forplot, by="SampleID") %>% as_tibble()
+        
+        W_unifrac_dm_pcoa_qiime_forplot_table_list <- lapply(colnames(Metadata_stats_demo()), function(i){
+          
+          W_unifrac_dm_pcoa_qiime_forplot_table <- W_unifrac_dm_pcoa_qiime_forplot[, c("SampleID", i, "PC1", "PC2")]
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_forplot_table_list) <- colnames(Metadata_stats_demo())
+        
+        # Make all feature name to "feature"
+        for (i in 1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list)) {
+          names(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]])[2] <- "feature"
+        }
+        
+        
+        W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, label=SampleID, color=feature))+
+            geom_point(size=1.5)+
+            ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Weighted unifrac PCoA plot")+
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
+        
+        W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
+                 aes(x=PC1, y=PC2, color=feature))+
+            geom_point(size=1.5)+
+            # ggrepel::geom_text_repel(show.legend = F)+
+            xlab(paste0("PC1 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[1],2)*100, "%)"))+
+            ylab(paste0("PC2 (", round(W_unifrac_dm_pcoa_qiime$ProportionExplained[2],2)*100, "%)"))+
+            geom_vline(xintercept =0, linetype="dotted")+
+            geom_hline(yintercept = 0, linetype="dotted")+
+            theme_bw()+
+            ggtitle("Weighted unifrac PCoA plot")+
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+        })
+        
+        names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
+        
+        if(input$phylo_showID_demo){
+          return(W_unifrac_dm_pcoa_qiime_plot_list[[input$metadata_phylo_beta_demo]])
+        }else{
+          return(W_unifrac_dm_pcoa_qiime_plot_list_noID[[input$metadata_phylo_beta_demo]])
+        }
+        
+        
+        
+      })
+      
+      W_unif_nmds_plot_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo]!="NA")
+        taxatable_beta <- asv_table_demo()[, nonNA_position]
+        metadata_beta <- Metadata_stats_demo()[nonNA_position,]
+        colnames(metadata_beta)[1] <- "SampleID"
+        
+        # W_unifrac_dm_qiime <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                       job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+        W_unifrac_dm_qiime <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]]
+        sample_original_names <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+        
+        update_rownames <- function(feature_name, metadata, i){
+          
+          names_TF <- metadata[, feature_name]==unique(metadata[, feature_name])[i]
+          names_order <- which(names_TF==T)
+          
+          sample_names <- metadata[,1][names_order] %>% as.character()
+          return(sample_names)
+        }
+        
+        names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
+          
+          sapply(1:length(unique(metadata_beta[, i])), function(j){
+            
+            update_rownames(i, metadata_beta,j)
+            
+            
+          })
+          
+        })
+        
+        names(names_list) <- colnames(metadata_beta)[1:ncol(metadata_beta)]
+        
+        for (i in 1:length(names(names_list))) {
+          names(names_list[[i]]) <- unique(metadata_beta[,names(names_list)[i]]) %>% as.character()
+        }
+        
+        metadata_beta_filter <- filter(metadata_beta, SampleID %in% sample_original_names)
+        
+        metadata_beta_filter_arrange <- arrange(metadata_beta_filter, SampleID)
+        
+        NMDS_rowname <- metadata_beta_filter_arrange[, input$metadata_phylo_beta_demo]
+        
+        
+        metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
+        NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
+        # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+          geom_point(size=1.5)+
+          ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15))
+        
+        NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
+          geom_point(size=1.5)+
+          # ggrepel::geom_text_repel(show.legend = FALSE)+
+          xlab("NMDS1")+
+          ylab("NMDS2")+
+          geom_vline(xintercept = 0, linetype = "dotted")+
+          geom_hline(yintercept = 0, linetype = "dotted")+
+          theme_bw()+
+          labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
+          #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 15))
+        
+        if(input$phylo_showID_demo){
+          return(NMDS_beta_df_data_plot_gg)
+        }else{
+          return(NMDS_beta_df_data_plot_gg_noID)
+        }
+        
+        
+      })
+      
+      output$unW_unif_ordination_demo <- renderPlot({
+        
+        if(input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == F & input$ordination_phylo_demo == "PCoA"){
+          
+          return(unW_unif_pcoa_plot_demo())
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == F & input$ordination_phylo_demo == "NMDS"){
+          
+          return(unW_unif_nmds_plot_demo())
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == T & input$ordination_phylo_demo == "PCoA"){
+          
+          return(unW_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else if (input$UnW_or_W_phylo_demo=="Unweighted" & input$phylo_cluster_demo == T & input$ordination_phylo_demo == "NMDS"){
+          
+          return(unW_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==F & input$ordination_phylo_demo == "PCoA"){
+          
+          return(W_unif_pcoa_plot_demo())
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==F & input$ordination_phylo_demo == "NMDS"){
+          
+          return(W_unif_nmds_plot_demo())
+          
+        }else if(input$UnW_or_W_phylo_demo=="Weighted" & input$phylo_cluster_demo ==T & input$ordination_phylo_demo == "PCoA"){
+          
+          return(W_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+          
+        }else{
+          
+          return(W_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+          
+        }
+        
+      })
+      
+      output$download_unif_plot_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_plot_", input$UnW_or_W_phylo_demo, "_", input$ordination_phylo_demo,"_", input$metadata_phylo_beta_demo, "_demo.jpg")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            
+            if(input$ordination_phylo_demo=="PCoA"){
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = unW_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = unW_unif_pcoa_plot_demo())
+              }
+              
+            }else{
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = unW_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = unW_unif_nmds_plot_demo())
+              }
+              
+            }
+            
+          }else{
+            if(input$ordination_phylo_demo=="PCoA"){
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = W_unif_pcoa_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = W_unif_pcoa_plot_demo())
+              }
+              
+            }else{
+              if(input$phylo_cluster_demo){
+                ggsave(file, plot = W_unif_nmds_plot_demo() + stat_ellipse(type = "t"))
+              }else{
+                ggsave(file, plot = W_unif_nmds_plot_demo())
+              }
+              
+            }
+            
+          }
+          
+        }
+        
+      )
+      
+      
+      Permanova_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(unW_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      Permanova_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[, input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        adonis_result_table_list <- lapply(colnames(nonNA_metadata)[-1], function(x){
+          
+          adonis(W_unifrac_dm ~ nonNA_metadata[,x], nonNA_metadata, permutations = 999)[["aov.tab"]]
+          
+        })
+        
+        names(adonis_result_table_list) <- colnames(nonNA_metadata)[-1]
+        
+        for (i in colnames(nonNA_metadata)[-1]) {
+          
+          rownames(adonis_result_table_list[[i]])[1] <- i
+        }
+        
+        adonis_result_table_list_show <- adonis_result_table_list[[input$metadata_phylo_beta_demo]][1, c(5,6)]
+        colnames(adonis_result_table_list_show) <- c("R^2", "P value")
+        
+        
+        
+        adonis_result_table_list_show[, "R^2"] <- adonis_result_table_list_show[, "R^2"] %>% round(4) %>% as.character()
+        adonis_result_table_list_show[, "P value"] <- adonis_result_table_list_show[, "P value"] %>% round(4) %>% as.character()
+        
+        return(adonis_result_table_list_show)
+      })
+      
+      output$Permanova_title_phylo_demo <- renderText({
+        
+        if(is.null(Permanova_table_phylo_unW_demo()) && is.null(Permanova_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("PERMANOVA")
+        }
+        
+      })
+      
+      output$permanova_table_phylo_demo <- renderTable({
+        
+        permanova_table_phylo_list <- list(Permanova_table_phylo_unW_demo(), Permanova_table_phylo_W_demo())
+        names(permanova_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(permanova_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      output$download_permanova_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("UniFrac_PerMANOVA_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo == "Unweighted"){
+            write_csv(Permanova_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(Permanova_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      ANOSIM_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        # unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame() # web version
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      ANOSIM_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        # bray_df <- vegdist(t(nonNA_taxtable), method = "bray") %>% as.matrix() %>% as.data.frame()
+        anosim_result <- anosim(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        anosim_result_table <- data.frame(Significance=anosim_result$signif, statistic.R=anosim_result$statistic)
+        anosim_result_table <- anosim_result_table[,c(2,1)]
+        colnames(anosim_result_table) <- c("R", "P value")
+        
+        anosim_result_table$R <- anosim_result_table$R %>% as.numeric() %>% round(4) %>% as.character()
+        anosim_result_table$"P value" <- anosim_result_table$"P value" %>% as.numeric() %>% round(4) %>% as.character()
+        
+        return(anosim_result_table)
+        
+      })
+      
+      # Show ANOSIM title
+      output$ANOSIM_title_phylo_demo <- renderText({
+        
+        if(is.null(ANOSIM_table_phylo_unW_demo()) && is.null(ANOSIM_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("ANOSIM")
+        }
+        
+      })
+      
+      # Show ANOSIM table
+      output$ANOSIM_table_phylo_demo <- renderTable({
+        
+        ANOSIM_table_phylo_list <- list(ANOSIM_table_phylo_unW_demo(), ANOSIM_table_phylo_W_demo())
+        names(ANOSIM_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(ANOSIM_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download ANOSIM table
+      output$download_ANOSIM_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_ANOSIM_table_", input$UnW_or_W_phylo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(ANOSIM_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(ANOSIM_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      
+      
+      MRPP_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        mrpp_result <- mrpp(unW_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      MRPP_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        mrpp_result <- mrpp(W_unifrac_dm, nonNA_metadata[, input$metadata_phylo_beta_demo], permutations = 999)
+        mrpp_result_table <- data.frame(Group = 'all', 
+                                        Distance = 'Bray-Curtis', 
+                                        A = mrpp_result$A,            
+                                        Observe.delta = mrpp_result$delta,            
+                                        Expect.delta = mrpp_result$E.delta,            
+                                        P.value = mrpp_result$Pvalue)
+        mrpp_result_table_show <- mrpp_result_table[,3:6]
+        colnames(mrpp_result_table_show)[4] <- "P value"
+        
+        for (i in 1:4) {
+          
+          mrpp_result_table_show[, i] <- mrpp_result_table_show[, i] %>% round(4) %>% as.character()
+          
+        }
+        
+        return(mrpp_result_table_show[,c(1,4)])
+      })
+      
+      output$MRPP_title_phylo_demo <- renderText({
+        
+        if(is.null(MRPP_table_phylo_unW_demo()) && is.null(MRPP_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("MRPP")
+        }
+        
+      })
+      
+      # Show MRPP table
+      output$MRPP_table_phylo_demo <- renderTable({
+        
+        MRPP_table_phylo_list <- list(MRPP_table_phylo_unW_demo(), MRPP_table_phylo_W_demo())
+        names(MRPP_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(MRPP_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download MRPP table
+      output$download_MRPP_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_MRPP_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(MRPP_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(MRPP_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      # pairwise test
+      Permanova_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        # unW_unifrac_dm <- read_qza(paste0("/home/imuser/web_version/users_files/",
+        #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] %>% as.matrix() %>% as.data.frame()
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            adonis_result_pair <- adonis(unW_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7, 8)]))
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      Permanova_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          
+          adonis_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            adonis_result_pair <- adonis(W_unifrac_dm_pair ~ metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair<- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(adonis_result_pair_list) <- pair_names
+          
+          adonis_result_pair_list_table <- as.character(adonis_result_pair_list[[1]][["aov.tab"]][1,])
+          for (i in 1:(ncol(combn(group_names, 2))-1)) {
+            adonis_result_pair_list_table <- rbind(adonis_result_pair_list_table, 
+                                                   as.character(adonis_result_pair_list[[i+1]][["aov.tab"]][1,]))
+          }
+          
+          colnames(adonis_result_pair_list_table) <- c("Df", "Sums Of Sqs", "Mean Sqs", "F.Model", "R^2", "P value")
+          adjusted_P <- p.adjust(adonis_result_pair_list_table[,6], method = "BH")
+          adonis_result_pair_list_table <- cbind(Comparisons=pair_names, adonis_result_pair_list_table, `Adjusted P value` = round(adjusted_P, 4))
+          
+          for (i in 3:7) {
+            
+            adonis_result_pair_list_table[, i] <- adonis_result_pair_list_table[, i] %>% as.numeric() %>% round(4) %>% as.character()
+            
+          }
+          
+          return(as.data.frame(adonis_result_pair_list_table[, c(1, 6, 7,8)]))
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      # Show permanova pair title
+      output$Permanova_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(Permanova_pair_table_phylo_unW_demo()) && is.null(Permanova_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise PERMANOVA")
+        }
+        
+      })
+      
+      # Show permanova pair table
+      output$permanova_pair_table_phylo_demo <- renderTable({
+        
+        permanova_pair_table_phylo_list <- list(Permanova_pair_table_phylo_unW_demo(), Permanova_pair_table_phylo_W_demo())
+        names(permanova_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(permanova_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download permanova pair table
+      output$download_permanova_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_PerMANOVA_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(Permanova_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(Permanova_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      ANOSIM_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            adonis_result_pair <- anosim(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      ANOSIM_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+          })
+          
+          anosim_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            anosim_result_pair <- anosim(W_unifrac_dm_pair, metadata_pair[,input$metadata_phylo_beta_demo], metadata_pair, permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(anosim_result_pair_list) <- pair_names
+          
+          anosim_result_pair_list_signif <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_signif[i] <- anosim_result_pair_list[[i]][["signif"]]
+          }
+          
+          anosim_result_pair_list_R <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            anosim_result_pair_list_R[i] <- anosim_result_pair_list[[i]][["statistic"]]
+          }
+          
+          anosim_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                      R=anosim_result_pair_list_R,
+                                                      "P_value"=anosim_result_pair_list_signif)
+          
+          anosim_result_pair_list_table$R <- anosim_result_pair_list_table$R %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% round(4) %>% as.character()
+          anosim_result_pair_list_table$P_value_adjusted <- anosim_result_pair_list_table$P_value %>% as.numeric() %>% p.adjust(method = "BH") %>% round(4) %>% as.character()
+          colnames(anosim_result_pair_list_table)[3:4] <- c("P value", "Adjusted P value")
+          
+          return(anosim_result_pair_list_table)
+          
+        }else{
+          return(NULL)
+        }
+        
+      })
+      
+      # Show ANOSIM pair title
+      output$ANOSIM_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(ANOSIM_pair_table_phylo_unW_demo()) && is.null(ANOSIM_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise ANOSIM")
+        }
+        
+      })
+      
+      # Show ANOSIM pair table
+      output$ANOSIM_pair_table_phylo_demo <- renderTable({
+        
+        ANOSIM_pair_table_phylo_list <- list(ANOSIM_pair_table_phylo_unW_demo(), ANOSIM_pair_table_phylo_W_demo())
+        names(ANOSIM_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(ANOSIM_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      
+      
+      
+      # Download ANOSIM pair table
+      output$download_ANOSIM_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_ANOSIM_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(ANOSIM_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(ANOSIM_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      
+      
+      MRPP_pair_table_phylo_unW_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        unW_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(unW_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          unW_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # unW_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                   job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            unW_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/unweighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(unW_unifrac_ds, sample_f1_f2[,"SampleID"]))
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            unW_unifrac_dm_pair <- unW_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(unW_unifrac_dm_pair))
+            MRPP_result_pair <- mrpp(unW_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5,6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      MRPP_pair_table_phylo_W_demo <- reactive({
+        
+        nonNA_position <- which(Metadata_stats_demo()[,input$metadata_phylo_beta_demo] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        nonNA_taxtable <- asv_table_demo()[,nonNA_sampleid]
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        
+        W_unifrac_dm <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]] %>% as.matrix() %>% as.data.frame()
+        
+        nonNA_metadata <- filter(nonNA_metadata, SampleID %in% rownames(W_unifrac_dm))
+        
+        group_names <- unique(nonNA_metadata[,input$metadata_phylo_beta_demo])
+        
+        if(length(group_names)>2){
+          
+          sample_list <- lapply(2:ncol(nonNA_metadata), function(x){
+            
+            sample_cb_meta <- nonNA_metadata[,c(1,x)]
+            
+          })
+          names(sample_list) <- colnames(nonNA_metadata)[2:ncol(nonNA_metadata)]
+          
+          W_unifrac_dm_f1_f2_list <- lapply(1:ncol(combn(group_names, 2)), function(i){
+            
+            feature1_feature2 <- t(combn(group_names, 2))[i,] %>% as.character()
+            sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
+            # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
+            #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio//weighted_unifrac_distance_matrix.qza")[["data"]]
+            return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
+            
+          })
+          
+          MRPP_result_pair_list <- lapply(1:ncol(combn(group_names, 2)), function(k){
+            
+            W_unifrac_dm_pair <- W_unifrac_dm_f1_f2_list[[k]] %>% as.matrix() %>% as.data.frame()
+            metadata_pair <- nonNA_metadata %>% filter(SampleID %in% colnames(W_unifrac_dm_pair))
+            MRPP_result_pair <- mrpp(W_unifrac_dm_pair, metadata_pair[, input$metadata_phylo_beta_demo], permutations = 999)
+            
+          })
+          
+          pair_names <- c()
+          df_pair <- t(combn(group_names, 2))
+          for (i in 1:ncol(combn(group_names, 2))) {
+            
+            pair_names[i] <- paste(df_pair[i,1], df_pair[i,2], sep = " - ")
+            
+          }
+          names(MRPP_result_pair_list) <- pair_names
+          
+          MRPP_result_pair_list_Pvalue <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Pvalue[i] <- MRPP_result_pair_list[[i]][["Pvalue"]]
+          }
+          
+          MRPP_result_pair_list_A <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_A[i] <- MRPP_result_pair_list[[i]][["A"]]
+          }
+          
+          MRPP_result_pair_list_delta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_delta[i] <- MRPP_result_pair_list[[i]][["delta"]]
+          }
+          
+          MRPP_result_pair_list_Edelta <- c()
+          for (i in 1:ncol(combn(group_names, 2))) {
+            MRPP_result_pair_list_Edelta[i] <- MRPP_result_pair_list[[i]][["E.delta"]]
+          }
+          
+          MRPP_result_pair_list_table <- data.frame(Comparisons=pair_names,
+                                                    A=MRPP_result_pair_list_A,
+                                                    delta=MRPP_result_pair_list_delta,
+                                                    E.delta=MRPP_result_pair_list_Edelta,
+                                                    P_value=MRPP_result_pair_list_Pvalue,
+                                                    P_value_adjusted=p.adjust(MRPP_result_pair_list_Pvalue, method = "BH"))
+          
+          for (i in 2:6) {
+            
+            MRPP_result_pair_list_table[, i] <- MRPP_result_pair_list_table[, i] %>% round(4) %>% as.character()
+            
+          }
+          
+          colnames(MRPP_result_pair_list_table)[c(5, 6)] <- c("P value", "Adjusted P value")
+          
+          return(MRPP_result_pair_list_table[,c(1,2,5, 6)])
+        }else{
+          return(NULL)
+        }
+      })
+      
+      # Show MRPP pair title
+      output$MRPP_pair_title_phylo_demo <- renderText({
+        
+        if(is.null(MRPP_pair_table_phylo_unW_demo()) && is.null(MRPP_pair_table_phylo_W_demo())){
+          
+          return(NULL)
+        }else{
+          return("Pairwise MRPP")
+        }
+        
+        
+      })
+      
+      # Show MRPP pair table
+      output$MRPP_pair_table_phylo_demo <- renderTable({
+        
+        MRPP_pair_table_phylo_list <- list(MRPP_pair_table_phylo_unW_demo(), MRPP_pair_table_phylo_W_demo())
+        names(MRPP_pair_table_phylo_list) <- c("Unweighted", "Weighted")
+        return(MRPP_pair_table_phylo_list[[input$UnW_or_W_phylo_demo]])
+        
+      })
+      
+      # Download MRPP pair table
+      output$download_MRPP_pair_phylo_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Unifrac_MRPP_pair_table_", input$UnW_or_W_phylo_demo, "_demo.csv")
+        },
+        content = function(file){
+          if(input$UnW_or_W_phylo_demo=="Unweighted"){
+            write_csv(MRPP_pair_table_phylo_unW_demo(), file)
+          }else{
+            write_csv(MRPP_pair_table_phylo_W_demo(), file)
+          }
+        }
+      )
+      
+      # ANCOM demo
+      updateRadioButtons(session, 
+                         inputId = "metadata_ANCOM_demo",
+                         choices = c("facility", "days"),
+                         inline = T
+      )
+      
+      output$word_ancom_plotly_demo <- renderUI({
+        
+        h3("ANCOM Volcano Plot", 
+           style = "color: black;top: 10px;")
+      })
+      
+      
+      output$ancom_plotly_demo <- renderPlotly({
+        
+        ancom_data <- read.table("/home/imuser/example_files/Pacbio/data.tsv", sep = "\t", header = T)
+        ancom_sig <- read.table("/home/imuser/example_files/Pacbio/ancom.tsv", sep = "\t", header = T)
+        names(ancom_sig)[1] <- "id" 
+        
+        ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+        ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+        ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+        ancom_merge$id <- gsub("__", "", ancom_merge$id)
+        
+        plot_ly(data = ancom_merge,
+                x = ~ clr,
+                y = ~ W,
+                color = ~ Reject.null.hypothesis,
+                colors = c("grey","red")[1:length(unique(ancom_sig$Reject.null.hypothesis))],
+                type = "scatter",
+                hoverinfo = "text",
+                hovertext = paste("Species:", ancom_merge$id,
+                                  "<br> clr:", round(ancom_merge$clr, digits = 4),
+                                  "<br> W:", ancom_merge$W) 
+        ) %>% layout(showlegend = T)
+        
+      })
+      
+      output$annotation_ancom_demo <- renderUI({
+        HTML("<p>The W value is the number of sub-hypotheses that have rejected for a given taxon in ANCOM analysis.<br>The clr represents log-fold change relative to the average microbe.</p>")
+      })
+      
+      output$word_ancom_table_demo <- renderUI({
+        
+        h3("ANCOM results (Taxa with significant W value)", 
+           style = "color: black;top: 10px;")
+      })
+      
+      output$ancom_sig_demo <- renderDataTable({
+        
+        ancom_sig <- read.table("/home/imuser/example_files/Pacbio/ancom.tsv", sep = "\t", header = T)
+        names(ancom_sig)[1] <- "Species"
+        
+        ancom_sig_true <- filter(ancom_sig, Reject.null.hypothesis == "True")
+        ancom_sig_true$Species <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_sig_true$Species)
+        ancom_sig_true$Species <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_sig_true$Species)
+        ancom_sig_true$Species <- gsub("__", "", ancom_sig_true$Species)
+        
+        ancom_sig_true <- separate(ancom_sig_true, col = "Species", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
+        
+        return(ancom_sig_true[,1:8])
+        
+      })
+      
+      output$ancom_table_download_demo <- downloadHandler(
+        
+        filename = "ANCOM_table_demo.csv",
+        content = function(file){
+          
+          ancom_data <- read.table("/home/imuser/example_files/Pacbio/data.tsv", sep = "\t", header = T)
+          ancom_sig <- read.table("/home/imuser/example_files/Pacbio/ancom.tsv", sep = "\t", header = T)
+          names(ancom_sig)[1] <- "id"
+          
+          ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
+          ancom_merge$id <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__|D_9__|D_10__|D_11__|D_12__|D_13__|D_14__", "", ancom_merge$id)
+          ancom_merge$id <- gsub("k__|p__|c__|o__|f__|g__|s__", "", ancom_merge$id)
+          ancom_merge$id <- gsub("__", "", ancom_merge$id)
+          ancom_merge <- separate(ancom_merge, col = "id", into = c("Kingdom","Phylum","Class","Order","Family","Genus","Species"), sep = ";")
+          write_csv(ancom_merge, file, col_names = T)
+        }
+      )
+      
+      # Function analysis
+      Metadata_FA_demo <- reactive({
+        
+        metadata <- read.table("/home/imuser/example_files/Pacbio/sample-metadata.tsv", header = T, na.strings = "", sep = "\t")
+        colnames(metadata)[1] <- "SampleID"
+        taxatable_FA <- read_qza("/home/imuser/example_files/Pacbio/taxatable7_Pacbio.qza")[["data"]]
+        metadata <- filter(metadata, SampleID %in% colnames(taxatable_FA))
+        colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
+        
+        col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
+        
+        if( 1 %in% col_vector){
+          
+          position_non1 <- which(col_vector!=1)
+          
+          metadata <- metadata[,position_non1]
+          
+        }
+        
+        colnames(metadata)[1] <- "SampleID"
+        
+        for (i in 1:ncol(metadata)) {
+          
+          metadata[,i] <- as.character(metadata[,i])
+          metadata[,i] <- replace_na(metadata[,i], "NA")
+          
+        }
+        
+        OKstats_col <- lapply(colnames(metadata)[-1], function(x){
+          if(sum(table(metadata[, x])<=1)==0){
+            return(x)
+          }
+        }) %>% unlist()
+        
+        metadata <- metadata[, c("SampleID", OKstats_col)]
+        
+        return(metadata)
+        
+        
+      })
+      
+      
+      observe({
+        newchoices_FA <- colnames(Metadata_FA_demo())
+        updateRadioButtons(session, "metadata_FA_demo", choices = newchoices_FA[-1], inline = T)
+      })
+      
+      output$function_report_demo <- renderUI({
+        
+        a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
+        a_report <- a[104:106,2]
+        a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
+        a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_remove(a_report[2], pattern = "\\(leftovers\\)")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "record", replacement = "taxa")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "group", replacement = "function type")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "taxa", replacement = "taxon.")
+        
+        HTML(paste(a_report[1], a_report[2] ,a_report[3], sep = "<br/>"))
+        
+        
+      })
+      
+      output$func_table_BY_sampleid_demo <- renderDataTable({
+        
+        func_table_BY_sampleid <- read_qza("/home/imuser/example_files/Pacbio/func-table7.qza")[["data"]]
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        return(func_table_BY_sampleid_filtered_tibble)
+        
+      })
+      
+      output$func_table_ID<-downloadHandler(
+        
+        filename = "function_table_demo.csv",
+        content = function(file) {
+          
+          func_table_BY_sampleid <- read_qza("/home/imuser/example_files/Pacbio/func-table7.qza")[["data"]]
+          
+          TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+          
+          func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+          
+          func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+          
+          write.csv(func_table_BY_sampleid_filtered_tibble, file, row.names = F)
+          
+        }
+      )
+      
+      output$Function_barplot_demo <- renderPlotly({
+        
+        
+        func_table_BY_sampleid <- read_qza("/home/imuser/example_files/Pacbio/func-table7.qza")[["data"]]
+        taxa_table <- read_qza("/home/imuser/example_files/Pacbio/taxatable7_Pacbio.qza")$data
+        reads_persample <- colSums(taxa_table)
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        for (i in 1:length(reads_persample)) {
+          for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+            func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+          }
+          
+        }
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+        
+        df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
+        
+        df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                        from = Metadata_FA_demo()[,1],
+                                        to = as.character(Metadata_FA_demo()[, input$metadata_FA_demo]))
+        
+        
+        df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
+        colnames(df_barplot_ag_mean)[3] <- "mean"
+        df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
+        colnames(df_barplot_ag_sd)[3] <- "sd"
+        
+        df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+        
+        FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+          geom_bar(stat="identity", color="black", 
+                   position=position_dodge()) +
+          geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+          labs(x="Function types", y="Relative abundance")+
+          theme(axis.title.x = element_text(color="black", size=16))+
+          theme(axis.title.y = element_text(color="black", size=16))
+        
+        
+        y <- list(
+          title = list(text="Function types",standoff=20)
+        )
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y)
+        
+      })
+      
+      output$FA_plot_download_demo <- downloadHandler(
+        
+        filename = function(){
+          paste0("Functional_analysis_plot_", input$metadata_FA_demo, "_demo.jpg")
+        },
+        
+        content = function(file){
+          
+          
+          func_table_BY_sampleid <- read_qza("/home/imuser/example_files/Pacbio/func-table7.qza")[["data"]]
+          taxa_table <- read_qza("/home/imuser/example_files/Pacbio/taxatable7_Pacbio.qza")$data
+          reads_persample <- colSums(taxa_table)
+          
+          TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+          
+          func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+          
+          for (i in 1:length(reads_persample)) {
+            for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+              func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+            }
+            
+          }
+          
+          func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+          
+          func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+          
+          
+          df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
+          
+          df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                          from = Metadata_FA_demo()[,1],
+                                          to = as.character(Metadata_FA_demo()[, input$metadata_FA_demo]))
+          
+          
+          df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
+          colnames(df_barplot_ag_mean)[3] <- "mean"
+          df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
+          colnames(df_barplot_ag_sd)[3] <- "sd"
+          
+          df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+          
+          FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+            geom_bar(stat="identity", color="black", 
+                     position=position_dodge()) +
+            geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                          position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+            labs(x="Function types", y="Relative abundance")+
+            theme(axis.title.x = element_text(color="black", size=16))+
+            theme(axis.title.y = element_text(color="black", size=16))
+          
+          ggsave(file, plot = FA_ggplot, width = 80, height = 40, units = "cm")
+        }
+      )
+      
       
     }
     
