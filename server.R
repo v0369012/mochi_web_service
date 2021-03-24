@@ -19917,7 +19917,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_single_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_single_example.html")
         # includeHTML(path = "/home/imuser/example_files/single/iframe_krona.html")
       })
       
@@ -25093,7 +25093,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_paired_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_paired_example.html")
         # includeHTML(path = "/home/imuser/example_files/paired/iframe_krona.html")
       })
       
@@ -30270,7 +30270,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_Pacbio_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_Pacbio_example.html")
         # includeHTML(path = "/home/imuser/example_files/Pacbio/iframe_krona.html")
       })
       
