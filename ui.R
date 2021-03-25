@@ -1698,7 +1698,7 @@ shinyUI(
           br(),br(),
           # strong("Installation tutorial", style = "font-size:24px;"),
           tags$iframe(style="height:800px; width:90%; scrolling=yes;margin:0 100px", id = "ch1",
-                      src="https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Ch_1.pdf")
+                      src="https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Local.pdf")
                       # src="http://140.113.83.24:3811/test.pdf") %>% span()
           
         )
