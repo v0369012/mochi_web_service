@@ -11297,7 +11297,7 @@ server <- function(session, input, output) {
       taxtable_data_Level_spread_prop_logtrf_list <- list()
       taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats()), function(i){
         lapply(1:length(unique(Metadata_stats()[, i])), function(j){
-          taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+          taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- as.data.frame(taxtable_data_Level_spread_prop_logtrf)[,names_list[[i]][[j]]]
         })
         
       })
@@ -19769,7 +19769,7 @@ server <- function(session, input, output) {
           taxtable_data_Level_spread_prop_logtrf_list <- list()
           taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats_demo()), function(i){
             lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
-              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- as.data.frame(taxtable_data_Level_spread_prop_logtrf)[,names_list[[i]][[j]]]
             })
             
           })
@@ -24945,7 +24945,7 @@ server <- function(session, input, output) {
           taxtable_data_Level_spread_prop_logtrf_list <- list()
           taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats_demo()), function(i){
             lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
-              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- as.data.frame(taxtable_data_Level_spread_prop_logtrf)[,names_list[[i]][[j]]]
             })
             
           })
@@ -30122,7 +30122,7 @@ server <- function(session, input, output) {
           taxtable_data_Level_spread_prop_logtrf_list <- list()
           taxtable_data_Level_spread_prop_logtrf_list <- lapply(colnames(Metadata_stats_demo()), function(i){
             lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
-              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- taxtable_data_Level_spread_prop_logtrf[,names_list[[i]][[j]]]
+              taxtable_data_Level_spread_prop_logtrf_list[[i]][[j]] <- as.data.frame(taxtable_data_Level_spread_prop_logtrf)[,names_list[[i]][[j]]]
             })
             
           })
