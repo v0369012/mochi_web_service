@@ -1792,7 +1792,7 @@ shinyUI(
                                              style = "color:#317EAC"),
                                 h4("Forward reads"),
                                 tableOutput("demux_table_single_demo"),
-                                plotlyOutput("demux_table_boxplot_single_demo"),
+                                plotlyOutput("demux_table_boxplot_single_demo") %>% withSpinner(type = 2, color.background = "white"),
                                 downloadButton("demux_table_single_demo_dl", 
                                                "Download the read couts table")
                               ),
@@ -2553,10 +2553,10 @@ shinyUI(
                                              style = "color:#317EAC"),
                                 h4("Forward reads"),
                                 tableOutput("demux_table_paired_f_demo"),
-                                plotlyOutput("demux_table_boxplot_paired_f_demo"),
+                                plotlyOutput("demux_table_boxplot_paired_f_demo") %>% withSpinner(type = 2, color.background = "white"),
                                 h4("Reverse reads"),
                                 tableOutput("demux_table_paired_r_demo"),
-                                plotlyOutput("demux_table_boxplot_paired_r_demo"),
+                                plotlyOutput("demux_table_boxplot_paired_r_demo") %>% withSpinner(type = 2, color.background = "white"),
                                 downloadButton("demux_table_paired_demo_dl", 
                                                "Download the read couts table")
                               ),
@@ -2671,7 +2671,7 @@ shinyUI(
                                              style = "color:#317EAC"),
                                 h4("Forward reads"),
                                 tableOutput("demux_table_Pacbio_demo"),
-                                plotlyOutput("demux_table_boxplot_Pacbio_demo"),
+                                plotlyOutput("demux_table_boxplot_Pacbio_demo") %>% withSpinner(type = 2, color.background = "white"),
                                 downloadButton("demux_table_Pacbio_demo_dl", 
                                                "Download the read couts table")
                               ),
