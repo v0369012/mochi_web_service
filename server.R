@@ -33319,7 +33319,7 @@ server <- function(session, input, output) {
         
       })
       
-      output$func_table_ID<-downloadHandler(
+      output$func_table_ID_demo<-downloadHandler(
         
         filename = "function_table_demo.csv",
         content = function(file) {
