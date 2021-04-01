@@ -915,7 +915,7 @@ shinyUI(
                    fileInput(inputId = "taxonomic_table", 
                              label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
                              multiple = F,
-                             accept = ".qza",
+                             accept = ".qza"),
                    tippy::tippy_this(elementId = "info_taxatable", tooltip = "Downloaded from taxonomy classification", placement = "right"),
                    
                    # span("Upload the ASVs table file (Download from Taxonomy Analysis)"),
