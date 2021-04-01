@@ -1184,12 +1184,39 @@ server <- function(session, input, output) {
     if (is.null(infile1))
       return(NULL)
     
-    validate(
-      need(infile1 != "", message = F),
-      need(read_qza(infile1$datapath)$type == "FeatureTable[Frequency]", message = "")
-    )
+    # if(str_detect(infile1$datapath, ".qza")){
+      validate(
+        need(infile1 != "", message = F),
+        need(read_qza(infile1$datapath)$type == "FeatureTable[Frequency]", message = "")
+      )
+      
+      read_qza(input$taxonomic_table$datapath)$data
+      
+    # }else if(str_detect(infile1$datapath, ".tsv")){
+    #   
+    #   validate(
+    #     need(infile1 != "", message = F)
+    #   )
+    #   
+    #   a <- read.table(input$taxonomic_table$datapath, header = T, sep = "\t")
+    #   a_rownames <- a[,1]
+    #   rownames(a) <- a_rownames
+    #   a <- a[,-1]
+    #   return(a)
+    #   
+    # }else if(str_detect(infile1$datapath, ".csv")){
+    #   
+    #   validate(
+    #     need(infile1 != "", message = F)
+    #   )
+    #   
+    #   a <- read.csv(input$taxonomic_table$datapath, header = T)
+    #   a_rownames <- a[,1]
+    #   rownames(a) <- a_rownames
+    #   a <- a[,-1]
+    #   return(a)
+    # }
     
-    read_qza(input$taxonomic_table$datapath)$data
     
   }) # read the input file (.qza)
   
@@ -15624,7 +15651,9 @@ server <- function(session, input, output) {
                 paste0("/home/imuser/web_version/users_files/",
                        job_id(), "_DA_ancom","/taxatable_.txt")
                 , quote = F, col.names = T, row.names = F, sep = "\t")
-    system(paste0("/home/imuser/miniconda3/envs/qiime2-2019.10/bin/biom convert -i ",
+    biom_cmd <- "/home/imuser/miniconda3/envs/qiime2-2020.8/bin/biom"
+    system(paste0(biom_cmd,
+                  " convert -i ",
                   paste0("/home/imuser/web_version/users_files/",
                          job_id(), "_DA_ancom",
                   "/taxatable_.txt"),
