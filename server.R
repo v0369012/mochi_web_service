@@ -8280,6 +8280,8 @@ server <- function(session, input, output) {
         # "chimeric_reads_min_fold_change" = input$chimera_Pacbio,
         # "reads_error_model" = input$n_reads_Pacbio,
         # "metadata_upload" = is.null(input$sample_data_Pacbio),
+        "forward_primer" = paste(input$primer_f_Pacbio, input$primer_f_manu_Pacbio),
+        "reverse_primer" = paste(input$primer_r_Pacbio, input$primer_r_manu_Pacbio),
         "computing_setting" = input$threads_Pacbio
       )
       write.csv(parameter_table,
