@@ -1037,12 +1037,12 @@ server <- function(session, input, output) {
                          tagList(
                            strong("Minimum length"),
                            p("1. Sequenceses shorter than the minimun length will be discarded."),
-                           p("2. The default value is minimun length of denoised-sequences."),
-                           p("3. Set to zero to disable min length filtering."),
+                           # p("2. The default value is minimun length of denoised-sequences."),
+                           p("2. Set to zero to disable min length filtering."),
                            strong("Maximum length"),
                            p("1. Sequenceses longer than the maximum length will be discarded."),
-                           p("2. The default value is maximum length of denoised-sequences."),
-                           p("3. Set to zero to disable max length filtering.")
+                           # p("2. The default value is maximum length of denoised-sequences."),
+                           p("2. Set to zero to disable max length filtering.")
                            
                          ),
                          
@@ -2064,92 +2064,92 @@ server <- function(session, input, output) {
   # })
   
   
-  observe({
-    req(input$input_job_id_taxa)
-    if(input$seqs_type == "Single end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-          }
-        
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }else if(input$seqs_type == "Paired end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
-        
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }else if(input$seqs_type == "Long read"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
-        
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }
-        
-  })
+  # observe({
+  #   req(input$input_job_id_taxa)
+  #   if(input$seqs_type == "Single end"){
+  #     if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                           input$input_job_id_taxa,
+  #                           "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+  #       min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[3,2]
+  #       max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[4,2]
+  #       
+  #       if(min_length == max_length){
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+  #       }else{
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = max_length)
+  #         }
+  #       
+  #     }else{
+  #       updateTextInput(session, inputId = "min_length", value = 0)
+  #       updateTextInput(session, inputId = "max_length", value = 0)
+  #     }
+  #   }else if(input$seqs_type == "Paired end"){
+  #     if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                           input$input_job_id_taxa,
+  #                           "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+  #       min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[3,2]
+  #       max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[4,2]
+  #       
+  #       if(min_length == max_length){
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+  #       }else{
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = max_length)
+  #       }
+  #       
+  #     }else{
+  #       updateTextInput(session, inputId = "min_length", value = 0)
+  #       updateTextInput(session, inputId = "max_length", value = 0)
+  #     }
+  #   }else if(input$seqs_type == "Long read"){
+  #     if(file.exists(paste0("/home/imuser/web_version/users_files/",
+  #                           input$input_job_id_taxa,
+  #                           "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+  #       min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[3,2]
+  #       max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+  #                                       input$input_job_id_taxa,
+  #                                       "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+  #                                sep = "\t", 
+  #                                stringsAsFactors = F)[4,2]
+  #       
+  #       if(min_length == max_length){
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+  #       }else{
+  #         updateTextInput(session, inputId = "min_length", value = min_length)
+  #         updateTextInput(session, inputId = "max_length", value = max_length)
+  #       }
+  #       
+  #     }else{
+  #       updateTextInput(session, inputId = "min_length", value = 0)
+  #       updateTextInput(session, inputId = "max_length", value = 0)
+  #     }
+  #   }
+  #       
+  # })
   
 
   
@@ -5795,67 +5795,67 @@ server <- function(session, input, output) {
         
         
         # update reference seqs filter length
-        if(input$seqs_type == "Single end"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[4,2]
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = 0)
-            updateTextInput(session, inputId = "max_length", value = 0)
-          }
-        }else if(input$seqs_type == "Paired end"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[4,2]
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = 0)
-            updateTextInput(session, inputId = "max_length", value = 0)
-          }
-        }else if(input$seqs_type == "Long read"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                     sep = "\t", 
-                                     stringsAsFactors = F)[4,2]
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = 0)
-            updateTextInput(session, inputId = "max_length", value = 0)
-          }
-        }
+        # if(input$seqs_type == "Single end"){
+        #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+        #                         input$input_job_id_taxa,
+        #                         "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[3,2]
+        #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[4,2]
+        #     updateTextInput(session, inputId = "min_length", value = min_length)
+        #     updateTextInput(session, inputId = "max_length", value = max_length)
+        #   }else{
+        #     updateTextInput(session, inputId = "min_length", value = 0)
+        #     updateTextInput(session, inputId = "max_length", value = 0)
+        #   }
+        # }else if(input$seqs_type == "Paired end"){
+        #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+        #                         input$input_job_id_taxa,
+        #                         "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[3,2]
+        #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[4,2]
+        #     updateTextInput(session, inputId = "min_length", value = min_length)
+        #     updateTextInput(session, inputId = "max_length", value = max_length)
+        #   }else{
+        #     updateTextInput(session, inputId = "min_length", value = 0)
+        #     updateTextInput(session, inputId = "max_length", value = 0)
+        #   }
+        # }else if(input$seqs_type == "Long read"){
+        #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+        #                         input$input_job_id_taxa,
+        #                         "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[3,2]
+        #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                     input$input_job_id_taxa,
+        #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+        #                              sep = "\t", 
+        #                              stringsAsFactors = F)[4,2]
+        #     updateTextInput(session, inputId = "min_length", value = min_length)
+        #     updateTextInput(session, inputId = "max_length", value = max_length)
+        #   }else{
+        #     updateTextInput(session, inputId = "min_length", value = 0)
+        #     updateTextInput(session, inputId = "max_length", value = 0)
+        #   }
+        # }
         
         # removeModal()
         remove_modal_spinner()
@@ -7011,67 +7011,67 @@ server <- function(session, input, output) {
     
     
     # update reference seqs filter length
-    if(input$seqs_type == "Single end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        updateTextInput(session, inputId = "min_length", value = min_length)
-        updateTextInput(session, inputId = "max_length", value = max_length)
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }else if(input$seqs_type == "Paired end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        updateTextInput(session, inputId = "min_length", value = min_length)
-        updateTextInput(session, inputId = "max_length", value = max_length)
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }else if(input$seqs_type == "Long read"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                 sep = "\t", 
-                                 stringsAsFactors = F)[4,2]
-        updateTextInput(session, inputId = "min_length", value = min_length)
-        updateTextInput(session, inputId = "max_length", value = max_length)
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
-    }
+    # if(input$seqs_type == "Single end"){
+    #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+    #                         input$input_job_id_taxa,
+    #                         "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+    #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[3,2]
+    #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[4,2]
+    #     updateTextInput(session, inputId = "min_length", value = min_length)
+    #     updateTextInput(session, inputId = "max_length", value = max_length)
+    #   }else{
+    #     updateTextInput(session, inputId = "min_length", value = 0)
+    #     updateTextInput(session, inputId = "max_length", value = 0)
+    #   }
+    # }else if(input$seqs_type == "Paired end"){
+    #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+    #                         input$input_job_id_taxa,
+    #                         "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+    #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[3,2]
+    #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[4,2]
+    #     updateTextInput(session, inputId = "min_length", value = min_length)
+    #     updateTextInput(session, inputId = "max_length", value = max_length)
+    #   }else{
+    #     updateTextInput(session, inputId = "min_length", value = 0)
+    #     updateTextInput(session, inputId = "max_length", value = 0)
+    #   }
+    # }else if(input$seqs_type == "Long read"){
+    #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+    #                         input$input_job_id_taxa,
+    #                         "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+    #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[3,2]
+    #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+    #                                     input$input_job_id_taxa,
+    #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+    #                              sep = "\t", 
+    #                              stringsAsFactors = F)[4,2]
+    #     updateTextInput(session, inputId = "min_length", value = min_length)
+    #     updateTextInput(session, inputId = "max_length", value = max_length)
+    #   }else{
+    #     updateTextInput(session, inputId = "min_length", value = 0)
+    #     updateTextInput(session, inputId = "max_length", value = 0)
+    #   }
+    # }
     
     # removeModal()
     remove_modal_spinner()
@@ -8199,67 +8199,67 @@ server <- function(session, input, output) {
       
       
       # update reference seqs filter length
-      if(input$seqs_type == "Single end"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[4,2]
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = 0)
-          updateTextInput(session, inputId = "max_length", value = 0)
-        }
-      }else if(input$seqs_type == "Paired end"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[4,2]
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = 0)
-          updateTextInput(session, inputId = "max_length", value = 0)
-        }
-      }else if(input$seqs_type == "Long read"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
-                                   sep = "\t", 
-                                   stringsAsFactors = F)[4,2]
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = 0)
-          updateTextInput(session, inputId = "max_length", value = 0)
-        }
-      }
+      # if(input$seqs_type == "Single end"){
+      #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+      #                         input$input_job_id_taxa,
+      #                         "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
+      #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[3,2]
+      #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[4,2]
+      #     updateTextInput(session, inputId = "min_length", value = min_length)
+      #     updateTextInput(session, inputId = "max_length", value = max_length)
+      #   }else{
+      #     updateTextInput(session, inputId = "min_length", value = 0)
+      #     updateTextInput(session, inputId = "max_length", value = 0)
+      #   }
+      # }else if(input$seqs_type == "Paired end"){
+      #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+      #                         input$input_job_id_taxa,
+      #                         "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
+      #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[3,2]
+      #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[4,2]
+      #     updateTextInput(session, inputId = "min_length", value = min_length)
+      #     updateTextInput(session, inputId = "max_length", value = max_length)
+      #   }else{
+      #     updateTextInput(session, inputId = "min_length", value = 0)
+      #     updateTextInput(session, inputId = "max_length", value = 0)
+      #   }
+      # }else if(input$seqs_type == "Long read"){
+      #   if(file.exists(paste0("/home/imuser/web_version/users_files/",
+      #                         input$input_job_id_taxa,
+      #                         "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+      #     min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[3,2]
+      #     max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                     input$input_job_id_taxa,
+      #                                     "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"), 
+      #                              sep = "\t", 
+      #                              stringsAsFactors = F)[4,2]
+      #     updateTextInput(session, inputId = "min_length", value = min_length)
+      #     updateTextInput(session, inputId = "max_length", value = max_length)
+      #   }else{
+      #     updateTextInput(session, inputId = "min_length", value = 0)
+      #     updateTextInput(session, inputId = "max_length", value = 0)
+      #   }
+      # }
       
       # removeModal()
       remove_modal_spinner()
