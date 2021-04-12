@@ -11885,7 +11885,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
-        sapply(1:length(unique(metadata[, i])), function(j){
+        lapply(1:length(unique(metadata[, i])), function(j){
           
           update_rownames(i, metadata,j)
           
@@ -12544,15 +12544,6 @@ server <- function(session, input, output) {
     
     plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group(), topN){
       
-      # topN_species_list <- lapply(1:ncol(taxtable), function(i){
-      #   
-      #   sort(taxtable[,i], decreasing = T)[1:topN] %>% names()
-      # })
-      # 
-      # topN_species_union <- unique(unlist(topN_species_list))
-      # 
-      # new_taxtable <- taxtable[topN_species_union,]
-      
       species_taxtable<-row.names(taxtable) 
       barplot_taxa_table_data<-as_tibble(taxtable) 
       barplot_taxa_table_data<-add_column(barplot_taxa_table_data,Species=species_taxtable) 
@@ -12690,7 +12681,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
-        sapply(1:length(unique(metadata[, i])), function(j){
+        lapply(1:length(unique(metadata[, i])), function(j){
           
           update_rownames(i, metadata,j)
           
