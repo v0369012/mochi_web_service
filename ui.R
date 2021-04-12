@@ -2012,7 +2012,7 @@ shinyUI(
                                                  
                                                  textOutput(outputId="word_metadata_NA_1_demo") %>% shinyjs::hidden(),  
                                                  selectInput(inputId = "select_level_bar_demo", 
-                                                             label = "Choose the level_demo", 
+                                                             label = "Choose the level", 
                                                              choices = c("Kingdom","Phylum","Class","Order","Family","Genus","Species") 
                                                  ),
                                                  sliderInput(inputId = "integer_demo", 

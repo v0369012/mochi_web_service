@@ -19140,7 +19140,7 @@ server <- function(session, input, output) {
           df_data <- df_data %>%
             separate(
               col = Species,
-              into = level_group(),
+              into = level_group_demo(),
               sep = ";"
             )
           
@@ -19219,7 +19219,7 @@ server <- function(session, input, output) {
           # Seperate Species names by taxon
           barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
                                                     col = "Species_name",
-                                                    into = level_group(),
+                                                    into = level_group_demo(),
                                                     sep = ";")
           
           
@@ -19386,8 +19386,7 @@ server <- function(session, input, output) {
       
       barplot_sub_download_demo <- reactive({
         
-        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
-
+        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group(), topN){
           
           species_taxtable<-row.names(taxtable) 
           barplot_taxa_table_data<-as_tibble(taxtable) 
@@ -19418,7 +19417,7 @@ server <- function(session, input, output) {
           
           barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
                                                     col = "Species_name",
-                                                    into = level_group(),
+                                                    into = level_group_demo(),
                                                     sep = ";")
           
           
@@ -19463,7 +19462,14 @@ server <- function(session, input, output) {
           species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
           species_diff <- setdiff(species_Levels, species_union)
           
-
+          # others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+          #   a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+          #   topN <- topN
+          #   species_name <- a$Levels %>% as.character()
+          #   species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+          #   species_name_topN <- species_name_sort[-c(1:topN)]
+          #   return(species_name_topN)
+          # })
           '%!in%' <- function(x,y)!('%in%'(x,y))
           others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
             a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
@@ -19519,7 +19525,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -19556,11 +19562,6 @@ server <- function(session, input, output) {
             number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
             
             barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
-            
-            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
-            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
-            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
-            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
             
             library(viridis)
             
@@ -24358,7 +24359,7 @@ server <- function(session, input, output) {
           df_data <- df_data %>%
             separate(
               col = Species,
-              into = level_group(),
+              into = level_group_demo(),
               sep = ";"
             )
           
@@ -24437,7 +24438,7 @@ server <- function(session, input, output) {
           # Seperate Species names by taxon
           barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
                                                     col = "Species_name",
-                                                    into = level_group(),
+                                                    into = level_group_demo(),
                                                     sep = ";")
           
           
@@ -24604,8 +24605,7 @@ server <- function(session, input, output) {
       
       barplot_sub_download_demo <- reactive({
         
-        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
-          
+        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group(), topN){
           
           species_taxtable<-row.names(taxtable) 
           barplot_taxa_table_data<-as_tibble(taxtable) 
@@ -24636,7 +24636,7 @@ server <- function(session, input, output) {
           
           barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
                                                     col = "Species_name",
-                                                    into = level_group(),
+                                                    into = level_group_demo(),
                                                     sep = ";")
           
           
@@ -24681,7 +24681,14 @@ server <- function(session, input, output) {
           species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
           species_diff <- setdiff(species_Levels, species_union)
           
-          
+          # others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+          #   a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+          #   topN <- topN
+          #   species_name <- a$Levels %>% as.character()
+          #   species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+          #   species_name_topN <- species_name_sort[-c(1:topN)]
+          #   return(species_name_topN)
+          # })
           '%!in%' <- function(x,y)!('%in%'(x,y))
           others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
             a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
@@ -24737,7 +24744,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -24774,11 +24781,6 @@ server <- function(session, input, output) {
             number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
             
             barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
-            
-            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
-            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
-            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
-            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
             
             library(viridis)
             
@@ -29781,8 +29783,7 @@ server <- function(session, input, output) {
       
       barplot_sub_download_demo <- reactive({
         
-        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group_demo(), topN){
-          
+        plot_LeveltoSamples_sub<-function(taxtable, metadata, features, Level=level_group(), topN){
           
           species_taxtable<-row.names(taxtable) 
           barplot_taxa_table_data<-as_tibble(taxtable) 
@@ -29813,7 +29814,7 @@ server <- function(session, input, output) {
           
           barplot_taxa_table_data_percent<-separate(data = barplot_taxa_table_data_percent,
                                                     col = "Species_name",
-                                                    into = level_group(),
+                                                    into = level_group_demo(),
                                                     sep = ";")
           
           
@@ -29858,7 +29859,14 @@ server <- function(session, input, output) {
           species_Levels <- unique(barplot_taxa_table_data_percent_Level_noUnassigned$Levels) %>% as.character()
           species_diff <- setdiff(species_Levels, species_union)
           
-          
+          # others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
+          #   a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
+          #   topN <- topN
+          #   species_name <- a$Levels %>% as.character()
+          #   species_name_sort <- species_name[order(a$read_percentage, decreasing = T)]
+          #   species_name_topN <- species_name_sort[-c(1:topN)]
+          #   return(species_name_topN)
+          # })
           '%!in%' <- function(x,y)!('%in%'(x,y))
           others_list <- lapply(unique(barplot_taxa_table_data_percent_Level_noUnassigned$Sample_ID), function(x){
             a <- filter(barplot_taxa_table_data_percent_Level_noUnassigned, Sample_ID == x)
@@ -29914,7 +29922,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -29951,11 +29959,6 @@ server <- function(session, input, output) {
             number_nameslist <- length(names_list[[features]][[features_sub]]) %>% as.character()
             
             barplot_taxa_table_data_percent_Level_sub$read_percentage <- barplot_taxa_table_data_percent_Level_sub$read_percentage*100 %>% round(2)
-            
-            # col_names <- colnames(barplot_taxa_table_data_percent_Level_sub)
-            # col_names_new <- gsub(pattern = "Sample_ID", replacement = "SampleID", x = col_names)
-            # col_names_new <- gsub(pattern = "read_percentage", replacement = "Relative abundance", x = col_names)
-            # colnames(barplot_taxa_table_data_percent_Level_sub) <- col_names_new
             
             library(viridis)
             
