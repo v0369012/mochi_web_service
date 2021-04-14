@@ -14263,6 +14263,10 @@ server <- function(session, input, output) {
       
       unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
         
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                          levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+        
         ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                aes(x=PC1, y=PC2, label=SampleID, color=feature))+
           geom_point(size=2.5)+
@@ -14273,12 +14277,16 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Unweighted unifrac PCoA plot")+
-          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
       })
       
       names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
       
       unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+        unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
         
         ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                aes(x=PC1, y=PC2, color=feature))+
@@ -14290,7 +14298,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Unweighted unifrac PCoA plot")+
-          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
       })
       
       names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
@@ -14353,6 +14361,10 @@ server <- function(session, input, output) {
       # NMDS_rowname <- NMDS_rowname_arrange
       NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
       
+      NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                              levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+      NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
+      
       NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
         geom_point(size=2.5)+
         ggrepel::geom_text_repel(show.legend = FALSE)+
@@ -14408,6 +14420,10 @@ server <- function(session, input, output) {
       
       W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
         
+        W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                          levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+        W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+        
         ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                aes(x=PC1, y=PC2, label=SampleID, color=feature))+
           geom_point(size=2.5)+
@@ -14418,13 +14434,17 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Weighted unifrac PCoA plot")+
-          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
       })
       
       names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
       
       
       W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+        
+        W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                          levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+        W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
         
         ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                aes(x=PC1, y=PC2, color=feature))+
@@ -14436,7 +14456,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Weighted unifrac PCoA plot")+
-          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
       })
       
       names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
@@ -14500,6 +14520,10 @@ server <- function(session, input, output) {
       NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
       # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
       NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+      
+      NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                              levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+      NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
       
       NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
         geom_point(size=2.5)+
@@ -21668,6 +21692,10 @@ server <- function(session, input, output) {
         
         unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -21678,13 +21706,17 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         
         unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -21696,7 +21728,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -21760,6 +21792,10 @@ server <- function(session, input, output) {
         # NMDS_rowname <- NMDS_rowname_arrange
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
         
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
+        
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
@@ -21813,6 +21849,10 @@ server <- function(session, input, output) {
         
         W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -21823,12 +21863,16 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -21840,7 +21884,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -21904,6 +21948,10 @@ server <- function(session, input, output) {
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
           geom_point(size=2.5)+
@@ -26858,6 +26906,10 @@ server <- function(session, input, output) {
         
         unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -26868,13 +26920,17 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         
         unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -26886,7 +26942,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -26950,6 +27006,10 @@ server <- function(session, input, output) {
         # NMDS_rowname <- NMDS_rowname_arrange
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
         
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
+        
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
@@ -27003,6 +27063,10 @@ server <- function(session, input, output) {
         
         W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -27013,12 +27077,16 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -27030,7 +27098,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -27094,6 +27162,10 @@ server <- function(session, input, output) {
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
           geom_point(size=2.5)+
@@ -32049,6 +32121,10 @@ server <- function(session, input, output) {
         
         unW_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -32059,13 +32135,17 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         
         unW_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(unW_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                              levels = str_sort(unique(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = unW_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -32077,7 +32157,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -32141,6 +32221,10 @@ server <- function(session, input, output) {
         # NMDS_rowname <- NMDS_rowname_arrange
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
         
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
+        
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
@@ -32194,6 +32278,10 @@ server <- function(session, input, output) {
         
         W_unifrac_dm_pcoa_qiime_plot_list <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
           
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
+          
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, label=SampleID, color=feature))+
             geom_point(size=2.5)+
@@ -32204,12 +32292,16 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
         
         W_unifrac_dm_pcoa_qiime_plot_list_noID <- lapply(1:length(W_unifrac_dm_pcoa_qiime_forplot_table_list), function(i){
+          
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature <- factor(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature,
+                                                                            levels = str_sort(unique(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]]$feature), numeric = T))
+          W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]] <- arrange(W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], feature)
           
           ggplot(data = W_unifrac_dm_pcoa_qiime_forplot_table_list[[i]], 
                  aes(x=PC1, y=PC2, color=feature))+
@@ -32221,7 +32313,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]])
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -32285,6 +32377,10 @@ server <- function(session, input, output) {
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
         NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        
+        NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
+                                                levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
+        NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
         NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
           geom_point(size=2.5)+
