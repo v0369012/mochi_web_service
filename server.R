@@ -10955,7 +10955,9 @@ server <- function(session, input, output) {
         shinyjs::hide("alpha_ui")
         shinyjs::hide("beta_ui")
         shinyjs::hide("phylo_ui")
+        shinyjs::hide("phylo_output_ui")
         shinyjs::hide("ancom_ui")
+        shinyjs::hide("ancom_output_ui")
         closeAlert(session, "sampleAlert")
     
  
