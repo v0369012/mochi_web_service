@@ -16102,6 +16102,12 @@ server <- function(session, input, output) {
       
       df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
       
+      df_barplot_ag$feature <- factor(df_barplot_ag$feature, levels = stringr::str_sort(unique(df_barplot_ag$feature), numeric = T))
+      df_barplot_ag <- arrange(df_barplot_ag, feature)
+      
+      df_barplot_ag$mean <- round(df_barplot_ag$mean, 2)
+      df_barplot_ag$sd <- round(df_barplot_ag$sd, 2)
+      
       FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
         geom_bar(stat="identity", color="black", 
                  position=position_dodge()) +
