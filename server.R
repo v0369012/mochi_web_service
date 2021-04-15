@@ -10477,7 +10477,7 @@ server <- function(session, input, output) {
       #           col = 'black',
       #           size = 5) +
       geom_boxplot() +
-      ggtitle("Alpha diversity") +
+      ggtitle("Alpha diversity boxplot") +
       xlab(input$metadata_alpha) +
       ylab(input$select_diversity)+
       labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -10575,7 +10575,7 @@ server <- function(session, input, output) {
       #           col = 'black',
       #           size = 5) +
       geom_boxplot() +
-      ggtitle("Alpha diversity") +
+      ggtitle("Alpha diversity boxplot") +
       xlab(input$metadata_alpha) +
       ylab(input$select_diversity)+
       labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -13954,7 +13954,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Phylogenetic Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_phylo_alpha) +
           ylab("Faith_PD")+
           labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -14024,7 +14024,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Phylogenetic Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_phylo_alpha) +
           ylab("Faith_PD")+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -20202,7 +20202,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -20300,7 +20300,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -21396,7 +21396,7 @@ server <- function(session, input, output) {
             #           col = 'black',
             #           size = 5) +
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -21463,7 +21463,7 @@ server <- function(session, input, output) {
           ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
            
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -25458,7 +25458,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -25556,7 +25556,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -26631,7 +26631,7 @@ server <- function(session, input, output) {
             #           col = 'black',
             #           size = 5) +
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -26698,7 +26698,7 @@ server <- function(session, input, output) {
           ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
             
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -30673,7 +30673,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -30771,7 +30771,7 @@ server <- function(session, input, output) {
           #           col = 'black',
           #           size = 5) +
           geom_boxplot() +
-          ggtitle("Alpha diversity") +
+          ggtitle("Alpha diversity boxplot") +
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -31846,7 +31846,7 @@ server <- function(session, input, output) {
             #           col = 'black',
             #           size = 5) +
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
@@ -31913,7 +31913,7 @@ server <- function(session, input, output) {
           ggplot(A_diversity_metadata_list[[feature]], aes(x = feature_name, y = faith_pd)) +
             
             geom_boxplot() +
-            ggtitle("Phylogenetic Alpha diversity") +
+            ggtitle("Alpha diversity boxplot") +
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
