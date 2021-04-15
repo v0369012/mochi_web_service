@@ -10481,9 +10481,9 @@ server <- function(session, input, output) {
       xlab(input$metadata_alpha) +
       ylab(input$select_diversity)+
       labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                 geom = "text", 
+                                                                                                                                                 geom = "text", size =7, 
                                                                                                                                                  hjust = 0.5,
-                                                                                                                                                 vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                                 vjust = 0.9) + theme(text = element_text(size = 25))
   })
   
   alpha_anova_tukey <- reactive({
@@ -10579,9 +10579,9 @@ server <- function(session, input, output) {
       xlab(input$metadata_alpha) +
       ylab(input$select_diversity)+
       labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                        geom = "text", 
+                                                                                                                                        geom = "text", size =7, 
                                                                                                                                         hjust = 0.5,
-                                                                                                                                        vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                        vjust = 0.9) + theme(text = element_text(size = 25))
   })
   
   alpha_KW_Dunn <- reactive({
@@ -10709,7 +10709,7 @@ server <- function(session, input, output) {
       geom_hline(yintercept = 0, linetype="dotted")+
       theme_bw()+
       ggtitle("PCA plot")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20)) 
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25)) 
     
     pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
       geom_point(size=2.5)+
@@ -10720,7 +10720,7 @@ server <- function(session, input, output) {
       geom_hline(yintercept = 0, linetype="dotted")+
       theme_bw()+
       ggtitle("PCA plot")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20)) 
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25)) 
     
     
     # PCoA
@@ -10780,7 +10780,7 @@ server <- function(session, input, output) {
       geom_hline(yintercept = 0, linetype="dotted")+
       theme_bw()+
       ggtitle("PCoA plot")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20)) 
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25)) 
     
     pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
       geom_point(size=2.5)+
@@ -10791,7 +10791,7 @@ server <- function(session, input, output) {
       geom_hline(yintercept = 0, linetype="dotted")+
       theme_bw()+
       ggtitle("PCoA plot")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20)) 
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25)) 
     
     # NMDS
     comm_bray <- vegdist(t(taxatable_beta))
@@ -10810,7 +10810,7 @@ server <- function(session, input, output) {
       theme_bw()+
       labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
       #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20)) 
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25)) 
     
     NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
       geom_point(size=2.5)+
@@ -10822,7 +10822,7 @@ server <- function(session, input, output) {
       theme_bw()+
       labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
       #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 20))
+      scale_colour_discrete(input$metadata_beta) + theme(text = element_text(size = 25))
     
     
     if(input$sep == "PCoA" & input$beta_cluster == F) {
@@ -13958,7 +13958,7 @@ server <- function(session, input, output) {
           xlab(input$metadata_phylo_alpha) +
           ylab("Faith_PD")+
           labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                   geom = "text", 
+                                                                                                                                                   geom = "text", size =7, 
                                                                                                                                                    hjust = 0.5,
                                                                                                                                                    vjust = 0.9)
         
@@ -14028,7 +14028,7 @@ server <- function(session, input, output) {
           xlab(input$metadata_phylo_alpha) +
           ylab("Faith_PD")+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                            geom = "text", 
+                                                                                                                                            geom = "text", size =7, 
                                                                                                                                             hjust = 0.5,
                                                                                                                                             vjust = 0.9) 
         
@@ -14279,7 +14279,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Unweighted unifrac PCoA plot")+
-          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
       })
       
       names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
@@ -14300,7 +14300,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Unweighted unifrac PCoA plot")+
-          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+          scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
       })
       
       names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
@@ -14377,7 +14377,7 @@ server <- function(session, input, output) {
         theme_bw()+
         labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
         #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 20)) 
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 25)) 
       
       NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
         geom_point(size=2.5)+
@@ -14389,7 +14389,7 @@ server <- function(session, input, output) {
         theme_bw()+
         labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
         #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 20)) 
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 25)) 
       
       if(input$phylo_showID){
         return(NMDS_beta_df_data_plot_gg)
@@ -14436,7 +14436,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Weighted unifrac PCoA plot")+
-          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
       })
       
       names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats())
@@ -14458,7 +14458,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("Weighted unifrac PCoA plot")+
-          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+          scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
       })
       
       names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats())
@@ -14537,7 +14537,7 @@ server <- function(session, input, output) {
         theme_bw()+
         labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
         #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 20))
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 25))
       
       NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
         geom_point(size=2.5)+
@@ -14548,7 +14548,7 @@ server <- function(session, input, output) {
         geom_hline(yintercept = 0, linetype = "dotted")+
         theme_bw()+
         labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
-        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 20))
+        scale_colour_discrete(input$metadata_phylo_beta) + theme(text = element_text(size = 25))
       
       if(input$phylo_showID){
         return(NMDS_beta_df_data_plot_gg)
@@ -20206,9 +20206,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_anova_tukey_demo <- reactive({
@@ -20304,9 +20304,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                            geom = "text", 
+                                                                                                                                            geom = "text", size =7, 
                                                                                                                                             hjust = 0.5,
-                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_KW_Dunn_demo <- reactive({
@@ -20556,7 +20556,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -20567,7 +20567,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         # PCoA
@@ -20627,7 +20627,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -20638,7 +20638,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         # NMDS
         comm_bray <- vegdist(t(taxatable_beta))
@@ -20657,7 +20657,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -20668,7 +20668,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         if(input$sep_demo == "PCoA" & input$beta_cluster_demo == F) {
@@ -21400,7 +21400,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
                                                                                                                                                      vjust = 0.9)
           
@@ -21467,7 +21467,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                              geom = "text", 
+                                                                                                                                              geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
                                                                                                                                               vjust = 0.9) 
           
@@ -21708,7 +21708,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -21730,7 +21730,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -21808,7 +21808,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -21820,7 +21820,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
@@ -21865,7 +21865,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -21886,7 +21886,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -21965,7 +21965,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -21977,7 +21977,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
@@ -25462,9 +25462,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_anova_tukey_demo <- reactive({
@@ -25560,9 +25560,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                            geom = "text", 
+                                                                                                                                            geom = "text", size =7, 
                                                                                                                                             hjust = 0.5,
-                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_KW_Dunn_demo <- reactive({
@@ -25791,7 +25791,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -25802,7 +25802,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         # PCoA
@@ -25862,7 +25862,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -25873,7 +25873,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         # NMDS
         comm_bray <- vegdist(t(taxatable_beta))
@@ -25892,7 +25892,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -25903,7 +25903,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         if(input$sep_demo == "PCoA" & input$beta_cluster_demo == F) {
@@ -26635,7 +26635,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
                                                                                                                                                      vjust = 0.9)
           
@@ -26702,7 +26702,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                              geom = "text", 
+                                                                                                                                              geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
                                                                                                                                               vjust = 0.9) 
           
@@ -26922,7 +26922,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -26944,7 +26944,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -27022,7 +27022,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -27034,7 +27034,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
@@ -27079,7 +27079,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -27100,7 +27100,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20)) 
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25)) 
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -27179,7 +27179,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -27191,7 +27191,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
@@ -30677,9 +30677,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption = paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_anova_tukey_demo <- reactive({
@@ -30775,9 +30775,9 @@ server <- function(session, input, output) {
           xlab(input$metadata_alpha_demo) +
           ylab(input$select_diversity_demo)+
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                            geom = "text", 
+                                                                                                                                            geom = "text", size =7, 
                                                                                                                                             hjust = 0.5,
-                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 20))
+                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 25))
       })
       
       alpha_KW_Dunn_demo <- reactive({
@@ -31006,7 +31006,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pca_Bray_df_data_plot_gg_noID <- ggplot(data = pca_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -31017,7 +31017,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         # PCoA
@@ -31077,7 +31077,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         pcoa_Bray_df_data_plot_gg_noID <- ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, color=sample))+
           geom_point(size=2.5)+
@@ -31088,7 +31088,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           ggtitle("PCoA plot")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         # NMDS
         comm_bray <- vegdist(t(taxatable_beta))
@@ -31107,7 +31107,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -31118,7 +31118,7 @@ server <- function(session, input, output) {
           geom_hline(yintercept = 0, linetype="dotted")+
           theme_bw()+
           labs(title="NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
-          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_beta_demo) + theme(text = element_text(size = 25)) 
         
         
         if(input$sep_demo == "PCoA" & input$beta_cluster_demo == F) {
@@ -31850,7 +31850,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                                     geom = "text", 
+                                                                                                                                                     geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
                                                                                                                                                      vjust = 0.9)
           
@@ -31917,7 +31917,7 @@ server <- function(session, input, output) {
             xlab(input$metadata_phylo_alpha_demo) +
             ylab("Faith_PD")+
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
-                                                                                                                                              geom = "text", 
+                                                                                                                                              geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
                                                                                                                                               vjust = 0.9) 
           
@@ -32137,7 +32137,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -32159,7 +32159,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Unweighted unifrac PCoA plot")+
-            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(unW_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(unW_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -32237,7 +32237,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -32249,7 +32249,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Unweighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20)) 
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25)) 
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
@@ -32294,7 +32294,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list) <- colnames(Metadata_stats_demo())
@@ -32315,7 +32315,7 @@ server <- function(session, input, output) {
             geom_hline(yintercept = 0, linetype="dotted")+
             theme_bw()+
             ggtitle("Weighted unifrac PCoA plot")+
-            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 20))
+            scale_colour_discrete(names(W_unifrac_dm_pcoa_qiime_forplot_table_list)[[i]]) + theme(text = element_text(size = 25))
         })
         
         names(W_unifrac_dm_pcoa_qiime_plot_list_noID) <- colnames(Metadata_stats_demo())
@@ -32394,7 +32394,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         NMDS_beta_df_data_plot_gg_noID <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, color=sample))+
           geom_point(size=2.5)+
@@ -32406,7 +32406,7 @@ server <- function(session, input, output) {
           theme_bw()+
           labs(title="Weighted unifrac NMDS plot", caption=paste("stress=", as.character(round(metaMDS_beta_df_data$stress, 4)), sep = ""))+
           #labs(caption = "A rule of thumb: stress > 0.05 provides an excellent representation in reduced dimensions, > 0.1 is great, >0.2 is good/ok, and stress > 0.3 provides a poor representation.")+
-          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 20))
+          scale_colour_discrete(input$metadata_phylo_beta_demo) + theme(text = element_text(size = 25))
         
         if(input$phylo_showID_demo){
           return(NMDS_beta_df_data_plot_gg)
