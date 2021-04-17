@@ -10409,7 +10409,7 @@ server <- function(session, input, output) {
         microbiome::evenness(taxatable_data[,i], index = "pielou")
       })
       
-      SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+      simpson_eveness<-lapply(1:ncol(taxatable_data), function(i){
         microbiome::evenness(taxatable_data[,i], index = "simpson")
       })
       
@@ -10421,8 +10421,8 @@ server <- function(session, input, output) {
                                         Shannon_diverstiy=unlist(alpha_diversity_Shannon),
                                         Simpson_diversity=unlist(alpha_diversity_Simpson),
                                         InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
-                                        Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
-                                        Simpson_evenness=unlist(pielou_evenness),
+                                        Shannon_evenness=unlist(pielou_evenness),
+                                        Simpson_evenness=unlist(simpson_eveness),
                                         # SimpsonEveness=unlist(SimpsonEveness),
                                         # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
                                         Goods_coverage=unlist(alpha_diversity_GoodCoverage)
@@ -20138,7 +20138,7 @@ server <- function(session, input, output) {
             microbiome::evenness(taxatable_data[,i], index = "pielou")
           })
           
-          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+          simpson_eveness<-lapply(1:ncol(taxatable_data), function(i){
             microbiome::evenness(taxatable_data[,i], index = "simpson")
           })
           
@@ -20150,8 +20150,8 @@ server <- function(session, input, output) {
                                             Shannon_diverstiy=unlist(alpha_diversity_Shannon),
                                             Simpson_diversity=unlist(alpha_diversity_Simpson),
                                             InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
-                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
-                                            Simpson_evenness=unlist(pielou_evenness),
+                                            Shannon_evenness=unlist(pielou_evenness),
+                                            Simpson_evenness=unlist(simpson_eveness),
                                             # SimpsonEveness=unlist(SimpsonEveness),
                                             # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
                                             Goods_coverage=unlist(alpha_diversity_GoodCoverage)
@@ -25407,7 +25407,7 @@ server <- function(session, input, output) {
             microbiome::evenness(taxatable_data[,i], index = "pielou")
           })
           
-          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+          simpson_eveness<-lapply(1:ncol(taxatable_data), function(i){
             microbiome::evenness(taxatable_data[,i], index = "simpson")
           })
           
@@ -25419,8 +25419,8 @@ server <- function(session, input, output) {
                                             Shannon_diverstiy=unlist(alpha_diversity_Shannon),
                                             Simpson_diversity=unlist(alpha_diversity_Simpson),
                                             InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
-                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
-                                            Simpson_evenness=unlist(pielou_evenness),
+                                            Shannon_evenness=unlist(pielou_evenness),
+                                            Simpson_evenness=unlist(simpson_eveness),
                                             # SimpsonEveness=unlist(SimpsonEveness),
                                             # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
                                             Goods_coverage=unlist(alpha_diversity_GoodCoverage)
@@ -30635,7 +30635,7 @@ server <- function(session, input, output) {
             microbiome::evenness(taxatable_data[,i], index = "pielou")
           })
           
-          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+          simpson_eveness<-lapply(1:ncol(taxatable_data), function(i){
             microbiome::evenness(taxatable_data[,i], index = "simpson")
           })
           
@@ -30647,8 +30647,8 @@ server <- function(session, input, output) {
                                             Shannon_diverstiy=unlist(alpha_diversity_Shannon),
                                             Simpson_diversity=unlist(alpha_diversity_Simpson),
                                             InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
-                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
-                                            Simpson_evenness=unlist(pielou_evenness),
+                                            Shannon_evenness=unlist(pielou_evenness),
+                                            Simpson_evenness=unlist(simpson_eveness),
                                             # SimpsonEveness=unlist(SimpsonEveness),
                                             # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
                                             Goods_coverage=unlist(alpha_diversity_GoodCoverage)
