@@ -10335,31 +10335,31 @@ server <- function(session, input, output) {
     
     as_alpha_diversity_table <- function(taxatable_data){
       
-      alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+      alpha_diversity_richness<-lapply(1:ncol(taxatable_data), function(i){
         nrow(subset(as.data.frame(taxatable_data), 
                     as.data.frame(taxatable_data)[,i]>0))
       })
       
       library(fossil)
-      alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
-        chao1(taxatable_data[,i])
+      alpha_diversity_Choa1<-lapply(1:ncol(taxatable_data), function(i){
+        fossil::chao1(taxatable_data[,i])
       })
       
-      alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
-        ACE(taxatable_data[,i])
+      alpha_diversity_ACE<-lapply(1:ncol(taxatable_data), function(i){
+        fossil::ACE(taxatable_data[,i])
       })
       
-      library(vegan)
-      alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
-        diversity(taxatable_data[,i], index = "shannon")
+      
+      alpha_diversity_Shannon<-lapply(1:ncol(taxatable_data), function(i){
+        vegan::diversity(taxatable_data[,i], index = "shannon")
       })
       
-      alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
-        diversity(taxatable_data[,i], index = "simpson")
+      alpha_diversity_Simpson<-lapply(1:ncol(taxatable_data), function(i){
+        vegan::diversity(taxatable_data[,i], index = "simpson")
       })
       
-      alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
-        diversity(taxatable_data[,i], index = "invsimpson")
+      alpha_diversity_InvSimpson<-lapply(1:ncol(taxatable_data), function(i){
+        vegan::diversity(taxatable_data[,i], index = "invsimpson")
       })
       
       
@@ -10373,7 +10373,7 @@ server <- function(session, input, output) {
         
       }
       
-      alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+      alpha_diversity_ShannonEvenness<-lapply(1:ncol(taxatable_data), function(i){
         ShannonEvenness(taxatable_data[,i])
       })
       
@@ -10387,7 +10387,7 @@ server <- function(session, input, output) {
         
       }
       
-      alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+      alpha_diversity_SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
         SimpsonEvenness(taxatable_data[,i])
       })
       
@@ -10400,21 +10400,32 @@ server <- function(session, input, output) {
         
       }
       
-      alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+      alpha_diversity_GoodCoverage<-lapply(1:ncol(taxatable_data), function(i){
         GoodCoverage(taxatable_data[,i])
       })
       
       
+      pielou_evenness <- lapply(1:ncol(taxatable_data), function(i){
+        microbiome::evenness(taxatable_data[,i], index = "pielou")
+      })
+      
+      SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+        microbiome::evenness(taxatable_data[,i], index = "simpson")
+      })
+      
+      
       alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
-                                        Richness=alpha_diversity_richness,
-                                        Chao1=alpha_diversity_Choa1,
-                                        ACE=alpha_diversity_ACE,
-                                        Shannon_diverstiy=alpha_diversity_Shannon,
-                                        Simpson_diversity=alpha_diversity_Simpson,
-                                        InvSimpson_diversity=alpha_diversity_InvSimpson,
-                                        Shannon_evenness=alpha_diversity_ShannonEvenness,
-                                        Simpson_evenness=alpha_diversity_SimpsonEveness,
-                                        Goods_coverage=alpha_diversity_GoodCoverage
+                                        Richness=unlist(alpha_diversity_richness),
+                                        Chao1=unlist(alpha_diversity_Choa1),
+                                        ACE=unlist(alpha_diversity_ACE),
+                                        Shannon_diverstiy=unlist(alpha_diversity_Shannon),
+                                        Simpson_diversity=unlist(alpha_diversity_Simpson),
+                                        InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
+                                        Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
+                                        Simpson_evenness=unlist(pielou_evenness),
+                                        # SimpsonEveness=unlist(SimpsonEveness),
+                                        # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
+                                        Goods_coverage=unlist(alpha_diversity_GoodCoverage)
       )
       
       
@@ -20053,31 +20064,31 @@ server <- function(session, input, output) {
         
         as_alpha_diversity_table <- function(taxatable_data){
           
-          alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_richness<-lapply(1:ncol(taxatable_data), function(i){
             nrow(subset(as.data.frame(taxatable_data), 
                         as.data.frame(taxatable_data)[,i]>0))
           })
           
           library(fossil)
-          alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
-            chao1(taxatable_data[,i])
+          alpha_diversity_Choa1<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::chao1(taxatable_data[,i])
           })
           
-          alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
-            ACE(taxatable_data[,i])
+          alpha_diversity_ACE<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::ACE(taxatable_data[,i])
           })
           
-          library(vegan)
-          alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "shannon")
+          
+          alpha_diversity_Shannon<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "shannon")
           })
           
-          alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "simpson")
+          alpha_diversity_Simpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "simpson")
           })
           
-          alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "invsimpson")
+          alpha_diversity_InvSimpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "invsimpson")
           })
           
           
@@ -20091,7 +20102,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_ShannonEvenness<-lapply(1:ncol(taxatable_data), function(i){
             ShannonEvenness(taxatable_data[,i])
           })
           
@@ -20105,7 +20116,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
             SimpsonEvenness(taxatable_data[,i])
           })
           
@@ -20118,21 +20129,32 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_GoodCoverage<-lapply(1:ncol(taxatable_data), function(i){
             GoodCoverage(taxatable_data[,i])
           })
           
           
+          pielou_evenness <- lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "pielou")
+          })
+          
+          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "simpson")
+          })
+          
+          
           alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
-                                            Richness=alpha_diversity_richness,
-                                            Chao1=alpha_diversity_Choa1,
-                                            ACE=alpha_diversity_ACE,
-                                            Shannon_diverstiy=alpha_diversity_Shannon,
-                                            Simpson_diversity=alpha_diversity_Simpson,
-                                            InvSimpson_diversity=alpha_diversity_InvSimpson,
-                                            Shannon_evenness=alpha_diversity_ShannonEvenness,
-                                            Simpson_evenness=alpha_diversity_SimpsonEveness,
-                                            Goods_coverage=alpha_diversity_GoodCoverage
+                                            Richness=unlist(alpha_diversity_richness),
+                                            Chao1=unlist(alpha_diversity_Choa1),
+                                            ACE=unlist(alpha_diversity_ACE),
+                                            Shannon_diverstiy=unlist(alpha_diversity_Shannon),
+                                            Simpson_diversity=unlist(alpha_diversity_Simpson),
+                                            InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
+                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
+                                            Simpson_evenness=unlist(pielou_evenness),
+                                            # SimpsonEveness=unlist(SimpsonEveness),
+                                            # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
+                                            Goods_coverage=unlist(alpha_diversity_GoodCoverage)
           )
           
           
@@ -25311,31 +25333,31 @@ server <- function(session, input, output) {
         
         as_alpha_diversity_table <- function(taxatable_data){
           
-          alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_richness<-lapply(1:ncol(taxatable_data), function(i){
             nrow(subset(as.data.frame(taxatable_data), 
                         as.data.frame(taxatable_data)[,i]>0))
           })
           
           library(fossil)
-          alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
-            chao1(taxatable_data[,i])
+          alpha_diversity_Choa1<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::chao1(taxatable_data[,i])
           })
           
-          alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
-            ACE(taxatable_data[,i])
+          alpha_diversity_ACE<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::ACE(taxatable_data[,i])
           })
           
-          library(vegan)
-          alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "shannon")
+          
+          alpha_diversity_Shannon<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "shannon")
           })
           
-          alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "simpson")
+          alpha_diversity_Simpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "simpson")
           })
           
-          alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "invsimpson")
+          alpha_diversity_InvSimpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "invsimpson")
           })
           
           
@@ -25349,7 +25371,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_ShannonEvenness<-lapply(1:ncol(taxatable_data), function(i){
             ShannonEvenness(taxatable_data[,i])
           })
           
@@ -25363,7 +25385,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
             SimpsonEvenness(taxatable_data[,i])
           })
           
@@ -25376,21 +25398,32 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_GoodCoverage<-lapply(1:ncol(taxatable_data), function(i){
             GoodCoverage(taxatable_data[,i])
           })
           
           
+          pielou_evenness <- lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "pielou")
+          })
+          
+          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "simpson")
+          })
+          
+          
           alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
-                                            Richness=alpha_diversity_richness,
-                                            Chao1=alpha_diversity_Choa1,
-                                            ACE=alpha_diversity_ACE,
-                                            Shannon_diverstiy=alpha_diversity_Shannon,
-                                            Simpson_diversity=alpha_diversity_Simpson,
-                                            InvSimpson_diversity=alpha_diversity_InvSimpson,
-                                            Shannon_evenness=alpha_diversity_ShannonEvenness,
-                                            Simpson_evenness=alpha_diversity_SimpsonEveness,
-                                            Goods_coverage=alpha_diversity_GoodCoverage
+                                            Richness=unlist(alpha_diversity_richness),
+                                            Chao1=unlist(alpha_diversity_Choa1),
+                                            ACE=unlist(alpha_diversity_ACE),
+                                            Shannon_diverstiy=unlist(alpha_diversity_Shannon),
+                                            Simpson_diversity=unlist(alpha_diversity_Simpson),
+                                            InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
+                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
+                                            Simpson_evenness=unlist(pielou_evenness),
+                                            # SimpsonEveness=unlist(SimpsonEveness),
+                                            # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
+                                            Goods_coverage=unlist(alpha_diversity_GoodCoverage)
           )
           
           
@@ -30528,31 +30561,31 @@ server <- function(session, input, output) {
         
         as_alpha_diversity_table <- function(taxatable_data){
           
-          alpha_diversity_richness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_richness<-lapply(1:ncol(taxatable_data), function(i){
             nrow(subset(as.data.frame(taxatable_data), 
                         as.data.frame(taxatable_data)[,i]>0))
           })
           
           library(fossil)
-          alpha_diversity_Choa1<-sapply(1:ncol(taxatable_data), function(i){
-            chao1(taxatable_data[,i])
+          alpha_diversity_Choa1<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::chao1(taxatable_data[,i])
           })
           
-          alpha_diversity_ACE<-sapply(1:ncol(taxatable_data), function(i){
-            ACE(taxatable_data[,i])
+          alpha_diversity_ACE<-lapply(1:ncol(taxatable_data), function(i){
+            fossil::ACE(taxatable_data[,i])
           })
           
-          library(vegan)
-          alpha_diversity_Shannon<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "shannon")
+          
+          alpha_diversity_Shannon<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "shannon")
           })
           
-          alpha_diversity_Simpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "simpson")
+          alpha_diversity_Simpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "simpson")
           })
           
-          alpha_diversity_InvSimpson<-sapply(1:ncol(taxatable_data), function(i){
-            diversity(taxatable_data[,i], index = "invsimpson")
+          alpha_diversity_InvSimpson<-lapply(1:ncol(taxatable_data), function(i){
+            vegan::diversity(taxatable_data[,i], index = "invsimpson")
           })
           
           
@@ -30566,7 +30599,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_ShannonEvenness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_ShannonEvenness<-lapply(1:ncol(taxatable_data), function(i){
             ShannonEvenness(taxatable_data[,i])
           })
           
@@ -30580,7 +30613,7 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_SimpsonEveness<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
             SimpsonEvenness(taxatable_data[,i])
           })
           
@@ -30593,21 +30626,32 @@ server <- function(session, input, output) {
             
           }
           
-          alpha_diversity_GoodCoverage<-sapply(1:ncol(taxatable_data), function(i){
+          alpha_diversity_GoodCoverage<-lapply(1:ncol(taxatable_data), function(i){
             GoodCoverage(taxatable_data[,i])
           })
           
           
+          pielou_evenness <- lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "pielou")
+          })
+          
+          SimpsonEveness<-lapply(1:ncol(taxatable_data), function(i){
+            microbiome::evenness(taxatable_data[,i], index = "simpson")
+          })
+          
+          
           alpha_diversity_table<-data.frame(Sample=colnames(taxatable_data),
-                                            Richness=alpha_diversity_richness,
-                                            Chao1=alpha_diversity_Choa1,
-                                            ACE=alpha_diversity_ACE,
-                                            Shannon_diverstiy=alpha_diversity_Shannon,
-                                            Simpson_diversity=alpha_diversity_Simpson,
-                                            InvSimpson_diversity=alpha_diversity_InvSimpson,
-                                            Shannon_evenness=alpha_diversity_ShannonEvenness,
-                                            Simpson_evenness=alpha_diversity_SimpsonEveness,
-                                            Goods_coverage=alpha_diversity_GoodCoverage
+                                            Richness=unlist(alpha_diversity_richness),
+                                            Chao1=unlist(alpha_diversity_Choa1),
+                                            ACE=unlist(alpha_diversity_ACE),
+                                            Shannon_diverstiy=unlist(alpha_diversity_Shannon),
+                                            Simpson_diversity=unlist(alpha_diversity_Simpson),
+                                            InvSimpson_diversity=unlist(alpha_diversity_InvSimpson),
+                                            Shannon_evenness=unlist(alpha_diversity_ShannonEvenness),
+                                            Simpson_evenness=unlist(pielou_evenness),
+                                            # SimpsonEveness=unlist(SimpsonEveness),
+                                            # Simpson_evenness=unlist(alpha_diversity_SimpsonEveness),
+                                            Goods_coverage=unlist(alpha_diversity_GoodCoverage)
           )
           
           
