@@ -23011,7 +23011,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", input$ANCOM_level_demo, ")",
+        h3("ANCOM Volcano Plot (", "Order", ")",
            style = "color: black;top: 10px;")
       })
       
@@ -28238,7 +28238,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", input$ANCOM_level_demo, ")",
+        h3("ANCOM Volcano Plot (", "Family", ")",
            style = "color: black;top: 10px;")
       })
       
@@ -33466,7 +33466,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", input$ANCOM_level_demo, ")",
+        h3("ANCOM Volcano Plot (", "Genus", ")",
            style = "color: black;top: 10px;")
       })
       
