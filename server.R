@@ -1037,12 +1037,12 @@ server <- function(session, input, output) {
                          tagList(
                            strong("Minimum length"),
                            p("1. Sequenceses shorter than the minimun length will be discarded."),
-                           # p("2. The default value is minimun length of denoised-sequences."),
-                           p("2. Set to zero to disable min length filtering."),
+                           p("2. The default value is minimun length of denoised-sequences."),
+                           p("3. Set to zero to disable min length filtering."),
                            strong("Maximum length"),
                            p("1. Sequenceses longer than the maximum length will be discarded."),
-                           # p("2. The default value is maximum length of denoised-sequences."),
-                           p("2. Set to zero to disable max length filtering.")
+                           p("2. The default value is maximum length of denoised-sequences."),
+                           p("3. Set to zero to disable max length filtering.")
                            
                          ),
                          
