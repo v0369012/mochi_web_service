@@ -520,7 +520,7 @@ shinyUI(
                                     tabPanel(
                                       title = "Rarefaction plot",
                                       br(),br(),
-                                      plotOutput("rarefaction_plot_single"),
+                                      plotOutput("rarefaction_plot_single", height = "500px"),
                                       downloadButton("rarefaction_plot_single_dl", "Download the rarefaction plot"),
                                       downloadButton("rarefaction_table_single_dl", "Download the rarefaction table")
                                     ),
@@ -605,7 +605,7 @@ shinyUI(
                                     tabPanel(
                                       title = "Rarefaction plot",
                                       br(),br(),
-                                      plotOutput("rarefaction_plot_paired"),
+                                      plotOutput("rarefaction_plot_paired", height = "500px"),
                                       downloadButton("rarefaction_plot_paired_dl", "Download the rarefaction plot"),
                                       downloadButton("rarefaction_table_paired_dl", "Download the rarefaction table")
                                     ),
@@ -684,7 +684,7 @@ shinyUI(
                                            tabPanel(
                                              title = "Rarefaction plot",
                                              br(),br(),
-                                             plotOutput("rarefaction_plot_Pacbio"),
+                                             plotOutput("rarefaction_plot_Pacbio", height = "500px"),
                                              downloadButton("rarefaction_plot_Pacbio_dl", "Download the rarefaction plot"),
                                              downloadButton("rarefaction_table_Pacbio_dl", "Download the rarefaction table")
                                            ),
@@ -1872,7 +1872,7 @@ shinyUI(
                               tabPanel(
                                 title = "Rarefaction plot",
                                 br(),br(),
-                                plotOutput("rarefaction_plot_single_demo"),
+                                plotOutput("rarefaction_plot_single_demo", height = "500px"),
                                 downloadButton("rarefaction_plot_single_demo_dl", "Download the rarefaction plot"),
                                 downloadButton("rarefaction_table_single_demo_dl", "Download the rarefaction table")
                               ),
@@ -2649,7 +2649,7 @@ shinyUI(
                               tabPanel(
                                 title = "Rarefaction plot",
                                 br(),br(),
-                                plotOutput("rarefaction_plot_paired_demo"),
+                                plotOutput("rarefaction_plot_paired_demo", height = "500px"),
                                 downloadButton("rarefaction_plot_paired_demo_dl", "Download the rarefaction plot"),
                                 downloadButton("rarefaction_table_paired_demo_dl", "Download the rarefaction table")
                               ),
@@ -2761,7 +2761,7 @@ shinyUI(
                               tabPanel(
                                 title = "Rarefaction plot",
                                 br(),br(),
-                                plotOutput("rarefaction_plot_Pacbio_demo"),
+                                plotOutput("rarefaction_plot_Pacbio_demo", height = "500px"),
                                 downloadButton("rarefaction_plot_Pacbio_demo_dl", "Download the rarefaction plot"),
                                 downloadButton("rarefaction_table_Pacbio_demo_dl", "Download the rarefaction table")
                               ),
