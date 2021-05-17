@@ -17669,6 +17669,8 @@ server <- function(session, input, output) {
     
     asv_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
     
+    asv_table <- filter(asv_table, V2 != 0) # qiime version problem
+    
     asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
     
     colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
@@ -17818,6 +17820,8 @@ server <- function(session, input, output) {
       }
       
       asv_table <- read.csv("/home/imuser/example_files/Pacbio/denoise_Pacbio_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+      
+      asv_table <- filter(asv_table, V2 != 0) # qiime version problem
       
       asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
       
