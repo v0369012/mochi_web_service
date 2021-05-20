@@ -471,7 +471,7 @@ shinyUI(
                                 
                                 column(width = 12,
                                 
-                                h1('2. Sequence denoising (DADA2) for Single end'),
+                                h1('2. Sequence denoising (DADA2 1.18.0) for Single end'),
 
                                 h4("(1) Start to denoise."),
                                 actionButton(inputId = "denoising_single", 
@@ -553,7 +553,7 @@ shinyUI(
                                 column(width = 12,
                                 
                                 uiOutput(outputId = "show_job_id_denoise_paired"),
-                                h1('2. Sequence denoising (DADA2) for Paired end'),
+                                h1('2. Sequence denoising (DADA2 1.18.0) for Paired end'),
                                 
                                 
                                 # br(),br(),
@@ -635,7 +635,7 @@ shinyUI(
                                 
                                 column(width = 12,
                                        
-                                       h1('2. Sequence denoising (DADA2) for Long read'),
+                                       h1('2. Sequence denoising (DADA2 1.18.0) for Long read'),
                                        
                                        h4("(1) Start to denoise."),
                                        actionButton(inputId = "denoising_Pacbio", 
@@ -1831,7 +1831,7 @@ shinyUI(
                    condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          h1('2. Sequence denoising (DADA2) for Single end'),
+                          h1('2. Sequence denoising (DADA2 1.18.0) for Single end'),
                           div(
                             id = "dada2_results_single_demo",
                             hr(),
@@ -2608,7 +2608,7 @@ shinyUI(
                    condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
                    
                    column(width = 12,
-                          h1('2. Sequence denoising (DADA2) for Paired end'),
+                          h1('2. Sequence denoising (DADA2 1.18.0) for Paired end'),
                           div(
                             id = "dada2_results_paired_demo",
                             hr(),
@@ -2720,7 +2720,7 @@ shinyUI(
                    
                    column(width = 12,
                           
-                          h1('2. Sequence denoising (DADA2) for Long read'),
+                          h1('2. Sequence denoising (DADA2 1.18.0) for Long read'),
                           div(
                             id = "dada2_results_Pacbio_demo",
                             hr(),

@@ -56,7 +56,7 @@ server <- function(session, input, output) {
            style = "color: #317EAC;"),
       strong("MOCHI"), span(" is a 16S or 18S microbiota amplicon rRNA analytical tool for microbiota based primarily on "), 
       a("QIIME2", href = "https://qiime2.org/", target = "_blank"),
-      span(" with a friendly web interface powered by the R package of "),
+      span("(2021.4) with a friendly web interface powered by the R package of "),
       a("Shiny", href = "https://shiny.rstudio.com/", target = "_blank"), span(".", .noWS = "outside"),
       p("MOCHI may also be downloaded and operated locally."),
       # actionButton("home_demo", "Demo"),
