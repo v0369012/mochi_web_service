@@ -23096,7 +23096,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", "Order", ")",
+        h3("ANCOM Volcano Plot (", "body.site-order", ")",
            style = "color: black;top: 10px;")
       })
       
@@ -23392,7 +23392,7 @@ server <- function(session, input, output) {
       # Taxonomic table
       updateRadioButtons(session, 
                          inputId = "metadata1_demo",
-                         choices = c("SampleID", "Collection_Date"),
+                         choices = c("SampleID", "Collection_Date", "Species", "place"),
                          inline = T
       )
       
@@ -23651,7 +23651,7 @@ server <- function(session, input, output) {
       # update metadata selection
       updateRadioButtons(session, 
                          inputId = "metadata_barplot_demo",
-                         choices = c("SampleID", "Collection_Date"),
+                         choices = c("SampleID", "Collection_Date", "Species", "place"),
                          inline = T
       )
       
@@ -25043,7 +25043,7 @@ server <- function(session, input, output) {
       
       updateRadioButtons(session, 
                          inputId = "metadata_hm_demo",
-                         choices = c("SampleID", "Collection_Date"),
+                         choices = c("SampleID", "Collection_Date", "Species", "place"),
                          inline = T
       )
       
@@ -25405,7 +25405,7 @@ server <- function(session, input, output) {
       # Alpha diversity
       updateRadioButtons(session, 
                          inputId = "metadata_alpha_demo",
-                         choices = "Collection_Date",
+                         choices = c("Collection_Date","Species", "place"),
                          inline = T
       )
       
@@ -25821,7 +25821,7 @@ server <- function(session, input, output) {
       # Beta diversity
       updateRadioButtons(session, 
                          inputId = "metadata_beta_demo",
-                         choices = c("Collection_Date"),
+                         choices = c("Collection_Date", "Species", "place"),
                          inline = T
       )
       
@@ -26655,13 +26655,13 @@ server <- function(session, input, output) {
       # phylogenetic diversity
       updateRadioButtons(session, 
                          inputId = "metadata_phylo_alpha_demo",
-                         choices = "Collection_Date",
+                         choices = c("Collection_Date", "Species", "place"),
                          inline = T
       )
       
       updateRadioButtons(session, 
                          inputId = "metadata_phylo_beta_demo",
-                         choices = "Collection_Date",
+                         choices = c("Collection_Date", "Species", "place"),
                          inline = T
       )
       
@@ -28334,13 +28334,13 @@ server <- function(session, input, output) {
       # ANCOM demo
       updateRadioButtons(session, 
                          inputId = "metadata_ANCOM_demo",
-                         choices = "Collection_Date",
+                         choices = c("Collection_Date", "Species", "place"),
                          inline = T
       )
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", "Family", ")",
+        h3("ANCOM Volcano Plot (", "Collection_Date-Family", ")",
            style = "color: black;top: 10px;")
       })
       
@@ -33585,7 +33585,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", "Genus", ")",
+        h3("ANCOM Volcano Plot (", "days-Genus", ")",
            style = "color: black;top: 10px;")
       })
       
