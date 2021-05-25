@@ -25978,7 +25978,7 @@ server <- function(session, input, output) {
         pcoa_Bray_df_data_plot <- arrange(pcoa_Bray_df_data_plot, sample)
         
         library(ggrepel)
-        pcoa_Bray_df_data_plot_gg<-ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_org_names, color=sample))+
+        pcoa_Bray_df_data_plot_gg<-ggplot(data = pcoa_Bray_df_data_plot, aes(x=PC1, y=PC2, label=sample_org, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab(paste("PC1 (", round(pcoa_Bray_df_data$values[1,2],2)*100, "%", ")", sep = ""))+
