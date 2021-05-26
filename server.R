@@ -20864,7 +20864,7 @@ server <- function(session, input, output) {
           if(input$sep_demo == "PCA"){
             paste0("BetaPlot_PCA_", input$metadata_beta_demo,"_demo.jpg")
           }
-          else if(input$sep == "PCoA") {
+          else if(input$sep_demo == "PCoA") {
             paste0("BetaPlot_PCoA_", input$metadata_beta_demo,"_demo.jpg")
           }
           else {
@@ -26129,7 +26129,7 @@ server <- function(session, input, output) {
           if(input$sep_demo == "PCA"){
             paste0("BetaPlot_PCA_", input$metadata_beta_demo,"_demo.jpg")
           }
-          else if(input$sep == "PCoA") {
+          else if(input$sep_demo == "PCoA") {
             paste0("BetaPlot_PCoA_", input$metadata_beta_demo,"_demo.jpg")
           }
           else {
@@ -31374,7 +31374,7 @@ server <- function(session, input, output) {
           if(input$sep_demo == "PCA"){
             paste0("BetaPlot_PCA_", input$metadata_beta_demo,"_demo.jpg")
           }
-          else if(input$sep == "PCoA") {
+          else if(input$sep_demo == "PCoA") {
             paste0("BetaPlot_PCoA_", input$metadata_beta_demo,"_demo.jpg")
           }
           else {
