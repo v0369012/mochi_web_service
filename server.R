@@ -17467,6 +17467,8 @@ server <- function(session, input, output) {
     
     asv_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
     
+    asv_table <- filter(asv_table, V2 != 0) # qiime version problem
+    
     asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
     
     colnames(asv_smr_table)[1:2] <- c("ASV", "Read count")
@@ -17615,6 +17617,8 @@ server <- function(session, input, output) {
       }
       
       asv_table <- read.csv("/home/imuser/example_files/paired/denoise_paired_position_table/new_dirname/data/feature-frequency-detail.csv", header = F)
+      
+      asv_table <- filter(asv_table, V2 != 0) # qiime version problem
       
       asv_smr_table <- cbind(asv_table, "Number of samples observed in" = asv_found_number)
       
@@ -23208,7 +23212,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", "body.site-order", ")",
+        h3("ANCOM Volcano Plot (", "body.site-Genus", ")",
            style = "color: black;top: 10px;")
       })
       
@@ -28452,7 +28456,7 @@ server <- function(session, input, output) {
       
       output$word_ancom_plotly_demo <- renderUI({
         
-        h3("ANCOM Volcano Plot (", "Collection_Date-Family", ")",
+        h3("ANCOM Volcano Plot (", "Collection_Date-Genus", ")",
            style = "color: black;top: 10px;")
       })
       
