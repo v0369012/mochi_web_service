@@ -34057,8 +34057,7 @@ server <- function(session, input, output) {
                           position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
             labs(x="Function types", y="Relative abundance")+
             theme(axis.title.x = element_text(color="black", size=16))+
-            theme(axis.title.y = element_text(color="black", size=16))+
-            theme(text = element_text(size = 25))
+            theme(axis.title.y = element_text(color="black", size=16))
           
           ggsave(file, plot = FA_ggplot, width = 80, height = 40, units = "cm")
         }
