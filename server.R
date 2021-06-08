@@ -16027,6 +16027,8 @@ server <- function(session, input, output) {
                                      job_id(), "_DA_ancom",
                                      "/ancom_comparison_unzip/new_dirname/data/ancom.tsv"), 
                               sep = "\t", header = T)
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
       names(ancom_sig)[1] <- "id"
       
       ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -16124,6 +16126,8 @@ server <- function(session, input, output) {
                                      job_id(), "_DA_ancom",
                                      "/ancom_comparison_unzip/new_dirname/data/ancom.tsv"), 
                               sep = "\t", header = T)
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
       names(ancom_sig)[1] <- "id"
       
       ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -16147,6 +16151,8 @@ server <- function(session, input, output) {
                                      job_id(), "_DA_ancom",
                                      "/ancom_comparison_unzip/new_dirname/data/ancom.tsv")
                               , sep = "\t", header = T)
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+      ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
       names(ancom_sig)[1] <- "id"
       
       ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -23249,6 +23255,8 @@ server <- function(session, input, output) {
         
         ancom_data <- read.table("/home/imuser/example_files/single/data.tsv", sep = "\t", header = T)
         ancom_sig <- read.table("/home/imuser/example_files/single/ancom.tsv", sep = "\t", header = T)
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
         names(ancom_sig)[1] <- "id" 
         
         ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -23303,6 +23311,8 @@ server <- function(session, input, output) {
           
           ancom_data <- read.table("/home/imuser/example_files/single/data.tsv", sep = "\t", header = T)
           ancom_sig <- read.table("/home/imuser/example_files/single/ancom.tsv", sep = "\t", header = T)
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
           names(ancom_sig)[1] <- "id"
           
           ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -28507,6 +28517,8 @@ server <- function(session, input, output) {
         
         ancom_data <- read.table("/home/imuser/example_files/paired/data.tsv", sep = "\t", header = T)
         ancom_sig <- read.table("/home/imuser/example_files/paired/ancom.tsv", sep = "\t", header = T)
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
         names(ancom_sig)[1] <- "id" 
         
         ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -28561,6 +28573,8 @@ server <- function(session, input, output) {
           
           ancom_data <- read.table("/home/imuser/example_files/paired/data.tsv", sep = "\t", header = T)
           ancom_sig <- read.table("/home/imuser/example_files/paired/ancom.tsv", sep = "\t", header = T)
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
           names(ancom_sig)[1] <- "id"
           
           ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -33765,6 +33779,8 @@ server <- function(session, input, output) {
         
         ancom_data <- read.table("/home/imuser/example_files/Pacbio/data.tsv", sep = "\t", header = T)
         ancom_sig <- read.table("/home/imuser/example_files/Pacbio/ancom.tsv", sep = "\t", header = T)
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+        ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
         names(ancom_sig)[1] <- "id" 
         
         ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
@@ -33819,6 +33835,8 @@ server <- function(session, input, output) {
           
           ancom_data <- read.table("/home/imuser/example_files/Pacbio/data.tsv", sep = "\t", header = T)
           ancom_sig <- read.table("/home/imuser/example_files/Pacbio/ancom.tsv", sep = "\t", header = T)
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "True", "Significant")
+          ancom_sig$Reject.null.hypothesis <- str_replace_all(ancom_sig$Reject.null.hypothesis, "False", "Not significant")
           names(ancom_sig)[1] <- "id"
           
           ancom_merge <- merge(x = ancom_data, y = ancom_sig[, c(1,3)], by = "id")
