@@ -1722,7 +1722,7 @@ server <- function(session, input, output) {
     }
   })
   
-  # Check the ASVs table input 
+  # Check the ASV table input 
   observe({
     
     req(input$table_dada2_upload)
@@ -1735,7 +1735,7 @@ server <- function(session, input, output) {
                   anchorId = "taxatable_alert", 
                   alertId = "taxaAlert", 
                   title = "Oops!",
-                  content = "Please check your input ASVs table file.", 
+                  content = "Please check your input ASV table file.", 
                   append = T,
                   style = "danger")
     } else {
@@ -2615,11 +2615,11 @@ server <- function(session, input, output) {
   #         
   #         
   #         if(file.exists(paste0("/home/imuser/web_version/users_files/", input_job_id(), "/", lastest_file_table))){
-  #         downloadButton(outputId = "table_dada2_download_user", label = "Download the ASVs table", style = "margin-bottom:5px")
+  #         downloadButton(outputId = "table_dada2_download_user", label = "Download the ASV table", style = "margin-bottom:5px")
   #           }else{
-  #             # HTML('<button type="submit style="color: grey; background-color: white">Download the ASVs table</button>')
+  #             # HTML('<button type="submit style="color: grey; background-color: white">Download the ASV table</button>')
   #             actionButton(inputId = "user_table_dada2_download_bttn",
-  #                          label = "Download the ASVs table",
+  #                          label = "Download the ASV table",
   #                          style = "color: grey;margin-bottom:5px"
   #             )
   #           },
