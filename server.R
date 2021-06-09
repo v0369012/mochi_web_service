@@ -12577,16 +12577,15 @@ server <- function(session, input, output) {
       # plot
       library(viridis)
       p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
-                                 aes(x=Sample_ID,
+                                 aes(x=Samples_ID,
                                      y=read_percentage,
                                      fill=Levels),
                                  colour="White",
                                  size=0.1,
-                                 stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
-                                                                                                         y="Relative abundance (%)",
-                                                                                                         fill="")
+                                 stat = "identity")+theme_bw() +
+        labs(x=paste0("Sample ID", " (n=", number_nameslist,")"),  y="Relative abundance (%)", fill="")
       
-      p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+      p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar))
     }
     
     return(plot_LeveltoSamples_save(TaxaTable_merge(), input$select_level_bar, input$integer))
@@ -12931,9 +12930,15 @@ server <- function(session, input, output) {
                                         colour="White",
                                         size=0.1,
                                         # show.legend = T,
-                                        stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
-                                                                                                                                          y="Relative abundance (%)",
-                                                                                                                                          fill="")
+                                        stat = "identity") + theme_bw() + 
+          theme(axis.text.x = element_text(angle = -45, hjust = 0.5)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), y="Relative abundance (%)", fill="")
+        
+        p_Level_plot + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar))+
+          theme(axis.text=element_text(size=12),
+                axis.title=element_text(size=14,face="bold"),
+                legend.title = element_text(size=14,face="bold"), #change legend title font size
+                legend.text = element_text(size=12))
+        
         
         
       }
@@ -13175,26 +13180,21 @@ server <- function(session, input, output) {
       
       
       if (input$metadata_barplot=="SampleID"){
-        # if (input$without_unassigned == F){
+        
         ggsave(file, 
-               plot = barplot_download() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-                 , width = 80, height = 40, units = "cm")
-        # }else{
-        #   ggsave(file, plot = barplot_noUnassigned_download(), width = 80, height = 40, units = "cm")
-        # }
+               plot = barplot_download() + 
+                 theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.5)) +
+                 theme(axis.text=element_text(size=12),
+                       axis.title=element_text(size=14,face="bold"),
+                       legend.title = element_text(size=14,face="bold"), #change legend title font size
+                       legend.text = element_text(size=12)) #change legend text font size)+
+               
+               , width = 80, height = 40, units = "cm")
+        
         
       }else{
         
-        # if(input$without_unassigned == F){
-        
-        
         ggsave(file, plot = barplot_sub_download(), width = 80, height = 40, units = "cm")
-        
-        
-        # }else{
-        #     ggsave(file, plot = barplot_noUnassigned_sub_download(), width = 80, height = 40, units = "cm")
-        # }
-        
         
       }
     }
@@ -19621,16 +19621,15 @@ server <- function(session, input, output) {
           # plot
           library(viridis)
           p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
-                                     aes(x=Sample_ID,
+                                     aes(x=Samples_ID,
                                          y=read_percentage,
                                          fill=Levels),
                                      colour="White",
                                      size=0.1,
-                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
-                                                                                                             y="Relative abundance (%)",
-                                                                                                             fill="")
+                                     stat = "identity")+theme_bw() +
+            labs(x=paste0("Sample ID", " (n=", number_nameslist,")"),  y="Relative abundance (%)", fill="")
           
-          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))
         }
         
         return(plot_LeveltoSamples_save(TaxaTable_merge_demo(), input$select_level_bar_demo, input$integer_demo))
@@ -19825,9 +19824,14 @@ server <- function(session, input, output) {
                                             colour="White",
                                             size=0.1,
                                             # show.legend = T,
-                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
-                                                                                                                                              y="Relative abundance (%)",
-                                                                                                                                              fill="")
+                                            stat = "identity") + theme_bw() + 
+              theme(axis.text.x = element_text(angle = -45, hjust = 0.5)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), y="Relative abundance (%)", fill="")
+            
+            p_Level_plot + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))+
+              theme(axis.text=element_text(size=12),
+                    axis.title=element_text(size=14,face="bold"),
+                    legend.title = element_text(size=14,face="bold"), #change legend title font size
+                    legend.text = element_text(size=12))
             
             
           }
@@ -19881,7 +19885,12 @@ server <- function(session, input, output) {
           if (input$metadata_barplot_demo=="SampleID"){
             
             ggsave(file, 
-                   plot = barplot_download_demo() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                   plot = barplot_download_demo() + 
+                     theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.5)) +
+                     theme(axis.text=element_text(size=12),
+                           axis.title=element_text(size=14,face="bold"),
+                           legend.title = element_text(size=14,face="bold"), #change legend title font size
+                           legend.text = element_text(size=12)) #change legend text font size)+
                    , width = 80, height = 40, units = "cm")
           
           }else{
@@ -24929,16 +24938,15 @@ server <- function(session, input, output) {
           # plot
           library(viridis)
           p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
-                                     aes(x=Sample_ID,
+                                     aes(x=Samples_ID,
                                          y=read_percentage,
                                          fill=Levels),
                                      colour="White",
                                      size=0.1,
-                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
-                                                                                                             y="Relative abundance (%)",
-                                                                                                             fill="")
+                                     stat = "identity")+theme_bw() +
+            labs(x=paste0("Sample ID", " (n=", number_nameslist,")"),  y="Relative abundance (%)", fill="")
           
-          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))
         }
         
         return(plot_LeveltoSamples_save(TaxaTable_merge_demo(), input$select_level_bar_demo, input$integer_demo))
@@ -25133,9 +25141,14 @@ server <- function(session, input, output) {
                                             colour="White",
                                             size=0.1,
                                             # show.legend = T,
-                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
-                                                                                                                                              y="Relative abundance (%)",
-                                                                                                                                              fill="")
+                                            stat = "identity") + theme_bw() + 
+              theme(axis.text.x = element_text(angle = -45, hjust = 0.5)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), y="Relative abundance (%)", fill="")
+            
+            p_Level_plot + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))+
+              theme(axis.text=element_text(size=12),
+                    axis.title=element_text(size=14,face="bold"),
+                    legend.title = element_text(size=14,face="bold"), #change legend title font size
+                    legend.text = element_text(size=12))
             
             
           }
@@ -25189,7 +25202,12 @@ server <- function(session, input, output) {
           if (input$metadata_barplot_demo=="SampleID"){
             
             ggsave(file, 
-                   plot = barplot_download_demo() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                   plot = barplot_download_demo() + 
+                     theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.5)) +
+                     theme(axis.text=element_text(size=12),
+                           axis.title=element_text(size=14,face="bold"),
+                           legend.title = element_text(size=14,face="bold"), #change legend title font size
+                           legend.text = element_text(size=12)) #change legend text font size)+
                    , width = 80, height = 40, units = "cm")
             
           }else{
@@ -30196,16 +30214,15 @@ server <- function(session, input, output) {
           # plot
           library(viridis)
           p_Level<-ggplot()+geom_bar(data = append_taxtable_list_all,
-                                     aes(x=Sample_ID,
+                                     aes(x=Samples_ID,
                                          y=read_percentage,
                                          fill=Levels),
                                      colour="White",
                                      size=0.1,
-                                     stat = "identity")+theme_bw()+theme(legend.title=element_blank())+ labs(x=paste0("Sample ID", " (n=", number_nameslist,")"), 
-                                                                                                             y="Relative abundance (%)",
-                                                                                                             fill="")
+                                     stat = "identity")+theme_bw() +
+            labs(x=paste0("Sample ID", " (n=", number_nameslist,")"),  y="Relative abundance (%)", fill="")
           
-          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE))
+          p_Level + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))
         }
         
         return(plot_LeveltoSamples_save(TaxaTable_merge_demo(), input$select_level_bar_demo, input$integer_demo))
@@ -30400,9 +30417,14 @@ server <- function(session, input, output) {
                                             colour="White",
                                             size=0.1,
                                             # show.legend = T,
-                                            stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), 
-                                                                                                                                              y="Relative abundance (%)",
-                                                                                                                                              fill="")
+                                            stat = "identity") + theme_bw() + 
+              theme(axis.text.x = element_text(angle = -45, hjust = 0.5)) + labs(x=paste0(features_sub, " (n=", number_nameslist,")"), y="Relative abundance (%)", fill="")
+            
+            p_Level_plot + guides(fill = guide_legend(nrow = 40, byrow = TRUE, title = input$select_level_bar_demo))+
+              theme(axis.text=element_text(size=12),
+                    axis.title=element_text(size=14,face="bold"),
+                    legend.title = element_text(size=14,face="bold"), #change legend title font size
+                    legend.text = element_text(size=12))
             
             
           }
@@ -30456,7 +30478,12 @@ server <- function(session, input, output) {
           if (input$metadata_barplot_demo=="SampleID"){
             
             ggsave(file, 
-                   plot = barplot_download_demo() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                   plot = barplot_download_demo() + 
+                     theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.5)) +
+                     theme(axis.text=element_text(size=12),
+                           axis.title=element_text(size=14,face="bold"),
+                           legend.title = element_text(size=14,face="bold"), #change legend title font size
+                           legend.text = element_text(size=12)) #change legend text font size)+
                    , width = 80, height = 40, units = "cm")
             
           }else{
