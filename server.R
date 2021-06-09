@@ -14562,13 +14562,15 @@ server <- function(session, input, output) {
       metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
       NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
       # NMDS_rowname <- NMDS_rowname_arrange
-      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                           sample=NMDS_rowname,
+                                           sample_org=metadata_beta_filter_arrange$SampleID)
       
       NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                               levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
       NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
       
-      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org, color=sample))+
         geom_point(size=2.5)+
         ggrepel::geom_text_repel(show.legend = FALSE)+
         xlab("NMDS1")+
@@ -14722,13 +14724,15 @@ server <- function(session, input, output) {
       metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
       NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
       # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
-      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+      NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                           sample=NMDS_rowname, 
+                                           sample_org=metadata_beta_filter_arrange$SampleID)
       
       NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                               levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
       NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
       
-      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+      NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org,color=sample))+
         geom_point(size=2.5)+
         ggrepel::geom_text_repel(show.legend = FALSE)+
         xlab("NMDS1")+
@@ -22044,13 +22048,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- NMDS_rowname_arrange
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
@@ -22201,13 +22207,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org,color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
@@ -27306,13 +27314,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- NMDS_rowname_arrange
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
@@ -27463,13 +27473,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org,color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
@@ -32568,13 +32580,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(unW_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- NMDS_rowname_arrange
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names, color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org, color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
@@ -32725,13 +32739,15 @@ server <- function(session, input, output) {
         metaMDS_beta_df_data <- metaMDS(W_unifrac_dm_qiime, distance = "bray")
         NMDS_beta_df_data <- data.frame(NMDS1=metaMDS_beta_df_data$points[,1], NMDS2=metaMDS_beta_df_data$points[,2])
         # NMDS_rowname <- as.matrix(W_unifrac_dm_qiime) %>% rownames()
-        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, sample=NMDS_rowname)
+        NMDS_beta_df_data_plot <- data.frame(NMDS_beta_df_data, 
+                                             sample=NMDS_rowname,
+                                             sample_org=metadata_beta_filter_arrange$SampleID)
         
         NMDS_beta_df_data_plot$sample <- factor(NMDS_beta_df_data_plot$sample, 
                                                 levels = str_sort(unique(NMDS_beta_df_data_plot$sample), numeric = T))
         NMDS_beta_df_data_plot <- arrange(NMDS_beta_df_data_plot, sample)
         
-        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_original_names,color=sample))+
+        NMDS_beta_df_data_plot_gg <- ggplot(data = NMDS_beta_df_data_plot, aes(x=NMDS1, y=NMDS2, label=sample_org,color=sample))+
           geom_point(size=2.5)+
           ggrepel::geom_text_repel(show.legend = FALSE)+
           xlab("NMDS1")+
