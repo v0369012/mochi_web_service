@@ -16358,8 +16358,8 @@ server <- function(session, input, output) {
         geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
                       position=position_dodge(.9)) + coord_flip() + theme_bw() +
         labs(x="Function types", y="Relative abundance")+
-        theme(axis.title.x = element_text(color="black", size=16))+
-        theme(axis.title.y = element_text(color="black", size=16))+
+        theme(axis.title.x = element_text(color="black", size=20))+
+        theme(axis.title.y = element_text(color="black", size=20))+
         theme(legend.title=element_blank())
       
       
@@ -16369,7 +16369,7 @@ server <- function(session, input, output) {
       )
       
       
-      ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 22)) , font = list(size = 16)))
+      ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 20)))
       
     })
     
@@ -16574,7 +16574,6 @@ server <- function(session, input, output) {
         tickfont = list(size = 20)
       )
       
-      ggplotly(FA_ggplot) %>% layout(yaxis=y)
       
       ggsave(file, plot = FA_plot, width = 80, height = 40, units = "cm")
     }
@@ -23489,8 +23488,8 @@ server <- function(session, input, output) {
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
                         position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
-          theme(axis.title.x = element_text(color="black", size=16))+
-          theme(axis.title.y = element_text(color="black", size=16))+
+          theme(axis.title.x = element_text(color="black", size=20))+
+          theme(axis.title.y = element_text(color="black", size=20))+
           theme(legend.title=element_blank())
 
         
@@ -23500,7 +23499,7 @@ server <- function(session, input, output) {
         )
         
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 20)))
         
       })
       
@@ -28766,8 +28765,8 @@ server <- function(session, input, output) {
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
                         position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
-          theme(axis.title.x = element_text(color="black", size=16))+
-          theme(axis.title.y = element_text(color="black", size=16))+
+          theme(axis.title.x = element_text(color="black", size=20))+
+          theme(axis.title.y = element_text(color="black", size=20))+
           theme(legend.title=element_blank())
         
         
@@ -28777,7 +28776,7 @@ server <- function(session, input, output) {
         )
         
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 20)))
         
       })
       
@@ -34043,8 +34042,8 @@ server <- function(session, input, output) {
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
                         position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
-          theme(axis.title.x = element_text(color="black", size=16))+
-          theme(axis.title.y = element_text(color="black", size=16))+
+          theme(axis.title.x = element_text(color="black", size=20))+
+          theme(axis.title.y = element_text(color="black", size=20))+
           theme(legend.title=element_blank())
         
         
@@ -34054,7 +34053,7 @@ server <- function(session, input, output) {
         )
         
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 20)))
         
       })
       
