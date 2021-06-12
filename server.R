@@ -16352,21 +16352,24 @@ server <- function(session, input, output) {
       df_barplot_ag$mean <- round(df_barplot_ag$mean, 2)
       df_barplot_ag$sd <- round(df_barplot_ag$sd, 2)
       
-      FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+       FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
         geom_bar(stat="identity", color="black", 
                  position=position_dodge()) +
         geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
-                      position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA))+
+                      position=position_dodge(.9)) + coord_flip() + theme_bw() +
         labs(x="Function types", y="Relative abundance")+
         theme(axis.title.x = element_text(color="black", size=16))+
-        theme(axis.title.y = element_text(color="black", size=16))
+        theme(axis.title.y = element_text(color="black", size=16))+
+        theme(legend.title=element_blank())
+      
       
       y <- list(
         title = list(text="Function types",standoff=20),
         tickfont = list(size = 20)
       )
       
-      ggplotly(FA_ggplot) %>% layout(yaxis=y)
+      
+      ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 22)) , font = list(size = 16)))
       
     })
     
@@ -23484,18 +23487,20 @@ server <- function(session, input, output) {
           geom_bar(stat="identity", color="black", 
                    position=position_dodge()) +
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
-                        position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
           theme(axis.title.x = element_text(color="black", size=16))+
-          theme(axis.title.y = element_text(color="black", size=16))
-        
+          theme(axis.title.y = element_text(color="black", size=16))+
+          theme(legend.title=element_blank())
+
         
         y <- list(
           title = list(text="Function types",standoff=20),
           tickfont = list(size = 20)
         )
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y)
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
         
       })
       
@@ -28759,10 +28764,11 @@ server <- function(session, input, output) {
           geom_bar(stat="identity", color="black", 
                    position=position_dodge()) +
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
-                        position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
           theme(axis.title.x = element_text(color="black", size=16))+
-          theme(axis.title.y = element_text(color="black", size=16))
+          theme(axis.title.y = element_text(color="black", size=16))+
+          theme(legend.title=element_blank())
         
         
         y <- list(
@@ -28770,7 +28776,8 @@ server <- function(session, input, output) {
           tickfont = list(size = 20)
         )
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y)
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
         
       })
       
@@ -34034,11 +34041,11 @@ server <- function(session, input, output) {
           geom_bar(stat="identity", color="black", 
                    position=position_dodge()) +
           geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
-                        position=position_dodge(.9)) + coord_flip() + theme_bw() + guides(fill=guide_legend(title=input$metadata_FA_demo))+
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() +
           labs(x="Function types", y="Relative abundance")+
           theme(axis.title.x = element_text(color="black", size=16))+
           theme(axis.title.y = element_text(color="black", size=16))+
-          theme(text = element_text(size = 25))
+          theme(legend.title=element_blank())
         
         
         y <- list(
@@ -34046,7 +34053,8 @@ server <- function(session, input, output) {
           tickfont = list(size = 20)
         )
         
-        ggplotly(FA_ggplot) %>% layout(yaxis=y)
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 22)) , font = list(size = 16)))
         
       })
       
