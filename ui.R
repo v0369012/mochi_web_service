@@ -148,7 +148,7 @@ shinyUI(
                  
                  
                  # Demultiplexed ----
-                 tabPanel(title = span("Step 1. Sequence summary", style = tabPanel_navmenu_style),
+                 tabPanel(title = span("Step 1. Sequence Summary", style = tabPanel_navmenu_style),
                           
                           # fluidRow(
                           sidebarLayout(
@@ -447,7 +447,7 @@ shinyUI(
                  
                  
                  # Sequence denoising ----
-                 tabPanel(title = span("Step 2. Sequence denoising", 
+                 tabPanel(title = span("Step 2. Sequence Denoising", 
                                        style = tabPanel_navmenu_style),
                           
                           sidebarLayout(
@@ -730,7 +730,7 @@ shinyUI(
 
                  
                  # Taxonomy classification ----
-                 tabPanel(span("Step 3. Taxonomy classification", style = tabPanel_navmenu_style),
+                 tabPanel(span("Step 3. Taxonomy Classification", style = tabPanel_navmenu_style),
                           
                           sidebarLayout(
                             fluid = T,
@@ -1773,11 +1773,11 @@ shinyUI(
                       ),
                       selectInput(inputId = "select_module", 
                                   label = "Select a module", 
-                                  choices = c("Sequence preprocessing", "Taxonomy analysis", "Function analysis") 
+                                  choices = c("Sequence Preprocessing", "Taxonomy Analysis", "Function Analysis") 
                       ),
                       selectInput(inputId = "select_module_step", 
                                   label = "Select a step", 
-                                  choices = c("Step 1. Sequence summary", "Step 2. Sequence denoising", "Step 3. Taxonomy classification"), 
+                                  choices = c("Step 1. Sequence Summary", "Step 2. Sequence Denoising", "Step 3. Taxonomy Classification"), 
                                   width = "350px"
                       ) %>% shinyjs::hidden()
                       
@@ -1786,7 +1786,7 @@ shinyUI(
                  # single end
                  conditionalPanel(
                    #single1
-                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 1. Sequence Summary'",
                    
                    column(width = 12,
                           h1("1. Sequence summary (for single end)"),
@@ -1828,7 +1828,7 @@ shinyUI(
                  ),
                  conditionalPanel(
                    #single2
-                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   condition = "input.select_dataset == 'Single end' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 2. Sequence Denoising'",
                    
                    column(width = 12,
                           h1('2. Sequence denoising (DADA2 1.18.0) for Single end'),
@@ -1893,7 +1893,7 @@ shinyUI(
                  ),
                  conditionalPanel(
                    #single3
-                   condition = "input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 3. Taxonomy classification'",
+                   condition = "input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 3. Taxonomy Classification'",
                    
                    column(width = 12,
                           
@@ -1954,7 +1954,7 @@ shinyUI(
                  # Taxonomy analysis demo
                  conditionalPanel(
                    
-                   condition = "input.select_module == 'Taxonomy analysis'",
+                   condition = "input.select_module == 'Taxonomy Analysis'",
                    
                    column(width = 12,
                           tabsetPanel(type = "tabs",
@@ -2505,7 +2505,7 @@ shinyUI(
                  
                  conditionalPanel(
                    #single5
-                   condition = "input.select_module == 'Function analysis'",
+                   condition = "input.select_module == 'Function Analysis'",
                    
                    column(width = 12,
                           tabsetPanel(type="tabs",
@@ -2556,7 +2556,7 @@ shinyUI(
                  # Paired end
                  conditionalPanel(
                    #Paired1
-                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 1. Sequence Summary'",
                    
                    column(width = 12,
                           h1("1. Sequence summary (for paired end)"),
@@ -2605,7 +2605,7 @@ shinyUI(
                  ),
                  conditionalPanel(
                    #Paired2
-                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   condition = "input.select_dataset == 'Paired end' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 2. Sequence Denoising'",
                    
                    column(width = 12,
                           h1('2. Sequence denoising (DADA2 1.18.0) for Paired end'),
@@ -2674,7 +2674,7 @@ shinyUI(
                  # Long read
                  conditionalPanel(
                    #Long read 1
-                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 1. Sequence summary'",
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 1. Sequence Summary'",
                    
                    column(width = 12,
                           h1("1. Sequence summary (for Long read)"),
@@ -2716,7 +2716,7 @@ shinyUI(
                  ),
                  conditionalPanel(
                    #Long read 2
-                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence preprocessing' & input.select_module_step == 'Step 2. Sequence denoising'",
+                   condition = "input.select_dataset == 'Long read' & input.select_module == 'Sequence Preprocessing' & input.select_module_step == 'Step 2. Sequence Denoising'",
                    
                    column(width = 12,
                           
