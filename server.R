@@ -16582,7 +16582,7 @@ server <- function(session, input, output) {
   
   # Demo ---------------------------------------------------------------------------------------------------
   observe({
-    if(input$select_module == "Sequence preprocessing"){
+    if(input$select_module == "Sequence Preprocessing"){
       shinyjs::show("select_module_step")
     }else{
       shinyjs::hide("select_module_step")
