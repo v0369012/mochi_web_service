@@ -2868,7 +2868,7 @@ server <- function(session, input, output) {
                          label = span("Taxonomic_table_example.qza"),
                          style = "margin: 5px;color: #317EAC"),
           downloadButton(outputId = "example_feature_table",
-                         label = span("ASVs_table_example.qza"),
+                         label = span("ASV_table_example.qza"),
                          style = "margin: 5px;color: #317EAC")
         ),
         easyClose = T, size = "l"
@@ -10201,7 +10201,7 @@ server <- function(session, input, output) {
   )
   
   output$table_dada2_download <- downloadHandler(
-    filename = "ASVs_table.qza",
+    filename = "ASV_table.qza",
     
     content = function(file){
       if(input$seqs_type == "Single end"){
@@ -11186,7 +11186,7 @@ server <- function(session, input, output) {
     filename <-"Taxonomic_table_example.qza",
     
     content = function(file){
-      file.copy("/home/imuser/example_files/single/taxatable.qza", file)
+      file.copy("/home/imuser/example_files/single/taxatable7_single.qza", file)
     },
     
     contentType = "application/qza"
@@ -14095,17 +14095,17 @@ server <- function(session, input, output) {
     filename = "Seqs_forPhylo_example.qza",
     
     content = function(file){
-      file.copy(from = "/home/imuser/example_files/single/rep-seqs-dada2.qza", to = file)
+      file.copy(from = "/home/imuser/example_files/single/rep-seqs-dada2_single.qza", to = file)
     },
     contentType = "application/qza"
   )
   
   output$example_feature_table <- downloadHandler(
     
-    filename = "ASVs_table_example.qza",
+    filename = "ASV_table_example.qza",
     
     content = function(file){
-      file.copy(from = "/home/imuser/example_files/single/table-dada2.qza", to = file)
+      file.copy(from = "/home/imuser/example_files/single/table-dada2_single.qza", to = file)
     },
     contentType = "application/qza"
   )
@@ -16282,7 +16282,7 @@ server <- function(session, input, output) {
   
   output$table_dada2_download_user <- downloadHandler(
     
-    filename = paste0("ASVs_table_", input_job_id(), ".qza"),
+    filename = paste0("ASV_table_", input_job_id(), ".qza"),
     
     content = function(file){
       # if(input$seqs_type == "Single end"){
@@ -18258,7 +18258,7 @@ server <- function(session, input, output) {
       )
       
       output$table_dada2_download_demo <- downloadHandler(
-        filename = "ASVs_table_single_demo.qza",
+        filename = "ASV_table_single_demo.qza",
         content = function(file){
           file.copy("/home/imuser/example_files/single/table-dada2_single.qza", file)
         }
@@ -18281,7 +18281,7 @@ server <- function(session, input, output) {
       )
       
       output$table_dada2_download_demo <- downloadHandler(
-        filename = "ASVs_table_paired_demo.qza",
+        filename = "ASV_table_paired_demo.qza",
         content = function(file){
           file.copy("/home/imuser/example_files/paired/table-dada2_paired.qza", file)
         }
@@ -18305,7 +18305,7 @@ server <- function(session, input, output) {
       )
       
       output$table_dada2_download_demo <- downloadHandler(
-        filename = "ASVs_table_long_demo.qza",
+        filename = "ASV_table_long_demo.qza",
         content = function(file){
           file.copy("/home/imuser/example_files/Pacbio/table-dada2_Pacbio.qza", file)
         }
