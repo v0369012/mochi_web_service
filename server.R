@@ -11198,7 +11198,7 @@ server <- function(session, input, output) {
     filename <-"Taxonomic_table_example.qza",
     
     content = function(file){
-      file.copy("/home/imuser/example_files/single/taxatable.qza", file)
+      file.copy("/home/imuser/example_files/single/taxatable7_single.qza", file)
     },
     
     contentType = "application/qza"
