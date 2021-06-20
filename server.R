@@ -11249,6 +11249,7 @@ server <- function(session, input, output) {
         shinyjs::hide("ancom_ui")
         shinyjs::hide("ancom_output_ui")
         closeAlert(session, "sampleAlert")
+        shinyjs::reset("TA_start")
     
  
   })
@@ -11263,6 +11264,7 @@ server <- function(session, input, output) {
     shinyjs::hide("func_table_ui")
     shinyjs::hide("func_barplot_ui")
     closeAlert(session, "sampleAlert_FA")
+    shinyjs::reset("FA_start")
     
   })
   
