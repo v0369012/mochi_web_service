@@ -11250,6 +11250,9 @@ server <- function(session, input, output) {
         shinyjs::hide("ancom_output_ui")
         closeAlert(session, "sampleAlert")
         shinyjs::reset("TA_start")
+        shinyjs::reset("phylogenetic_tree")
+        shinyjs::reset("rep_seq_dada2_upload")
+        shinyjs::reset("ANCOM_start")
     
  
   })
