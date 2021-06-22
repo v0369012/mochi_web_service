@@ -1763,7 +1763,11 @@ server <- function(session, input, output) {
                   style = "danger")
     } else {
       closeAlert(session, "seqAlert")
-      
+      file.copy(from = input$rep_seq_dada2_upload$datapath, 
+                to = paste0("/home/imuser/web_version/users_files/",
+                            job_id(),"_DA_phylo/",
+                            "For_phylo_state.qza")
+                )
     }
   })
   
@@ -14163,8 +14167,14 @@ server <- function(session, input, output) {
                  " --output-dir /home/imuser/web_version/users_files/",
                  job_id(),"_DA_phylo","/core-metrics-results"))
     
+    # rm phylos state
+    file.remove(paste0("/home/imuser/web_version/users_files/",
+                       job_id(),"_DA_phylo/",
+                       "For_phylo_state.qza")
+                )
+    
     # show phylo ui
-    if(file.exists(paste0("//home/imuser/web_version/users_files/",
+    if(file.exists(paste0("/home/imuser/web_version/users_files/",
                           job_id(),"_DA_phylo",
                           "/core-metrics-results/faith_pd_vector.qza"))){
       shinyjs::show("phylo_output_ui")
@@ -14255,7 +14265,7 @@ server <- function(session, input, output) {
           labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                                    geom = "text", size =7, 
                                                                                                                                                    hjust = 0.5,
-                                                                                                                                                   vjust = 0.9)
+                                                                                                                                                   vjust = 0.9) + theme(text = element_text(size = 25))
         
       }
       
@@ -14325,7 +14335,7 @@ server <- function(session, input, output) {
           labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                             geom = "text", size =7, 
                                                                                                                                             hjust = 0.5,
-                                                                                                                                            vjust = 0.9) 
+                                                                                                                                            vjust = 0.9) + theme(text = element_text(size = 25))
         
       }
       
@@ -21763,7 +21773,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                                      geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9)
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -21830,7 +21840,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                               geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
-                                                                                                                                              vjust = 0.9) 
+                                                                                                                                              vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -23250,7 +23260,7 @@ server <- function(session, input, output) {
             sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
             # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
             #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
-            W_unifrac_ds <- read_qza("/home/imuser/example_files/single//weighted_unifrac_distance_matrix.qza")[["data"]]
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/single/weighted_unifrac_distance_matrix.qza")[["data"]]
             return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
             
           })
@@ -27061,7 +27071,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                                      geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9)
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -27128,7 +27138,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                               geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
-                                                                                                                                              vjust = 0.9) 
+                                                                                                                                              vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -28527,7 +28537,7 @@ server <- function(session, input, output) {
             sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
             # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
             #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
-            W_unifrac_ds <- read_qza("/home/imuser/example_files/paired//weighted_unifrac_distance_matrix.qza")[["data"]]
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]
             return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
             
           })
@@ -32338,7 +32348,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of ANOVA = ", round(anova_summary[[1]][[5]][1], 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                                      geom = "text", size =7, 
                                                                                                                                                      hjust = 0.5,
-                                                                                                                                                     vjust = 0.9)
+                                                                                                                                                     vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -32405,7 +32415,7 @@ server <- function(session, input, output) {
             labs(caption=paste0("p value of KW-test = ", round(KW_result$p.value, 4))) + theme(text = element_text(size = 15)) + stat_summary(fun.data = stat_box_data,
                                                                                                                                               geom = "text", size =7, 
                                                                                                                                               hjust = 0.5,
-                                                                                                                                              vjust = 0.9) 
+                                                                                                                                              vjust = 0.9) + theme(text = element_text(size = 25))
           
         }
         
@@ -33804,7 +33814,7 @@ server <- function(session, input, output) {
             sample_f1_f2 <- sample_list[[input$metadata_phylo_beta_demo]] %>% filter(sample_list[[input$metadata_phylo_beta_demo]][,input$metadata_phylo_beta_demo] %in% feature1_feature2)
             # W_unifrac_ds <- read_qza(paste0("/home/imuser/web_version/users_files/",
             #                                 job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]] # web version
-            W_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio//weighted_unifrac_distance_matrix.qza")[["data"]]
+            W_unifrac_ds <- read_qza("/home/imuser/example_files/Pacbio/weighted_unifrac_distance_matrix.qza")[["data"]]
             return(usedist::dist_subset(W_unifrac_ds, sample_f1_f2[,"SampleID"]))
             
           })
