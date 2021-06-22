@@ -14125,7 +14125,10 @@ server <- function(session, input, output) {
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Please upload the file!", 
                             footer = NULL, easyClose = T, size = "l"))
-    }else{
+      
+    }else if(file.exists(paste0("/home/imuser/web_version/users_files/",
+                                job_id(),"_DA_phylo/",
+                                "For_phylo_state.qza"))){
     
     start_time <- Sys.time()
     # showModal(modalDialog(title = "Running making tree ...", "Waiting for a moment",footer = NULL))
