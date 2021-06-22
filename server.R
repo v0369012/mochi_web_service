@@ -1763,6 +1763,7 @@ server <- function(session, input, output) {
                   style = "danger")
     } else {
       closeAlert(session, "seqAlert")
+      system(paste0("mkdir /home/imuser/web_version/users_files/", job_id(), "_DA_phylo/"))
       file.copy(from = input$rep_seq_dada2_upload$datapath, 
                 to = paste0("/home/imuser/web_version/users_files/",
                             job_id(),"_DA_phylo/",
