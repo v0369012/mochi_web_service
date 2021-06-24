@@ -907,23 +907,25 @@ shinyUI(
                              label = p(HTML("<b>Upload the metadata file</b>"),span(shiny::icon("info-circle"),id = "info_metadata")),
                              multiple = F,
                              accept = ".tsv"),
+
                    tippy::tippy_this(elementId = "info_metadata", 
-                                     tooltip = HTML("<p>1st column name must be <b>SampleID</b></p>"), 
+                                     tooltip = "<span style='font-size:20px;'> Example </span><br>
+                          <span style='font-size:16px;'> SampleID | Var1 | Var2 | Var3 | ... </span><br>
+                          <span style='font-size:16px;'> Sample01 | xxxx | yyyy | zzzz | ... </span><br>
+                          <span style='font-size:16px;'> Sample01 | xxxx | yyyy | zzzz | ... </span><br>
+                          <span style='font-size:16px;'> Sample01 | xxxx | yyyy | zzzz | ... </span>",  
                                      placement = "right",
                                      allowHTML =T),
+                   # tags$style(".tooltip {position:relative;bottom:0px}"),
                    
-                   fileInput(inputId = "taxonomic_table", 
-                             label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
-                             multiple = F,
-                             accept = ".qza"),
-                   tippy::tippy_this(elementId = "info_taxatable", tooltip = "Downloaded from taxonomy classification", placement = "right"),
+                   hr(),
+                   radioButtons(inputId = "qza_or_txt", 
+                                label = "Choose file format",
+                                choices = c("MOCHI/QIIME2 output (.qza)", "Plain text table (.txt)")),
                    
-                   # span("Upload the ASV table file (Download from Taxonomy Analysis)"),
-                   fileInput(inputId = "table_dada2_upload", 
-                             label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
-                             multiple = F,
-                             accept = ".qza"),
-                   tippy::tippy_this(elementId = "info_ASVs", tooltip = "Downloaded from taxonomy classification", placement = "right"),
+                   
+                   uiOutput("TA_upload_ui"),
+                   
                    checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
                    tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
                    actionButton(inputId = "TA_start", 
@@ -1576,7 +1578,7 @@ shinyUI(
                              multiple = F,
                              accept = ".tsv"),
                    tippy::tippy_this(elementId = "info_metadata_FA", 
-                                     tooltip = HTML("<p>1st column name must be <b>SampleID</b></p>"), 
+                                     tooltip = "<span style='font-size:16px;'>First column name must be <b>SampleID</b></span>", 
                                      placement = "right",
                                      allowHTML = TRUE),
                    
@@ -1586,7 +1588,10 @@ shinyUI(
                                             id = "info_taxatable_FA")),
                              multiple = F,
                              accept = ".qza"),
-                   tippy::tippy_this(elementId = "info_taxatable_FA", tooltip = "Downloaded from Taxonomy classification", placement = "right"),
+                   tippy::tippy_this(elementId = "info_taxatable_FA", 
+                                     tooltip = "<span style='postion:relative;font-size:16px;'>Downloaded from taxonomy classification</span>", 
+                                     placement = "right",
+                                     allowHTML = TRUE),
                    
                    actionButton(inputId = "function_analysis", 
                                 label = strong("Start!"), 
@@ -2802,7 +2807,7 @@ shinyUI(
     tags$footer(
       tags$span(
         tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/23/2021"),
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/24/2021"),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 

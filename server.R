@@ -1072,6 +1072,9 @@ server <- function(session, input, output) {
   values_3 <- reactiveValues(
     upload_state = NULL
   )
+  values_4 <- reactiveValues(
+    upload_state = NULL
+  )
   
   observeEvent(input$sample_data, {
     values_1$upload_state <- 'uploaded'
@@ -1084,11 +1087,15 @@ server <- function(session, input, output) {
   observeEvent(input$table_dada2_upload, {
     values_3$upload_state <- 'uploaded'
   })
+  observeEvent(input$table_upload_txt, {
+    values_4$upload_state <- 'uploaded'
+  })
   
   observeEvent(input$TA_reset, {
     values_1$upload_state <- 'reset'
     values_2$upload_state <- 'reset'
     values_3$upload_state <- 'reset'
+    values_4$upload_state <- 'reset'
   })
   
   file_input_1 <- reactive({
@@ -1119,6 +1126,58 @@ server <- function(session, input, output) {
     } else if (values_3$upload_state == 'reset') {
       return(NULL)
     }
+  })
+  
+  file_input_4 <- reactive({
+    if (is.null(values_3$upload_state)) {
+      return(NULL)
+    } else if (values_4$upload_state == 'uploaded') {
+      return(input$table_dada2_upload)
+    } else if (values_4$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  
+  output$TA_upload_ui <- renderUI({
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+      tagList(
+        fileInput(inputId = "taxonomic_table", 
+                  label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
+                  multiple = F,
+                  accept = ".qza"),
+        
+        tippy::tippy_this(elementId = "info_taxatable", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
+        
+        
+        fileInput(inputId = "table_dada2_upload", 
+                  label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
+                  multiple = F,
+                  accept = ".qza"),
+        tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T)
+      )
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      tagList(
+        fileInput(inputId = "table_upload_txt", 
+                  label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
+                  multiple = F,
+                  accept = ".txt"),
+        tippy::tippy_this(elementId = "info_ASVs_txt", 
+                          tooltip = "<span style='font-size:20px;'> Example </span><br>
+                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
+                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
+                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
+                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>", 
+                          allowHTML = TRUE,
+                          placement = "right",
+                          themes = "light"),
+
+      )
+      
+      
+      
+    }
+    
   })
   
   
@@ -1830,6 +1889,8 @@ server <- function(session, input, output) {
   
   observeEvent(input$TA_start, {
     
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+    
     if(is.null(file_input_1()) || is.null(file_input_2()) || is_null(file_input_3())) {
       
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
@@ -1870,6 +1931,50 @@ server <- function(session, input, output) {
       
       shinyjs::show("ancom_ui")
       
+    }
+      
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      if(is.null(file_input_1()) || is.null(file_input_4())) {
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please upload the files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+        shinyjs::hide("taxatable_ui")
+        
+        shinyjs::hide("taxabarplot_ui")
+        
+        shinyjs::hide("taxaheatmap_ui") 
+        
+        shinyjs::hide("krona_ui")
+        
+        shinyjs::hide("alpha_ui")
+        
+        shinyjs::hide("beta_ui")
+        
+        shinyjs::hide("phylo_ui")
+        
+        shinyjs::hide("ancom_ui")
+        
+        
+      }else{
+        shinyjs::show("taxatable_ui")
+        
+        shinyjs::show("taxabarplot_ui")
+        
+        shinyjs::show("taxaheatmap_ui") 
+        
+        shinyjs::show("krona_ui")
+        
+        shinyjs::show("alpha_ui")
+        
+        shinyjs::show("beta_ui")
+        
+        shinyjs::show("phylo_ui")
+        
+        shinyjs::show("ancom_ui")
+        
+      }
     }
     
   })
@@ -2056,86 +2161,82 @@ server <- function(session, input, output) {
   observe({
     req(input$input_job_id_taxa)
     if(input$seqs_type == "Single end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
-
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-          }
-
+      unzip_name <- list.files(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forsingle_unzip/"), 
+        full.names = T)
+      stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+      if(file.exists(stats_file)){
+        # min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[3,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
+        center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
+        
+        updateTextInput(session, inputId = "min_length", value = center_length - 100)
+        updateTextInput(session, inputId = "max_length", value = center_length + 100)
+        
       }else{
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
     }else if(input$seqs_type == "Paired end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
-
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
-
+      unzip_name <- list.files(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forpaired_unzip/"), 
+        full.names = T)
+      stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+      if(file.exists(stats_file)){
+        # min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[3,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
+        center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
+        
+        updateTextInput(session, inputId = "min_length", value = center_length - 100)
+        updateTextInput(session, inputId = "max_length", value = center_length + 100)
+        
       }else{
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
     }else if(input$seqs_type == "Long read"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
-
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
-
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
+      # if(file.exists(paste0("/home/imuser/web_version/users_files/",
+      #                       input$input_job_id_taxa,
+      #                       "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+      #   min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                   input$input_job_id_taxa,
+      #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+      #                            sep = "\t",
+      #                            stringsAsFactors = F)[3,2]
+      #   max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+      #                                   input$input_job_id_taxa,
+      #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+      #                            sep = "\t",
+      #                            stringsAsFactors = F)[4,2]
+      #   
+      #   if(min_length == max_length){
+      #     updateTextInput(session, inputId = "min_length", value = min_length)
+      #     updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+      #   }else{
+      #     updateTextInput(session, inputId = "min_length", value = min_length)
+      #     updateTextInput(session, inputId = "max_length", value = max_length)
+      #   }
+      #   
+      # }else{
+      updateTextInput(session, inputId = "min_length", value = 1300)
+      updateTextInput(session, inputId = "max_length", value = 1600)
+      # }
     }
 
   })
@@ -3102,6 +3203,249 @@ server <- function(session, input, output) {
                         input$input_job_id_demux,
                         '/demux_single_trimmed.qza')
           )
+          
+          primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                              "27F"="AGAGTTTGATCMTGGCTCAG",
+                              "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                              "341F"="CTCCTACGGGAGGCAGCAG",
+                              "357F"="CTCCTACGGGAGGCAGCAG",
+                              "515F"="GTGCCAGCMGCCGCGGTAA",
+                              "533F"="GTGCCAGCAGCCGCGGTAA",
+                              "16S.1100.F16"="CAACGAGCGCAACCCT",
+                              "1237F"="GGGCTACACACGYGCWAC",
+                              "519R"="GWATTACCGCGGCKGCTG",
+                              "806R"="GGACTACHVGGGTWTCTAAT",
+                              "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                              "907R"="CCGTCAATTCMTTTRAGTTT",
+                              "1100R"="AGGGTTGCGCTCGTTG",
+                              "1391R"="GACGGGCGGTGTGTRCA",
+                              "1492R (l)"="GGTTACCTTGTTACGACTT",
+                              "1492R (s)"="ACCTTGTTACGACTT" 
+          )
+          
+          if(input$primer_f == "other" & input$primer_r == "other"){
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+           
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f == "other" & input$primer_r != "other"){
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r == "other"){
+            
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r != "other"){
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }
+          
         }else{
           # file.remove("/home/imuser/qiime_output/demux_single_end.qza")
           system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
@@ -3130,7 +3474,7 @@ server <- function(session, input, output) {
                               "1492R (s)"="ACCTTGTTACGACTT" 
           )
           
-          if(input$primer_f == "other"){
+          if(input$primer_f == "other" & input$primer_r != "other"){
             system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
                           job_id(),
@@ -3142,7 +3486,129 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_single_trimmed.qza"
             ))
-          }else if(input$primer_f != "other"){
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f == "other" & input$primer_r == "other"){
+            
+            system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                          " /home/imuser/web_version/users_files/",
+                          job_id(),
+                          "/demux_single_end.qza", 
+                          " --p-front ", input$primer_f_manu,
+                          " --p-cores ", input$n_jobs_demux,
+                          " --o-trimmed-sequences",
+                          " /home/imuser/web_version/users_files/",
+                          input$input_job_id_demux,
+                          "/demux_single_trimmed.qza"
+            ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r != "other"){
+            
             system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
                           job_id(),
@@ -3154,6 +3620,127 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_single_trimmed.qza"
             ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r == "other"){
+            
+            system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                          " /home/imuser/web_version/users_files/",
+                          job_id(),
+                          "/demux_single_end.qza", 
+                          " --p-front ", primer_list[[input$primer_f]],
+                          " --p-cores ", input$n_jobs_demux,
+                          " --o-trimmed-sequences",
+                          " /home/imuser/web_version/users_files/",
+                          input$input_job_id_demux,
+                          "/demux_single_trimmed.qza"
+            ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forsingle_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forsingle.zip"))
+            
           }
           
           
@@ -3263,14 +3850,7 @@ server <- function(session, input, output) {
     
     
     qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
-    # raw_data_path_list <- list()
-    # raw_data_path_list[[1]] <- parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs)
-    # raw_data_path_list[[1]] <- input$seqs_data_upload$datapath
-    
-    # file.remove("/home/imuser/seqs_upload/*")
-    # system("rm /home/imuser/seqs_upload/*")
-    # file.copy(input$seqs_data_upload$datapath, paste0("/home/imuser/seqs_upload/", input$seqs_data_upload$name))
-    
+
     # rename seqs file name
     # setwd("/home/imsuer/seqs_upload")
     seqs_name_original <- list.files("/home/imuser/seqs_upload")
@@ -3279,45 +3859,7 @@ server <- function(session, input, output) {
     seqs_name <- list.files("/home/imuser/seqs_upload")
     
     
-    # if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))<length(seqs_name)){
-    #   
-    # 
-    #   library(stringr)
-    #   seqs_name_split <- str_split(seqs_name, "_")
-    #   lane_number <- "L001"
-    #   set_number <- "001"
-    #   
-    #   seqs_name_new <- lapply(1:length(seqs_name_split), function(x){
-    #     
-    #     paste0(
-    #       seqs_name_split[[x]][1],
-    #       "_",
-    #       seqs_name_split[[x]][1],
-    #       "_",
-    #       lane_number,
-    #       "_R",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][1] %>% str_extract("[0-9]"),
-    #       "_",
-    #       set_number,
-    #       ".",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][2],
-    #       ".",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][3]
-    #       
-    #     )
-    #     
-    #   })
-    #   
-    #   for (i in 1:length(seqs_name_new)) {
-    #     
-    #     # file.rename(seqs_name[i], seqs_name_new[[i]])
-    #     system(paste0('sudo mv ', seqs_name[i], ' ',seqs_name_new[[i]]))
-    #   }
-    # 
-    # }else{
-    #   seqs_name_new <- seqs_name
-    # }
-    
+
     
     # demuxed transform
     Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin')
@@ -3328,66 +3870,553 @@ server <- function(session, input, output) {
     
     if(input$checkbox_primer==T){
       system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
-                   " --input-path", " /home/imuser/seqs_upload",
-                   " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
-                   ' --output-path /home/imuser/web_version/users_files/',
-                   input$input_job_id_demux,
-                   '/demux_single_trimmed.qza')
-             )
+                    " --input-path", " /home/imuser/seqs_upload",
+                    " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
+                    ' --output-path /home/imuser/web_version/users_files/',
+                    input$input_job_id_demux,
+                    '/demux_single_trimmed.qza')
+      )
+      
+      primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                          "27F"="AGAGTTTGATCMTGGCTCAG",
+                          "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                          "341F"="CTCCTACGGGAGGCAGCAG",
+                          "357F"="CTCCTACGGGAGGCAGCAG",
+                          "515F"="GTGCCAGCMGCCGCGGTAA",
+                          "533F"="GTGCCAGCAGCCGCGGTAA",
+                          "16S.1100.F16"="CAACGAGCGCAACCCT",
+                          "1237F"="GGGCTACACACGYGCWAC",
+                          "519R"="GWATTACCGCGGCKGCTG",
+                          "806R"="GGACTACHVGGGTWTCTAAT",
+                          "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                          "907R"="CCGTCAATTCMTTTRAGTTT",
+                          "1100R"="AGGGTTGCGCTCGTTG",
+                          "1391R"="GACGGGCGGTGTGTRCA",
+                          "1492R (l)"="GGTTACCTTGTTACGACTT",
+                          "1492R (s)"="ACCTTGTTACGACTT" 
+      )
+      
+      if(input$primer_f == "other" & input$primer_r == "other"){
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f == "other" & input$primer_r != "other"){
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r == "other"){
+        
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r != "other"){
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }
+      
     }else{
-    # file.remove("/home/imuser/qiime_output/demux_single_end.qza")
-    system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
-                 " --input-path", " /home/imuser/seqs_upload",
-                 " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
-                 ' --output-path /home/imuser/web_version/users_files/',
-                 input$input_job_id_demux,
-                 '/demux_single_end.qza'))
-    
-    primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
-                        "27F"="AGAGTTTGATCMTGGCTCAG",
-                        "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
-                        "341F"="CTCCTACGGGAGGCAGCAG",
-                        "357F"="CTCCTACGGGAGGCAGCAG",
-                        "515F"="GTGCCAGCMGCCGCGGTAA",
-                        "533F"="GTGCCAGCAGCCGCGGTAA",
-                        "16S.1100.F16"="CAACGAGCGCAACCCT",
-                        "1237F"="GGGCTACACACGYGCWAC",
-                        "519R"="GWATTACCGCGGCKGCTG",
-                        "806R"="GGACTACHVGGGTWTCTAAT",
-                        "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
-                        "907R"="CCGTCAATTCMTTTRAGTTT",
-                        "1100R"="AGGGTTGCGCTCGTTG",
-                        "1391R"="GACGGGCGGTGTGTRCA",
-                        "1492R (l)"="GGTTACCTTGTTACGACTT",
-                        "1492R (s)"="ACCTTGTTACGACTT" 
-    )
-    
-    if(input$primer_f == "other"){
-      system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
-                    " /home/imuser/web_version/users_files/",
-                    job_id(),
-                    "/demux_single_end.qza", 
-                    " --p-front ", input$primer_f_manu,
-                    " --p-cores ", input$n_jobs_demux,
-                    " --o-trimmed-sequences",
-                    " /home/imuser/web_version/users_files/",
+      # file.remove("/home/imuser/qiime_output/demux_single_end.qza")
+      system(paste0(qiime_cmd, " tools import --type 'SampleData[SequencesWithQuality]'", 
+                    " --input-path", " /home/imuser/seqs_upload",
+                    " --input-format 'CasavaOneEightSingleLanePerSampleDirFmt'" ,
+                    ' --output-path /home/imuser/web_version/users_files/',
                     input$input_job_id_demux,
-                    "/demux_single_trimmed.qza"
-      ))
-    }else if(input$primer_f != "other"){
-      system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
-                    " /home/imuser/web_version/users_files/",
-                    job_id(),
-                    "/demux_single_end.qza", 
-                    " --p-front ", primer_list[[input$primer_f]],
-                    " --p-cores ", input$n_jobs_demux,
-                    " --o-trimmed-sequences",
-                    " /home/imuser/web_version/users_files/",
-                    input$input_job_id_demux,
-                    "/demux_single_trimmed.qza"
-      ))
-    }
-    
+                    '/demux_single_end.qza'))
+      
+      primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                          "27F"="AGAGTTTGATCMTGGCTCAG",
+                          "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                          "341F"="CTCCTACGGGAGGCAGCAG",
+                          "357F"="CTCCTACGGGAGGCAGCAG",
+                          "515F"="GTGCCAGCMGCCGCGGTAA",
+                          "533F"="GTGCCAGCAGCCGCGGTAA",
+                          "16S.1100.F16"="CAACGAGCGCAACCCT",
+                          "1237F"="GGGCTACACACGYGCWAC",
+                          "519R"="GWATTACCGCGGCKGCTG",
+                          "806R"="GGACTACHVGGGTWTCTAAT",
+                          "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                          "907R"="CCGTCAATTCMTTTRAGTTT",
+                          "1100R"="AGGGTTGCGCTCGTTG",
+                          "1391R"="GACGGGCGGTGTGTRCA",
+                          "1492R (l)"="GGTTACCTTGTTACGACTT",
+                          "1492R (s)"="ACCTTGTTACGACTT" 
+      )
+      
+      if(input$primer_f == "other" & input$primer_r != "other"){
+        system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                      " /home/imuser/web_version/users_files/",
+                      job_id(),
+                      "/demux_single_end.qza", 
+                      " --p-front ", input$primer_f_manu,
+                      " --p-cores ", input$n_jobs_demux,
+                      " --o-trimmed-sequences",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_demux,
+                      "/demux_single_trimmed.qza"
+        ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f == "other" & input$primer_r == "other"){
+        
+        system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                      " /home/imuser/web_version/users_files/",
+                      job_id(),
+                      "/demux_single_end.qza", 
+                      " --p-front ", input$primer_f_manu,
+                      " --p-cores ", input$n_jobs_demux,
+                      " --o-trimmed-sequences",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_demux,
+                      "/demux_single_trimmed.qza"
+        ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r != "other"){
+        
+        system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                      " /home/imuser/web_version/users_files/",
+                      job_id(),
+                      "/demux_single_end.qza", 
+                      " --p-front ", primer_list[[input$primer_f]],
+                      " --p-cores ", input$n_jobs_demux,
+                      " --o-trimmed-sequences",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_demux,
+                      "/demux_single_trimmed.qza"
+        ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r == "other"){
+        
+        system(paste0(qiime_cmd, " cutadapt trim-single --i-demultiplexed-sequences", 
+                      " /home/imuser/web_version/users_files/",
+                      job_id(),
+                      "/demux_single_end.qza", 
+                      " --p-front ", primer_list[[input$primer_f]],
+                      " --p-cores ", input$n_jobs_demux,
+                      " --o-trimmed-sequences",
+                      " /home/imuser/web_version/users_files/",
+                      input$input_job_id_demux,
+                      "/demux_single_trimmed.qza"
+        ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forsingle_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forsingle.zip"))
+        
+      }
+      
+      
     }
     
     system(paste0(qiime_cmd, 
@@ -3920,6 +4949,250 @@ server <- function(session, input, output) {
                         input$input_job_id_demux,
                         '/demux_paired_trimmed.qza')
           )
+          
+          primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                              "27F"="AGAGTTTGATCMTGGCTCAG",
+                              "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                              "341F"="CTCCTACGGGAGGCAGCAG",
+                              "357F"="CTCCTACGGGAGGCAGCAG",
+                              "515F"="GTGCCAGCMGCCGCGGTAA",
+                              "533F"="GTGCCAGCAGCCGCGGTAA",
+                              "16S.1100.F16"="CAACGAGCGCAACCCT",
+                              "1237F"="GGGCTACACACGYGCWAC",
+                              "519R"="GWATTACCGCGGCKGCTG",
+                              "806R"="GGACTACHVGGGTWTCTAAT",
+                              "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                              "907R"="CCGTCAATTCMTTTRAGTTT",
+                              "1100R"="AGGGTTGCGCTCGTTG",
+                              "1391R"="GACGGGCGGTGTGTRCA",
+                              "1492R (l)"="GGTTACCTTGTTACGACTT",
+                              "1492R (s)"="ACCTTGTTACGACTT" 
+          )
+          
+          if(input$primer_f == "other" & input$primer_r == "other"){
+
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r == "other"){
+            
+
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+          }else if(input$primer_f == "other" & input$primer_r != "other"){
+
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+          }else if(input$primer_f != "other" & input$primer_r != "other"){
+
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+          }
+          
         }else{
           # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
           system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
@@ -3949,6 +5222,7 @@ server <- function(session, input, output) {
           )
           
           if(input$primer_f == "other" & input$primer_r == "other"){
+            
             system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
                           input$input_job_id_demux,
@@ -3961,7 +5235,62 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_paired_trimmed.qza"
             ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
           }else if(input$primer_f != "other" & input$primer_r == "other"){
+            
             system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
                           input$input_job_id_demux,
@@ -3974,6 +5303,60 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_paired_trimmed.qza"
             ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", input$primer_r_manu,
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
           }else if(input$primer_f == "other" & input$primer_r != "other"){
             system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
@@ -3987,6 +5370,60 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_paired_trimmed.qza"
             ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", input$primer_f_manu,
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
           }else if(input$primer_f != "other" & input$primer_r != "other"){
             system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                           " /home/imuser/web_version/users_files/",
@@ -4000,6 +5437,59 @@ server <- function(session, input, output) {
                           input$input_job_id_demux,
                           "/demux_paired_trimmed.qza"
             ))
+            
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            system(paste0("rm ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            system(paste0("rm -r",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip"))
+            
+            system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                          " /home/imuser/identity_otu_silva_90.qza",
+                          " --p-f-primer ", primer_list[[input$primer_f]],
+                          " --p-r-primer ", primer_list[[input$primer_r]],
+                          " --p-n-jobs ", input$n_jobs_demux,
+                          " --o-reads ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza"
+            ))
+            
+            system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qza",
+                          " --o-visualization ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv"))
+            
+            system(paste0("cp ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.qzv", 
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
+            
+            system(paste0("unzip -d ",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_Forpaired_unzip",
+                          ' /home/imuser/web_version/users_files/',
+                          input$input_job_id_demux,
+                          "/identity_otu_silva_90_Forpaired.zip"))
           }
           
           
@@ -4103,57 +5593,14 @@ server <- function(session, input, output) {
     
     
     qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
-    # raw_data_path <- parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs)
-    # raw_data_path <- input$seqs_data_upload$datapath
-    # file.remove("/home/imuser/seqs_upload/*")
-    # system("rm /home/imuser/seqs_upload/*")
-    # file.copy(input$seqs_data_upload$datapath, paste0("/home/imuser/seqs_upload/", input$seqs_data_upload$name))
-    
+
     # rename seqs file name
-    # setwd("/home/imuser/seqs_upload")
     seqs_name_original <- list.files("/home/imuser/seqs_upload")
     seqs_name <- str_replace_all(seqs_name_original, pattern = ".fq.gz", replacement = ".fastq.gz")
     file.rename(from = list.files("/home/imuser/seqs_upload", full.names = T), to = paste0("/home/imuser/seqs_upload/", seqs_name))
     seqs_name <- list.files("/home/imuser/seqs_upload")
     
-    # if(sum(str_detect(seqs_name, '.+_.+_L[0-9][0-9][0-9]_R[12]_[0-9][0-9][0-9]\\.fastq\\.gz'))<length(seqs_name)){
-    # 
-    #   library(stringr)
-    #   seqs_name_split <- str_split(seqs_name, "_")
-    #   lane_number <- "L001"
-    #   set_number <- "001"
-    #   
-    #   seqs_name_new <- lapply(1:length(seqs_name_split), function(x){
-    #     
-    #     paste0(
-    #       seqs_name_split[[x]][1],
-    #       "_",
-    #       seqs_name_split[[x]][1],
-    #       "_",
-    #       lane_number,
-    #       "_R",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][1] %>% str_extract("[0-9]"),
-    #       "_",
-    #       set_number,
-    #       ".",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][2],
-    #       ".",
-    #       str_split(seqs_name_split[[x]][2], "\\.")[[1]][3]
-    #       
-    #     )
-    #     
-    #   })
-    #   
-    #   for (i in 1:length(seqs_name_new)) {
-    #     
-    #     file.rename(seqs_name[i], seqs_name_new[[i]])
-    #     
-    #   }
-    #   
-    # }else{
-    #   seqs_name_new <- seqs_name
-    # }
-    
+
     # demux
     Sys.setenv(PATH='/usr/lib/rstudio-server/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/imuser/miniconda3/bin:/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin')
     file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_demux, "/demux_paired_trimmed.qza"))
@@ -4168,6 +5615,250 @@ server <- function(session, input, output) {
                     input$input_job_id_demux,
                     '/demux_paired_trimmed.qza')
       )
+      
+      primer_list <- list("8F"="AGAGTTTGATCCTGGCTCAG",
+                          "27F"="AGAGTTTGATCMTGGCTCAG",
+                          "CC [F]"="CCAGACTCCTACGGGAGGCAGC",
+                          "341F"="CTCCTACGGGAGGCAGCAG",
+                          "357F"="CTCCTACGGGAGGCAGCAG",
+                          "515F"="GTGCCAGCMGCCGCGGTAA",
+                          "533F"="GTGCCAGCAGCCGCGGTAA",
+                          "16S.1100.F16"="CAACGAGCGCAACCCT",
+                          "1237F"="GGGCTACACACGYGCWAC",
+                          "519R"="GWATTACCGCGGCKGCTG",
+                          "806R"="GGACTACHVGGGTWTCTAAT",
+                          "CD [R]"="CTTGTGCGGGCCCCCGTCAATTC",
+                          "907R"="CCGTCAATTCMTTTRAGTTT",
+                          "1100R"="AGGGTTGCGCTCGTTG",
+                          "1391R"="GACGGGCGGTGTGTRCA",
+                          "1492R (l)"="GGTTACCTTGTTACGACTT",
+                          "1492R (s)"="ACCTTGTTACGACTT" 
+      )
+      
+      if(input$primer_f == "other" & input$primer_r == "other"){
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r == "other"){
+        
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+      }else if(input$primer_f == "other" & input$primer_r != "other"){
+        
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+      }else if(input$primer_f != "other" & input$primer_r != "other"){
+        
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+      }
+      
     }else{
       # file.remove("/home/imuser/qiime_output/demux_paired_end.qza")
       system(paste0(qiime_cmd, " tools import --type 'SampleData[PairedEndSequencesWithQuality]'", 
@@ -4197,6 +5888,7 @@ server <- function(session, input, output) {
       )
       
       if(input$primer_f == "other" & input$primer_r == "other"){
+        
         system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                       " /home/imuser/web_version/users_files/",
                       input$input_job_id_demux,
@@ -4209,7 +5901,62 @@ server <- function(session, input, output) {
                       input$input_job_id_demux,
                       "/demux_paired_trimmed.qza"
         ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
       }else if(input$primer_f != "other" & input$primer_r == "other"){
+        
         system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                       " /home/imuser/web_version/users_files/",
                       input$input_job_id_demux,
@@ -4222,6 +5969,60 @@ server <- function(session, input, output) {
                       input$input_job_id_demux,
                       "/demux_paired_trimmed.qza"
         ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", input$primer_r_manu,
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
       }else if(input$primer_f == "other" & input$primer_r != "other"){
         system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                       " /home/imuser/web_version/users_files/",
@@ -4235,6 +6036,60 @@ server <- function(session, input, output) {
                       input$input_job_id_demux,
                       "/demux_paired_trimmed.qza"
         ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", input$primer_f_manu,
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
       }else if(input$primer_f != "other" & input$primer_r != "other"){
         system(paste0(qiime_cmd, " cutadapt trim-paired --i-demultiplexed-sequences", 
                       " /home/imuser/web_version/users_files/",
@@ -4248,7 +6103,61 @@ server <- function(session, input, output) {
                       input$input_job_id_demux,
                       "/demux_paired_trimmed.qza"
         ))
+        
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        system(paste0("rm ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        system(paste0("rm -r",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip"))
+        
+        system(paste0(qiime_cmd, " feature-classifier extract-reads --i-sequences", 
+                      " /home/imuser/identity_otu_silva_90.qza",
+                      " --p-f-primer ", primer_list[[input$primer_f]],
+                      " --p-r-primer ", primer_list[[input$primer_r]],
+                      " --p-n-jobs ", input$n_jobs_demux,
+                      " --o-reads ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza"
+        ))
+        
+        system(paste0(qiime_cmd, " feature-table tabulate-seqs --i-data ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qza",
+                      " --o-visualization ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv"))
+        
+        system(paste0("cp ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.qzv", 
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
+        
+        system(paste0("unzip -d ",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_Forpaired_unzip",
+                      ' /home/imuser/web_version/users_files/',
+                      input$input_job_id_demux,
+                      "/identity_otu_silva_90_Forpaired.zip"))
       }
+      
       
     }
     
@@ -5897,86 +7806,73 @@ server <- function(session, input, output) {
         
         # update reference seqs filter length
         if(input$seqs_type == "Single end"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[4,2]
+          unzip_name <- list.files(
+            paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forsingle_unzip/"), 
+            full.names = T)
+          stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+          if(file.exists(stats_file)){
+
+            center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
             
-            if(min_length == max_length){
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-            }else{
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = max_length)
-            }
+            updateTextInput(session, inputId = "min_length", value = center_length - 100)
+            updateTextInput(session, inputId = "max_length", value = center_length + 100)
             
           }else{
             updateTextInput(session, inputId = "min_length", value = 0)
             updateTextInput(session, inputId = "max_length", value = 0)
           }
         }else if(input$seqs_type == "Paired end"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[4,2]
+          unzip_name <- list.files(
+            paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forpaired_unzip/"), 
+            full.names = T)
+          stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+          if(file.exists(stats_file)){
+            # min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+            #                                 input$input_job_id_taxa,
+            #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+            #                          sep = "\t",
+            #                          stringsAsFactors = F)[3,2]
+            # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+            #                                 input$input_job_id_taxa,
+            #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+            #                          sep = "\t",
+            #                          stringsAsFactors = F)[4,2]
+            center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
             
-            if(min_length == max_length){
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-            }else{
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = max_length)
-            }
+            updateTextInput(session, inputId = "min_length", value = center_length - 100)
+            updateTextInput(session, inputId = "max_length", value = center_length + 100)
             
           }else{
             updateTextInput(session, inputId = "min_length", value = 0)
             updateTextInput(session, inputId = "max_length", value = 0)
           }
         }else if(input$seqs_type == "Long read"){
-          if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                                input$input_job_id_taxa,
-                                "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-            min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[3,2]
-            max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                            input$input_job_id_taxa,
-                                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                     sep = "\t",
-                                     stringsAsFactors = F)[4,2]
-            
-            if(min_length == max_length){
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-            }else{
-              updateTextInput(session, inputId = "min_length", value = min_length)
-              updateTextInput(session, inputId = "max_length", value = max_length)
-            }
-            
-          }else{
-            updateTextInput(session, inputId = "min_length", value = 0)
-            updateTextInput(session, inputId = "max_length", value = 0)
-          }
+          # if(file.exists(paste0("/home/imuser/web_version/users_files/",
+          #                       input$input_job_id_taxa,
+          #                       "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+          #   min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                   input$input_job_id_taxa,
+          #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                            sep = "\t",
+          #                            stringsAsFactors = F)[3,2]
+          #   max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                   input$input_job_id_taxa,
+          #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                            sep = "\t",
+          #                            stringsAsFactors = F)[4,2]
+          #   
+          #   if(min_length == max_length){
+          #     updateTextInput(session, inputId = "min_length", value = min_length)
+          #     updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+          #   }else{
+          #     updateTextInput(session, inputId = "min_length", value = min_length)
+          #     updateTextInput(session, inputId = "max_length", value = max_length)
+          #   }
+          #   
+          # }else{
+          updateTextInput(session, inputId = "min_length", value = 1300)
+          updateTextInput(session, inputId = "max_length", value = 1600)
+          # }
         }
         
         # removeModal()
@@ -7134,86 +9030,42 @@ server <- function(session, input, output) {
     
     # update reference seqs filter length
     if(input$seqs_type == "Single end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+      unzip_name <- list.files(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forsingle_unzip/"), 
+        full.names = T)
+      stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+      if(file.exists(stats_file)){
+
+        center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
         
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
+        updateTextInput(session, inputId = "min_length", value = center_length - 100)
+        updateTextInput(session, inputId = "max_length", value = center_length + 100)
         
       }else{
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
     }else if(input$seqs_type == "Paired end"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+      unzip_name <- list.files(
+        paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forpaired_unzip/"), 
+        full.names = T)
+      stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+      if(file.exists(stats_file)){
+
+        center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
         
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
+        updateTextInput(session, inputId = "min_length", value = center_length - 100)
+        updateTextInput(session, inputId = "max_length", value = center_length + 100)
         
       }else{
         updateTextInput(session, inputId = "min_length", value = 0)
         updateTextInput(session, inputId = "max_length", value = 0)
       }
     }else if(input$seqs_type == "Long read"){
-      if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                            input$input_job_id_taxa,
-                            "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-        min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[3,2]
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
-        
-        if(min_length == max_length){
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-        }else{
-          updateTextInput(session, inputId = "min_length", value = min_length)
-          updateTextInput(session, inputId = "max_length", value = max_length)
-        }
-        
-      }else{
-        updateTextInput(session, inputId = "min_length", value = 0)
-        updateTextInput(session, inputId = "max_length", value = 0)
-      }
+
+      updateTextInput(session, inputId = "min_length", value = 1300)
+      updateTextInput(session, inputId = "max_length", value = 1600)
+
     }
     
     # removeModal()
@@ -8343,86 +10195,82 @@ server <- function(session, input, output) {
       
       # update reference seqs filter length
       if(input$seqs_type == "Single end"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[4,2]
+        unzip_name <- list.files(
+          paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forsingle_unzip/"), 
+          full.names = T)
+        stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+        if(file.exists(stats_file)){
+          # min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                 input$input_job_id_taxa,
+          #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                          sep = "\t",
+          #                          stringsAsFactors = F)[3,2]
+          # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                 input$input_job_id_taxa,
+          #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                          sep = "\t",
+          #                          stringsAsFactors = F)[4,2]
+          center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
           
-          if(min_length == max_length){
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }
+          updateTextInput(session, inputId = "min_length", value = center_length - 100)
+          updateTextInput(session, inputId = "max_length", value = center_length + 100)
           
         }else{
           updateTextInput(session, inputId = "min_length", value = 0)
           updateTextInput(session, inputId = "max_length", value = 0)
         }
       }else if(input$seqs_type == "Paired end"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[4,2]
+        unzip_name <- list.files(
+          paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa,"/identity_Forpaired_unzip/"), 
+          full.names = T)
+        stats_file <- paste0(unzip_name, "/data/seven_number_summary.tsv")
+        if(file.exists(stats_file)){
+          # min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                 input$input_job_id_taxa,
+          #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                          sep = "\t",
+          #                          stringsAsFactors = F)[3,2]
+          # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+          #                                 input$input_job_id_taxa,
+          #                                 "/denoise_paired_seqs/new_dirname/data/descriptive_stats.tsv"),
+          #                          sep = "\t",
+          #                          stringsAsFactors = F)[4,2]
+          center_length <- read.table(stats_file, sep = "\t", header = T)[4,2]
           
-          if(min_length == max_length){
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }
+          updateTextInput(session, inputId = "min_length", value = center_length - 100)
+          updateTextInput(session, inputId = "max_length", value = center_length + 100)
           
         }else{
           updateTextInput(session, inputId = "min_length", value = 0)
           updateTextInput(session, inputId = "max_length", value = 0)
         }
       }else if(input$seqs_type == "Long read"){
-        if(file.exists(paste0("/home/imuser/web_version/users_files/",
-                              input$input_job_id_taxa,
-                              "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
-          min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[3,2]
-          max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                          input$input_job_id_taxa,
-                                          "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                   sep = "\t",
-                                   stringsAsFactors = F)[4,2]
-          
-          if(min_length == max_length){
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
-          }else{
-            updateTextInput(session, inputId = "min_length", value = min_length)
-            updateTextInput(session, inputId = "max_length", value = max_length)
-          }
-          
-        }else{
-          updateTextInput(session, inputId = "min_length", value = 0)
-          updateTextInput(session, inputId = "max_length", value = 0)
-        }
+        # if(file.exists(paste0("/home/imuser/web_version/users_files/",
+        #                       input$input_job_id_taxa,
+        #                       "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"))){
+        #   min_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                   input$input_job_id_taxa,
+        #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                            sep = "\t",
+        #                            stringsAsFactors = F)[3,2]
+        #   max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                   input$input_job_id_taxa,
+        #                                   "/denoise_Pacbio_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                            sep = "\t",
+        #                            stringsAsFactors = F)[4,2]
+        #   
+        #   if(min_length == max_length){
+        #     updateTextInput(session, inputId = "min_length", value = min_length)
+        #     updateTextInput(session, inputId = "max_length", value = as.numeric(max_length)+1)
+        #   }else{
+        #     updateTextInput(session, inputId = "min_length", value = min_length)
+        #     updateTextInput(session, inputId = "max_length", value = max_length)
+        #   }
+        #   
+        # }else{
+        updateTextInput(session, inputId = "min_length", value = 1300)
+        updateTextInput(session, inputId = "max_length", value = 1600)
+        # }
       }
       
       # removeModal()
