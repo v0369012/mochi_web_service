@@ -965,7 +965,7 @@ shinyUI(
                    div(id="TA_txt_ui",
                        
                        fileInput(inputId = "table_upload_txt",
-                                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
+                                 label = p(HTML("<b>Upload the ASV table (Taxon included)</b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
                                  multiple = F,
                                  accept = ".txt"),
                        tippy::tippy_this(elementId = "info_ASVs_txt",
