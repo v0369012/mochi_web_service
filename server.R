@@ -1926,12 +1926,40 @@ server <- function(session, input, output) {
   
   observeEvent(input$TA_start_MOCHI, {
     
+    Metadata_sampleID <- Metadata()[,1] %>% sort()
+    ASV_table_SampleID <- asv_table() %>% colnames() %>% sort()
+    
+    M_n <- length(Metadata_sampleID)
+    A_n <- length(ASV_table_SampleID)
+    
     if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
       
       if(is.null(file_input_1()) || is.null(file_input_2()) || is_null(file_input_3())) {
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Please upload the files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+        shinyjs::hide("taxatable_ui")
+        
+        shinyjs::hide("taxabarplot_ui")
+        
+        shinyjs::hide("taxaheatmap_ui") 
+        
+        shinyjs::hide("krona_ui")
+        
+        shinyjs::hide("alpha_ui")
+        
+        shinyjs::hide("beta_ui")
+        
+        shinyjs::hide("phylo_ui")
+        
+        shinyjs::hide("ancom_ui")
+        
+      }else if(sum(Metadata_sampleID == ASV_table_SampleID) != max(M_n, A_n)){
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Your SampleIDs are not consistent among the uploaded files.", 
                               footer = NULL, easyClose = T, size = "l"))
         
         shinyjs::hide("taxatable_ui")
@@ -1979,12 +2007,40 @@ server <- function(session, input, output) {
   
   observeEvent(input$TA_start_txt, {
     
+    Metadata_sampleID <- Metadata()[,1] %>% sort()
+    ASV_table_SampleID <- asv_table() %>% colnames() %>% sort()
+    
+    M_n <- length(Metadata_sampleID)
+    A_n <- length(ASV_table_SampleID)
+    
     if(input$qza_or_txt == "Plain text table (.txt)"){
       
       if(is.null(file_input_1()) || is.null(file_input_4())) {
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Please upload the files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+        shinyjs::hide("taxatable_ui")
+        
+        shinyjs::hide("taxabarplot_ui")
+        
+        shinyjs::hide("taxaheatmap_ui") 
+        
+        shinyjs::hide("krona_ui")
+        
+        shinyjs::hide("alpha_ui")
+        
+        shinyjs::hide("beta_ui")
+        
+        shinyjs::hide("phylo_ui")
+        
+        shinyjs::hide("ancom_ui")
+        
+      }else if(sum(Metadata_sampleID == ASV_table_SampleID) != max(M_n, A_n)){
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Your SampleIDs are not consistent among the uploaded files.", 
                               footer = NULL, easyClose = T, size = "l"))
         
         shinyjs::hide("taxatable_ui")
