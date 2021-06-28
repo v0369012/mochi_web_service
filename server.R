@@ -2208,7 +2208,7 @@ server <- function(session, input, output) {
     library(shinyBS)
     
     # if(!is.matrix(read_qza(input$taxonomic_table_FA$datapath)$data)) {
-    if(read_qza(input$taxonomic_table_FA$datapath)$type != "FeatureTable[Frequency]") {
+    if(read_qza(input$taxonomic_table_FA_MOCHI$datapath)$type != "FeatureTable[Frequency]") {
           createAlert(session, 
                   anchorId = "taxatable_alert_FA", 
                   alertId = "taxaAlert_FA", 
