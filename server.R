@@ -1398,7 +1398,7 @@ server <- function(session, input, output) {
       
       colnames(metadata)[1] <- "SampleID"
       
-      metadata <- filter(metadata, SampleID %in% colnames(asv_table()))
+      metadata <- subset(metadata, SampleID %in% colnames(asv_table()))
       colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
       col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
@@ -1501,7 +1501,7 @@ server <- function(session, input, output) {
       # asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
       
       colnames(metadata)[1] <- "SampleID"
-      metadata <- filter(metadata, SampleID %in% colnames(asv_table()))
+      metadata <- subset(metadata, SampleID %in% colnames(asv_table()))
       colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
       col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
