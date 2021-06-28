@@ -1928,9 +1928,13 @@ server <- function(session, input, output) {
     
     Metadata_sampleID <- Metadata()[,1] %>% sort()
     ASV_table_SampleID <- asv_table() %>% colnames() %>% sort()
+    Taxa_table_SampleID <- TaxaTable() %>% colnames() %>% sort()
     
     M_n <- length(Metadata_sampleID)
     A_n <- length(ASV_table_SampleID)
+    T_n <- length(Taxa_table_SampleID)
+    
+    all_equal_T <- sum(Reduce(intersect, list(M_n, A_n, T_n)) == M_n) == length(M_n)
     
     if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
       
@@ -1956,7 +1960,7 @@ server <- function(session, input, output) {
         
         shinyjs::hide("ancom_ui")
         
-      }else if(sum(Metadata_sampleID == ASV_table_SampleID) != max(M_n, A_n)){
+      }else if(all_equal_T == F){
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                               "Your SampleIDs are not consistent among the uploaded files.", 
@@ -1977,7 +1981,6 @@ server <- function(session, input, output) {
         shinyjs::hide("phylo_ui")
         
         shinyjs::hide("ancom_ui")
-        
         
       }else{
         
