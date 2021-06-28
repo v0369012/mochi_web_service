@@ -1142,54 +1142,16 @@ server <- function(session, input, output) {
     }
   })
   
+
   
-  # output$TA_upload_ui <- renderUI({
-  #   if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
-  #     tagList(
-  #       fileInput(inputId = "taxonomic_table", 
-  #                 label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
-  #                 multiple = F,
-  #                 accept = ".qza"),
-  #       
-  #       tippy::tippy_this(elementId = "info_taxatable", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
-  #       
-  #       
-  #       fileInput(inputId = "table_dada2_upload", 
-  #                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
-  #                 multiple = F,
-  #                 accept = ".qza"),
-  #       tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T)
-  #     )
-  #   }else if(input$qza_or_txt == "Plain text table (.txt)"){
-  #     tagList(
-  #       fileInput(inputId = "table_upload_txt", 
-  #                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
-  #                 multiple = F,
-  #                 accept = ".txt"),
-  #       tippy::tippy_this(elementId = "info_ASVs_txt", 
-  #                         tooltip = "<span style='font-size:20px;'> Example </span><br>
-  #                         <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
-  #                         <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
-  #                         <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
-  #                         <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>", 
-  #                         allowHTML = TRUE,
-  #                         placement = "right",
-  #                         themes = "light"),
-  # 
-  #     )
-  #     
-  #     
-  #     
-  #   }
-  #   
-  # })
-  
-  
-  # FA fileinput ----
+  # FA file input
   values_1_FA <- reactiveValues(
     upload_state = NULL
   )
   values_2_FA <- reactiveValues(
+    upload_state = NULL
+  )
+  values_3_FA <- reactiveValues(
     upload_state = NULL
   )
   
@@ -1198,14 +1160,24 @@ server <- function(session, input, output) {
     values_1_FA$upload_state <- 'uploaded'
   })
   
-  observeEvent(input$taxonomic_table_FA, {
+  observeEvent(input$taxonomic_table_FA_MOCHI, {
     values_2_FA$upload_state <- 'uploaded'
   })
   
- 
-  observeEvent(input$FA_reset, {
+  observeEvent(input$taxonomic_table_FA_txt, {
+    values_3_FA$upload_state <- 'uploaded'
+  })
+  
+  
+  observeEvent(input$FA_reset_MOCHI, {
     values_1_FA$upload_state <- 'reset'
     values_2_FA$upload_state <- 'reset'
+    
+  })
+  
+  observeEvent(input$FA_reset_txt, {
+    values_1_FA$upload_state <- 'reset'
+    values_3_FA$upload_state <- 'reset'
     
   })
   
@@ -1223,8 +1195,18 @@ server <- function(session, input, output) {
     if (is.null(values_2_FA$upload_state)) {
       return(NULL)
     } else if (values_2_FA$upload_state == 'uploaded') {
-      return(input$taxonomic_table_FA)
+      return(input$taxonomic_table_FA_MOCHI)
     } else if (values_2_FA$upload_state == 'reset') {
+      return(NULL)
+    }
+  })
+  
+  file_input_3_FA <- reactive({
+    if (is.null(values_3_FA$upload_state)) {
+      return(NULL)
+    } else if (values_3_FA$upload_state == 'uploaded') {
+      return(input$taxonomic_table_FA_txt)
+    } else if (values_3_FA$upload_state == 'reset') {
       return(NULL)
     }
   })
@@ -1432,7 +1414,7 @@ server <- function(session, input, output) {
   
   Metadata_FA <- reactive({
     
-    req(input$sample_data_FA, input$taxonomic_table_FA)
+    req(input$sample_data_FA)
     
     infile2 <- input$sample_data_FA
     
@@ -1444,7 +1426,20 @@ server <- function(session, input, output) {
       
       metadata <- read.table(input$sample_data_FA$datapath, header = T, na.strings = "", sep = "\t")
       colnames(metadata)[1] <- "SampleID"
-      taxatable_FA <- read_qza(input$taxonomic_table_FA$datapath)[["data"]]
+      
+      if(input$qza_or_txt_FA == "MOCHI/QIIME2 output (.qza)"){
+        req(input$taxonomic_table_FA_MOCHI)
+        taxatable_FA <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data
+      }else if(input$qza_or_txt_FA == "Plain text table (.txt)"){
+        req(input$taxonomic_table_FA_txt)
+        a <- read.table(input$taxonomic_table_FA_txt$datapath, sep = "\t", header = T)
+        b <- a[,-1]
+        c <- cbind(taxonomy=b[,ncol(b)], b[,-ncol(b)])
+        d <- aggregate(c[,-1], by=list(c[,1]), FUN=sum)
+        # taxatable_FA <- read_qza(paste0("/home/imuser/web_version/users_files/", job_id(), "_FA","/uploaded_taxatable_FA.qza"))$data
+        taxatable_FA <- d
+      }
+      
       metadata <- filter(metadata, SampleID %in% colnames(taxatable_FA))
       colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
@@ -1923,6 +1918,16 @@ server <- function(session, input, output) {
     }
   })
   
+  # show FA upload ui
+  observe({
+    if(input$qza_or_txt_FA == "MOCHI/QIIME2 output (.qza)"){
+      shinyjs::show("FA_MOCHI_ui")
+      shinyjs::hide("FA_txt_ui")
+    }else if(input$qza_or_txt_FA == "Plain text table (.txt)"){
+      shinyjs::show("FA_txt_ui")
+      shinyjs::hide("FA_MOCHI_ui")
+    }
+  })
   
   observeEvent(input$TA_start_MOCHI, {
     
@@ -2198,9 +2203,8 @@ server <- function(session, input, output) {
   ## check taxatable input
   observe({
     
-    req(input$taxonomic_table_FA)
-    
-    
+    req(input$taxonomic_table_FA_MOCHI)
+  
     library(shinyBS)
     
     # if(!is.matrix(read_qza(input$taxonomic_table_FA$datapath)$data)) {
@@ -2217,31 +2221,7 @@ server <- function(session, input, output) {
       
     }
   })
-  
-  
-  # observeEvent(input$function_analysis, {
-  #   
-  #   if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
-  #     showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-  #                           "Please upload the files.", 
-  #                           footer = NULL, easyClose = T, size = "l")) 
-  #   }else{
-  #     # if(file.exists(
-  #     #   paste0("/home/imuser/web_version/users_files/",
-  #     #          job_id(), "_FA",
-  #     #          "/func-table7.qza")
-  #     # )){
-  #       shinyjs::show("func_table_ui")
-  #       shinyjs::show("func_barplot_ui")
-  #     # }else{
-  #     #   showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-  #     #                         "Please check your input files.", 
-  #     #                         footer = NULL, easyClose = T, size = "l"))
-  #     # }
-  #   }
-  #   
-  #   
-  # })
+
   
   
   # taxa ref-seqs min max
@@ -3092,24 +3072,46 @@ server <- function(session, input, output) {
   })
   
   observeEvent(input$FA_example, {
-    showModal(
-      modalDialog(
-        title = "Message",
-        HTML("<p>1. Click the download buttons to download the example files.</p>",
-             "<p>2. Upload the example files and click the button <b>Start!</b> to begin function analysis."),
-        footer = tagList(
-          # p('Example files', style = "font-weight:700"),
-          downloadButton(outputId = "downloadMetaData_FA", 
-                         label = span("Metadata_example.tsv"),
-                         style = "margin: 5px;color: #317EAC"),
-          downloadButton(outputId = "downloadData_FA", 
-                         label = span("Taxonomic_table_example.qza"),
-                         style = "margin: 5px;color: #317EAC")
-          
-        ),
-        easyClose = T, size = "l"
+    
+    if(input$qza_or_txt_FA == "MOCHI/QIIME2 output (.qza)"){
+      showModal(
+        modalDialog(
+          title = "Message",
+          HTML("<p>1. Click the download buttons to download the example files.</p>",
+               "<p>2. Upload the example files and click the button <b>Start!</b> to begin function analysis."),
+          footer = tagList(
+            # p('Example files', style = "font-weight:700"),
+            downloadButton(outputId = "downloadMetaData_FA", 
+                           label = span("Metadata_example.tsv"),
+                           style = "margin: 5px;color: #317EAC"),
+            downloadButton(outputId = "downloadData_FA", 
+                           label = span("Taxonomic_table_example.qza"),
+                           style = "margin: 5px;color: #317EAC")
+            
+          ),
+          easyClose = T, size = "l"
+        )
       )
-    )
+    }else if(input$qza_or_txt_FA == "Plain text table (.txt)"){
+      showModal(
+        modalDialog(
+          title = "Message",
+          HTML("<p>1. Click the download buttons to download the example files.</p>",
+               "<p>2. Upload the example files to inspect the example results."),
+          footer = tagList(
+            # p('Example files', style = "font-weight:700"),
+            downloadButton(outputId = "downloadMetaData_FA", 
+                           label = span("Metadata_example.tsv"),
+                           style = "margin: 5px;color: #317EAC"),
+            downloadButton(outputId = "downloadData_txt_FA", 
+                           label = span("ASV_table_Taxon.txt"),
+                           style = "margin: 5px;color: #317EAC")
+          ),
+          easyClose = T, size = "l"
+        )
+      )
+    }
+    
   })
   
   
@@ -13158,7 +13160,7 @@ server <- function(session, input, output) {
   
   output$downloadData_txt <- downloadHandler(
     
-    filename <-"ASV_table.txt",
+    filename <-"ASV_table_Taxon.txt",
     
     content = function(file){
       file.copy("/home/imuser/example_files/single/ASVs_table_taxon_single.txt", file)
@@ -13177,6 +13179,18 @@ server <- function(session, input, output) {
     },
     
     contentType = "application/qza"
+    
+  )
+  
+  output$downloadData_txt_FA <- downloadHandler(
+    
+    filename <-"ASV_table_Taxon.txt",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/ASVs_table_taxon_single.txt", file)
+    },
+    
+    contentType = "application/txt"
     
   )
   
@@ -13256,19 +13270,30 @@ server <- function(session, input, output) {
   })
   
   # FA reset
-  
-  observeEvent(input$FA_reset,{
+  observeEvent(input$FA_reset_MOCHI,{
     
     shinyjs::reset("sample_data_FA")
-    shinyjs::reset("taxonomic_table_FA")
-    shinyjs::reset("table_dada2_upload_FA")
+    shinyjs::reset("taxonomic_table_FA_MOCHI")
+    shinyjs::reset("taxonomic_table_FA_txt")
     shinyjs::hide("func_table_ui")
     shinyjs::hide("func_barplot_ui")
     closeAlert(session, "sampleAlert_FA")
-    shinyjs::reset("FA_start")
+    
+    shinyjs::show("qza_or_txt_FA")
     
   })
   
+  observeEvent(input$FA_reset_txt,{
+    
+    shinyjs::reset("sample_data_FA")
+    shinyjs::reset("taxonomic_table_FA_MOCHI")
+    shinyjs::reset("taxonomic_table_FA_txt")
+    shinyjs::hide("func_table_ui")
+    shinyjs::hide("func_barplot_ui")
+    closeAlert(session, "sampleAlert_FA")
+    
+    shinyjs::show("qza_or_txt_FA")
+  })
   
   
   # Taxatable_output---------------------------------------------------------------------------------------------------
@@ -18345,15 +18370,29 @@ server <- function(session, input, output) {
   )
   
   # Function Analysis-------------------------------------------------------------------------------------------
-  observeEvent(input$function_analysis, {
+  observeEvent(input$function_analysis_MOCHI, {
+    
+    M_SampleID <- Metadata_FA()[,1] %>% sort()
+    T_SampleID <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data %>% colnames() %>% sort()
+    
+    M_n <- M_SampleID %>% length()
+    T_n <- T_SampleID %>% length()
+    
+    all_equal_T <- sum(Reduce(intersect, list(M_n, T_n)) == M_n) == length(M_n)
     
     if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
                             "Please upload the files!", 
                             footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(all_equal_T == F){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Your SampleIDs are not consistent among the uploaded files.", 
+                            footer = NULL, easyClose = T, size = "l"))
     }else{
     req(input$sample_data_FA)
-    req(input$taxonomic_table_FA)
+    req(input$taxonomic_table_FA_MOCHI)
     # showModal(modalDialog(title = "Running FAPROTAX ...", "Waiting for a moment", footer = NULL))
     show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
     
@@ -18367,7 +18406,7 @@ server <- function(session, input, output) {
     
     system(paste0(qiime_cmd, 
                   " tools export --input-path ", 
-                  input$taxonomic_table_FA$datapath, 
+                  input$taxonomic_table_FA_MOCHI$datapath, 
                   " --output-path /home/imuser/web_version/users_files/",
                     job_id(), "_FA",
                     "/exported-feature-table7"))
@@ -18403,6 +18442,7 @@ server <- function(session, input, output) {
           )){
             shinyjs::show("func_table_ui")
             shinyjs::show("func_barplot_ui")
+            shinyjs::hide("qza_or_txt_FA")
           }else{
             showModal(modalDialog(title = strong("Error!", style = "color: red"),
                                   "Please check your input files.",
@@ -18412,7 +18452,7 @@ server <- function(session, input, output) {
     
     output$func_table_BY_sampleid <- renderDataTable({
       
-      req(input$sample_data_FA, input$taxonomic_table_FA, input$function_analysis)
+      req(input$sample_data_FA, input$taxonomic_table_FA_MOCHI, input$function_analysis_MOCHI)
       
       func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
                                                 job_id(), "_FA",
@@ -18435,7 +18475,7 @@ server <- function(session, input, output) {
                                                 job_id(), "_FA",
                                                 "/func-table7.qza"))[["data"]]
       
-      taxa_table <- read_qza(input$taxonomic_table_FA$datapath)$data
+      taxa_table <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data
       reads_persample <- colSums(taxa_table)
       
       TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
@@ -18519,50 +18559,231 @@ server <- function(session, input, output) {
     }
   })
   
+  observeEvent(input$function_analysis_txt, {
+    
+    M_SampleID <- Metadata_FA()[,1] %>% sort()
+    
+    # transform file
+    a <- read.table(input$taxonomic_table_FA_txt$datapath, sep = "\t", header = T)
+    b <- a[,-1]
+    c <- cbind(taxonomy=b[,ncol(b)], b[,-ncol(b)])
+    d <- aggregate(c[,-1], by=list(c[,1]), FUN=sum)
+    T_SampleID <- colnames(d) %>% sort()
+    
+    M_n <- M_SampleID %>% length()
+    T_n <- T_SampleID %>% length()
+    
+    all_equal_T <- sum(Reduce(intersect, list(M_n, T_n)) == M_n) == length(M_n)
+    
+    if(is.null(file_input_1_FA()) || is.null(file_input_3_FA())){
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Please upload the files!", 
+                            footer = NULL, easyClose = T, size = "l"))
+      
+    }else if(all_equal_T == F){
+      
+      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                            "Your SampleIDs are not consistent among the uploaded files.", 
+                            footer = NULL, easyClose = T, size = "l"))
+    }else{
+      req(input$sample_data_FA)
+      req(input$taxonomic_table_FA_txt)
+      # showModal(modalDialog(title = "Running FAPROTAX ...", "Waiting for a moment", footer = NULL))
+      show_modal_spinner(spin = "circle", color = "#317EAC", text = "Please wait...")
+      
+      qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
+      
+      
+      system(paste0("rm ",
+                    "/home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/func-table7.qza"))
+      
+      a <- read.table(input$taxonomic_table_FA_txt$datapath, sep = "\t", header = T)
+      b <- a[,-1]
+      c <- cbind(taxonomy=b[,ncol(b)], b[,-ncol(b)])
+      d <- aggregate(c[,-1], by=list(c[,1]), FUN=sum)
+      
+      write.table(d, 
+                  "/home/imuser/taxa_table_upload_txt_FA.txt",
+                  sep = "\t", 
+                  quote = F, 
+                  row.names = F)
+      
+      system(paste0(" mkdir ",
+                    " /home/imuser/web_version/users_files/", job_id(), "_FA"))
+      
+      system(paste0(" mv ", 
+                    " /home/imuser/taxa_table_upload_txt_FA.txt ",
+                    paste0(" /home/imuser/web_version/users_files/", job_id(), "_FA", "/taxa_table_upload_txt_FA.txt")))
+      
+      qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
+      biom_cmd <- "/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/biom"
+      system(paste0(biom_cmd, " convert -i ", " /home/imuser/web_version/users_files/", job_id(), "_FA","/taxa_table_upload_txt_FA.txt ",
+                    " -o /home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA_.biom --table-type='OTU table' --to-hdf5"))
+      system(paste0(qiime_cmd, " tools import --input-path /home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA_.biom --type 'FeatureTable[Frequency]' --input-format BIOMV210Format", 
+                    " --output-path /home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA_.qza"))
+      
+      # start to analyze
+      system(paste0("cp /home/imuser/web_version/users_files/", job_id(), "_FA","/uploaded_taxatable_FA_.qza ",
+                    "/home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA.qza"))
+      
+      system(paste0(qiime_cmd, 
+                    " tools export --input-path ", 
+                    "/home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA.qza", 
+                    " --output-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/exported-feature-table7"))
+      # system(paste0("/usr/local/envs/python-2.7/bin/python2.7 /home/imuser/FAPROTAX_1.2.1/collapse_table.py ",
+      system(paste0("/home/imuser/miniconda3/envs/python-2.7/bin/python2.7 /home/imuser/FAPROTAX_1.2.1/collapse_table.py ",
+                    " --force -i /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/exported-feature-table7/feature-table.biom -o /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/FAPROTAX_output/func-table7.biom -g /home/imuser/FAPROTAX_1.2.1/FAPROTAX.txt -r /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/FAPROTAX_output/report7-record.txt --out_groups2records_table /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/FAPROTAX_output/groups2record.biom"))
+      system(paste0(qiime_cmd, 
+                    " tools import --input-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/FAPROTAX_output/func-table7.biom --type 'FeatureTable[Frequency]' --input-format BIOMV100Format --output-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/func-table7.qza"))
+      system(paste0(qiime_cmd, 
+                    " tools import --input-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/FAPROTAX_output/groups2record.biom --type 'FeatureTable[Frequency]' --input-format BIOMV100Format --output-path /home/imuser/web_version/users_files/",
+                    job_id(), "_FA",
+                    "/groups2record.qza"))
+      
+      
+      if(file.exists(
+        paste0("/home/imuser/web_version/users_files/",
+               job_id(), "_FA",
+               "/func-table7.qza")
+      )){
+        shinyjs::show("func_table_ui")
+        shinyjs::show("func_barplot_ui")
+        shinyjs::hide("qza_or_txt_FA")
+      }else{
+        showModal(modalDialog(title = strong("Error!", style = "color: red"),
+                              "Please check your input files.",
+                              footer = NULL, easyClose = T, size = "l"))
+      }
+      
+      
+      output$func_table_BY_sampleid <- renderDataTable({
+        
+        req(input$sample_data_FA, input$taxonomic_table_FA_txt, input$function_analysis_txt)
+        
+        func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                  job_id(), "_FA",
+                                                  "/func-table7.qza"))[["data"]]
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        return(func_table_BY_sampleid_filtered_tibble)
+        
+      })
+      
+      
+      output$Function_barplot <- renderPlotly({
+        
+        func_table_BY_sampleid <- read_qza(paste0("/home/imuser/web_version/users_files/",
+                                                  job_id(), "_FA",
+                                                  "/func-table7.qza"))[["data"]]
+        
+        taxa_table <- read_qza(paste0("/home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA.qza"))$data
+        reads_persample <- colSums(taxa_table)
+        
+        TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
+        
+        func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
+        
+        for (i in 1:length(reads_persample)) {
+          for (j in 1:nrow(func_table_BY_sampleid_filtered)) {
+            func_table_BY_sampleid_filtered[j,i] <- func_table_BY_sampleid_filtered[j,i]/reads_persample[i]
+          }
+          
+        }
+        
+        func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
+        
+        func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
+        
+        df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
+        
+        df_barplot$feature <- mapvalues(df_barplot$Sample_ID,
+                                        from = Metadata_FA()[,1],
+                                        to = as.character(Metadata_FA()[, input$metadata_FA]))
+        
+        
+        df_barplot_ag_mean <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , mean)
+        colnames(df_barplot_ag_mean)[3] <- "mean"
+        df_barplot_ag_sd <- aggregate(df_barplot$read_percent , by = list(Type=df_barplot$Type, feature=df_barplot$feature) , sd)
+        colnames(df_barplot_ag_sd)[3] <- "sd"
+        
+        df_barplot_ag <- cbind(df_barplot_ag_mean, sd = df_barplot_ag_sd[,3])
+        
+        df_barplot_ag$feature <- factor(df_barplot_ag$feature, levels = stringr::str_sort(unique(df_barplot_ag$feature), numeric = T))
+        df_barplot_ag <- arrange(df_barplot_ag, feature)
+        
+        df_barplot_ag$mean <- round(df_barplot_ag$mean, 2)
+        df_barplot_ag$sd <- round(df_barplot_ag$sd, 2)
+        
+        FA_ggplot <- ggplot(df_barplot_ag, aes(x=Type, y=mean, fill=feature)) + 
+          geom_bar(stat="identity", color="black", 
+                   position=position_dodge()) +
+          geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.005,
+                        position=position_dodge(.9)) + coord_flip() + theme_bw() +
+          labs(x="Function types", y="Relative abundance")+
+          theme(axis.title.x = element_text(color="black", size=20))+
+          theme(axis.title.y = element_text(color="black", size=20))+
+          theme(legend.title=element_blank())
+        
+        
+        y <- list(
+          title = list(text="Function types",standoff=20),
+          tickfont = list(size = 20)
+        )
+        
+        
+        ggplotly(FA_ggplot) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 20)))
+        
+      })
+      
+      output$function_report <- renderUI({
+        
+        a <- read_table(paste0("/home/imuser/web_version/users_files/",
+                               job_id(), "_FA",
+                               "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+        a_report <- a[104:106,2]
+        a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
+        a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
+        a_report[2] <- str_replace_all(a_report[2], pattern = "group", replacement = "function type.")
+        a_report[2] <- str_remove(a_report[2], pattern = "\\(leftovers\\)")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "record", replacement = "taxa")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "group", replacement = "function type")
+        a_report[3] <- str_replace_all(a_report[3], pattern = "taxa", replacement = "taxon.")
+        
+        HTML(paste(a_report[1], a_report[2] ,a_report[3], sep = "<br/>"))
+        
+        
+      })
+      
+      remove_modal_spinner()
+      
+    }
+  })
   
-  
-  # output$word_FA1 <- renderText({
-  #   
-  #   if(is.null(input$taxonomic_table_FA$datapath) == F){
-  #     
-  #     return("")
-  #     
-  #   }else{
-  #     return("Please upload the file from the last steps of the sequnecing preprocessing.")
-  #   }
-  # })
-  
-  
-  
-  
-  # output$word_FA2 <- renderText({
-  #   
-  #   if(file.exists("/home/imuser/qiime_output/func-table7.qza")){
-  #     
-  #     return("")
-  #     
-  #   }else{
-  #     
-  #     return("Please finish the steps of the sequnecing preprocessing.")
-  #   }
-  # })
-  
-  
-  
-  
-  # output$word_FA3 <- renderText({
-  #   
-  #   if(file.exists("/home/imuser/qiime_output/func-table7.qza")){
-  #     
-  #     return("")
-  #     
-  #   }else{
-  #     
-  #     return("Please finish the steps of the sequnecing preprocessing.")
-  #   }
-  # })
-  
-  
+
   observeEvent(input$function_info, {
     showModal(
       modalDialog(
@@ -18603,30 +18824,7 @@ server <- function(session, input, output) {
     }
   )
   
-  # output$func_table_Sp<-downloadHandler(
-  #   
-  #   filename = "function_table_bySpeciesName.csv",
-  #   content = function(file) {
-  #     
-  #     func_table_BY_sampleid <- read_qza("/home/imuser/qiime_output/func-table7.qza")[["data"]]
-  #     
-  #     TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
-  #     
-  #     func_table_BY_sampleid_filtered <- func_table_BY_sampleid[TF_all0,]
-  #     
-  #     func_name_filtered <- rownames(func_table_BY_sampleid_filtered)
-  #     
-  #     
-  #     func_table_BY_speciesname <- read_qza("/home/imuser/qiime_output/groups2record.qza")[["data"]]
-  #     
-  #     func_table_BY_speciesname_filtered <- func_table_BY_speciesname[,func_name_filtered]
-  #     
-  #     func_table_BY_speciesname_filtered_tibble <- cbind("Species names"=rownames(func_table_BY_speciesname_filtered), func_table_BY_speciesname_filtered) %>% as_tibble()
-  #     
-  #     write.csv(func_table_BY_speciesname_filtered_tibble, file, row.names = F)
-  #     
-  #   }
-  # )
+
   
   
   output$FA_plot_download <- downloadHandler(
@@ -18641,7 +18839,16 @@ server <- function(session, input, output) {
                                                 job_id(), "_FA",
                                                 "/func-table7.qza"))[["data"]]
       
-      taxa_table <- read_qza(input$taxonomic_table_FA$datapath)$data
+      if(input$qza_or_txt_FA == "MOCHI/QIIME2 output (.qza)"){
+        
+        taxa_table <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data
+        
+      }else if(input$qza_or_txt_FA == "Plain text table (.txt)"){
+        
+        taxa_table <- read_qza(paste0("/home/imuser/web_version/users_files/", job_id(), "_FA", "/uploaded_taxatable_FA.qza"))$data
+        
+      }
+      
       reads_persample <- colSums(taxa_table)
       
       TF_all0 <- apply(func_table_BY_sampleid, 1, function(x) !all(x==0))
@@ -18658,13 +18865,7 @@ server <- function(session, input, output) {
       func_table_BY_sampleid_filtered_tibble <- cbind("Type"=rownames(func_table_BY_sampleid_filtered), func_table_BY_sampleid_filtered) %>% as_tibble()
       
       func_table_BY_sampleid_filtered_tibble[,-1] <- apply(func_table_BY_sampleid_filtered_tibble[,-1], MARGIN = 2, FUN = as.numeric)
-      
-      # df_barplot <- data.frame(
-      #   Type = func_table_BY_sampleid_filtered_tibble[,1],
-      #   reads = rowSums(func_table_BY_sampleid_filtered_tibble[,-1]),
-      #   treatment = rep(c("low", "hight"), length(func_table_BY_sampleid_filtered_tibble[,1])),
-      #   stringsAsFactors = F
-      # )
+
       
       df_barplot <- gather(func_table_BY_sampleid_filtered_tibble, Sample_ID, read_percent, -Type)
       
@@ -18690,13 +18891,7 @@ server <- function(session, input, output) {
         theme(axis.title.y = element_text(color="black", size=16))
       
 
-      y <- list(
-        title = list(text="Function types",standoff=20),
-        tickfont = list(size = 20)
-      )
-      
-      
-      ggsave(file, plot = FA_plot, width = 80, height = 40, units = "cm")
+      ggsave(file, plot = FA_ggplot, width = 80, height = 40, units = "cm")
     }
   )
   
@@ -25562,7 +25757,7 @@ server <- function(session, input, output) {
         
       })
       
-      output$func_table_ID<-downloadHandler(
+      output$func_table_ID_demo<-downloadHandler(
         
         filename = "function_table_demo.csv",
         content = function(file) {
@@ -30857,7 +31052,7 @@ server <- function(session, input, output) {
         
       })
       
-      output$func_table_ID<-downloadHandler(
+      output$func_table_ID_demo<-downloadHandler(
         
         filename = "function_table_demo.csv",
         content = function(file) {

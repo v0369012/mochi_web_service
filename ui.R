@@ -1636,23 +1636,60 @@ shinyUI(
                                      placement = "right",
                                      allowHTML = TRUE),
                    
-                   fileInput(inputId = "taxonomic_table_FA", 
-                             label = p(HTML("<b>Upload the taxonomic table file </b>"),
-                                       span(shiny::icon("info-circle"),
-                                            id = "info_taxatable_FA")),
-                             multiple = F,
-                             accept = ".qza"),
-                   tippy::tippy_this(elementId = "info_taxatable_FA", 
-                                     tooltip = "<span style='postion:relative;font-size:16px;'>Downloaded from taxonomy classification</span>", 
-                                     placement = "right",
-                                     allowHTML = TRUE),
+                   hr(),
+                   radioButtons(inputId = "qza_or_txt_FA", 
+                                label = "Choose file format",
+                                choices = c("MOCHI/QIIME2 output (.qza)", "Plain text table (.txt)")),
                    
-                   actionButton(inputId = "function_analysis", 
-                                label = strong("Start!"), 
-                                icon = icon("play-circle")
-                                ),
+                   div(
+                     id = "FA_MOCHI_ui",
+                     fileInput(inputId = "taxonomic_table_FA_MOCHI", 
+                               label = p(HTML("<b>Upload the taxonomic table file </b>"),
+                                         span(shiny::icon("info-circle"),
+                                              id = "info_taxatable_FA_MOCHI")),
+                               multiple = F,
+                               accept = ".qza"),
+                     # accept = c(".qza", ".txt")),
+                     tippy::tippy_this(elementId = "info_taxatable_FA_MOCHI", 
+                                       tooltip = "<span style='postion:relative;font-size:16px;'>Downloaded from taxonomy classification</span>", 
+                                       placement = "right",
+                                       allowHTML = TRUE),
+                     
+                     actionButton(inputId = "function_analysis_MOCHI", 
+                                  label = strong("Start!"), 
+                                  icon = icon("play-circle")
+                                  
+                     ),
+                     actionButton("FA_reset_MOCHI", strong("Reset") , icon = icon("trash"))
+                     
+                   ) %>% shinyjs::hidden(),
                    
-                   actionButton("FA_reset", "reset", icon = icon("trash")),
+                   div(
+                     id = "FA_txt_ui",
+                     fileInput(inputId = "taxonomic_table_FA_txt", 
+                               label = p(HTML("<b>Upload the ASV table (Taxon included)</b>"),
+                                         span(shiny::icon("info-circle"),
+                                              id = "info_taxatable_FA_txt")),
+                               multiple = F,
+                               accept = ".txt"),
+                     # accept = c(".qza", ".txt")),
+                     tippy::tippy_this(elementId = "info_taxatable_FA_txt", 
+                                       tooltip = "<span style='font-size:20px;'> Example </span><br>
+                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
+                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
+                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
+                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>", 
+                                       placement = "right",
+                                       allowHTML = TRUE),
+                     
+                     actionButton(inputId = "function_analysis_txt", 
+                                  label = strong("Start!"), 
+                                  icon = icon("play-circle")
+                                  
+                     ),
+                     actionButton("FA_reset_txt", strong("Reset") , icon = icon("trash"))
+                     
+                   ) %>% shinyjs::hidden(),
                    
                    actionButton(inputId = "function_info",
                                 label = "learn more",
