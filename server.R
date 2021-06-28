@@ -2989,26 +2989,47 @@ server <- function(session, input, output) {
   })
   
   observeEvent(input$TA_example, {
-    showModal(
-      modalDialog(
-        title = "Message",
-        HTML("<p>1. Click the download buttons to download the example files.</p>",
-             "<p>2. Upload the example files to inspect the example results."),
-        footer = tagList(
-          # p('Example files', style = "font-weight:700"),
-          downloadButton(outputId = "downloadMetaData", 
-                         label = span("Metadata_example.tsv"),
-                         style = "margin: 5px;color: #317EAC"),
-          downloadButton(outputId = "downloadData", 
-                         label = span("Taxonomic_table_example.qza"),
-                         style = "margin: 5px;color: #317EAC"),
-          downloadButton(outputId = "example_feature_table",
-                         label = span("ASV_table_example.qza"),
-                         style = "margin: 5px;color: #317EAC")
-        ),
-        easyClose = T, size = "l"
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+      showModal(
+        modalDialog(
+          title = "Message",
+          HTML("<p>1. Click the download buttons to download the example files.</p>",
+               "<p>2. Upload the example files to inspect the example results."),
+          footer = tagList(
+            # p('Example files', style = "font-weight:700"),
+            downloadButton(outputId = "downloadMetaData", 
+                           label = span("Metadata_example.tsv"),
+                           style = "margin: 5px;color: #317EAC"),
+            downloadButton(outputId = "downloadData", 
+                           label = span("Taxonomic_table_example.qza"),
+                           style = "margin: 5px;color: #317EAC"),
+            downloadButton(outputId = "example_feature_table",
+                           label = span("ASV_table_example.qza"),
+                           style = "margin: 5px;color: #317EAC")
+          ),
+          easyClose = T, size = "l"
+        )
       )
-    )
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      showModal(
+        modalDialog(
+          title = "Message",
+          HTML("<p>1. Click the download buttons to download the example files.</p>",
+               "<p>2. Upload the example files to inspect the example results."),
+          footer = tagList(
+            # p('Example files', style = "font-weight:700"),
+            downloadButton(outputId = "downloadMetaData", 
+                           label = span("Metadata_example.tsv"),
+                           style = "margin: 5px;color: #317EAC"),
+            downloadButton(outputId = "downloadData_txt", 
+                           label = span("ASV_table.txt"),
+                           style = "margin: 5px;color: #317EAC")
+          ),
+          easyClose = T, size = "l"
+        )
+      )
+    }
+    
   })
   
   observeEvent(input$FA_example, {
@@ -13073,6 +13094,18 @@ server <- function(session, input, output) {
     },
     
     contentType = "application/qza"
+    
+  )
+  
+  output$downloadData_txt <- downloadHandler(
+    
+    filename <-"ASV_table.txt",
+    
+    content = function(file){
+      file.copy("/home/imuser/example_files/single/ASVs_table_taxon_single.txt", file)
+    },
+    
+    contentType = "application/txt"
     
   )
   
