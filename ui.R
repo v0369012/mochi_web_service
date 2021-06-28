@@ -924,15 +924,69 @@ shinyUI(
                                 choices = c("MOCHI/QIIME2 output (.qza)", "Plain text table (.txt)")),
                    
                    
-                   uiOutput("TA_upload_ui"),
+                   # uiOutput("TA_upload_ui"),
                    
-                   checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
-                   tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
-                   actionButton(inputId = "TA_start", 
-                                label = strong("Start!"), 
-                                icon = icon("play-circle")
-                   ),
-                   actionButton("TA_reset", "reset", icon = icon("trash")),
+                   # checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
+                   # tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
+                   # actionButton(inputId = "TA_start", 
+                   #              label = strong("Start!"), 
+                   #              icon = icon("play-circle")
+                   # ),
+                   # actionButton("TA_reset", "reset", icon = icon("trash")),
+                   
+                   div(id = "TA_MOCHI_ui",
+                       
+                       fileInput(inputId = "taxonomic_table",
+                                 label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
+                                 multiple = F,
+                                 accept = ".qza"),
+                       
+                       tippy::tippy_this(elementId = "info_taxatable", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
+                       
+                       
+                       fileInput(inputId = "table_dada2_upload",
+                                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
+                                 multiple = F,
+                                 accept = ".qza"),
+                       tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
+                       
+                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
+                       
+                       tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
+                       
+                       actionButton(inputId = "TA_start_MOCHI", 
+                                    label = strong("Start!"), 
+                                    icon = icon("play-circle")
+                       ),
+                       actionButton("TA_reset_MOCHI", strong("Reset") , icon = icon("trash"))
+                       
+                   )%>% shinyjs::hidden() ,
+                   
+                   div(id="TA_txt_ui",
+                       
+                       fileInput(inputId = "table_upload_txt",
+                                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
+                                 multiple = F,
+                                 accept = ".txt"),
+                       tippy::tippy_this(elementId = "info_ASVs_txt",
+                                         tooltip = "<span style='font-size:20px;'> Example </span><br>
+                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
+                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
+                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
+                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>",
+                                         allowHTML = TRUE,
+                                         placement = "right",
+                                         themes = "light"),
+                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
+                       tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
+                       
+                       actionButton(inputId = "TA_start_txt", 
+                                    label = strong("Start!"), 
+                                    icon = icon("play-circle")
+                       ),
+                       actionButton("TA_reset_txt", strong("Reset") , icon = icon("trash"))
+                   ) %>% shinyjs::hidden(),
+                   
                    actionButton("TA_example",
                                 strong("Example files", style = "margin: 5px;font-size: 18px"),
                                 icon = icon("chalkboard-teacher"),
@@ -2807,7 +2861,7 @@ shinyUI(
     tags$footer(
       tags$span(
         tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/24/2021"),
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/28/2021"),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 

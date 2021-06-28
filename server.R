@@ -1091,10 +1091,14 @@ server <- function(session, input, output) {
     values_4$upload_state <- 'uploaded'
   })
   
-  observeEvent(input$TA_reset, {
+  observeEvent(input$TA_reset_MOCHI, {
     values_1$upload_state <- 'reset'
     values_2$upload_state <- 'reset'
     values_3$upload_state <- 'reset'
+  })
+  
+  observeEvent(input$TA_reset_txt, {
+    values_1$upload_state <- 'reset'
     values_4$upload_state <- 'reset'
   })
   
@@ -1129,56 +1133,56 @@ server <- function(session, input, output) {
   })
   
   file_input_4 <- reactive({
-    if (is.null(values_3$upload_state)) {
+    if (is.null(values_4$upload_state)) {
       return(NULL)
     } else if (values_4$upload_state == 'uploaded') {
-      return(input$table_dada2_upload)
+      return(input$table_upload_txt)
     } else if (values_4$upload_state == 'reset') {
       return(NULL)
     }
   })
   
   
-  output$TA_upload_ui <- renderUI({
-    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
-      tagList(
-        fileInput(inputId = "taxonomic_table", 
-                  label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
-                  multiple = F,
-                  accept = ".qza"),
-        
-        tippy::tippy_this(elementId = "info_taxatable", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
-        
-        
-        fileInput(inputId = "table_dada2_upload", 
-                  label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
-                  multiple = F,
-                  accept = ".qza"),
-        tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T)
-      )
-    }else if(input$qza_or_txt == "Plain text table (.txt)"){
-      tagList(
-        fileInput(inputId = "table_upload_txt", 
-                  label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
-                  multiple = F,
-                  accept = ".txt"),
-        tippy::tippy_this(elementId = "info_ASVs_txt", 
-                          tooltip = "<span style='font-size:20px;'> Example </span><br>
-                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
-                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
-                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
-                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>", 
-                          allowHTML = TRUE,
-                          placement = "right",
-                          themes = "light"),
-
-      )
-      
-      
-      
-    }
-    
-  })
+  # output$TA_upload_ui <- renderUI({
+  #   if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+  #     tagList(
+  #       fileInput(inputId = "taxonomic_table", 
+  #                 label = p(HTML("<b>Upload the taxonomic table file </b>"),span(shiny::icon("info-circle"), id = "info_taxatable")),
+  #                 multiple = F,
+  #                 accept = ".qza"),
+  #       
+  #       tippy::tippy_this(elementId = "info_taxatable", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
+  #       
+  #       
+  #       fileInput(inputId = "table_dada2_upload", 
+  #                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs")),
+  #                 multiple = F,
+  #                 accept = ".qza"),
+  #       tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T)
+  #     )
+  #   }else if(input$qza_or_txt == "Plain text table (.txt)"){
+  #     tagList(
+  #       fileInput(inputId = "table_upload_txt", 
+  #                 label = p(HTML("<b>Upload the ASV table file </b>"),span(shiny::icon("info-circle"), id = "info_ASVs_txt")),
+  #                 multiple = F,
+  #                 accept = ".txt"),
+  #       tippy::tippy_this(elementId = "info_ASVs_txt", 
+  #                         tooltip = "<span style='font-size:20px;'> Example </span><br>
+  #                         <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
+  #                         <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
+  #                         <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
+  #                         <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>", 
+  #                         allowHTML = TRUE,
+  #                         placement = "right",
+  #                         themes = "light"),
+  # 
+  #     )
+  #     
+  #     
+  #     
+  #   }
+  #   
+  # })
   
   
   # FA fileinput ----
@@ -1235,15 +1239,18 @@ server <- function(session, input, output) {
   
   TaxaTable <- reactive({
     
-    req(input$taxonomic_table)
-    req(input$sample_data)
-    req(input$table_dada2_upload)
-    infile1 <- input$taxonomic_table
-    
-    if (is.null(infile1))
-      return(NULL)
-    
-    # if(str_detect(infile1$datapath, ".qza")){
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+      
+      req(input$taxonomic_table)
+      req(input$sample_data)
+      req(input$table_dada2_upload)
+      req(input$TA_start_MOCHI)
+      
+      infile1 <- input$taxonomic_table
+      
+      if (is.null(infile1))
+        return(NULL)
+      
       validate(
         need(infile1 != "", message = F),
         need(read_qza(infile1$datapath)$type == "FeatureTable[Frequency]", message = "")
@@ -1251,30 +1258,32 @@ server <- function(session, input, output) {
       
       read_qza(input$taxonomic_table$datapath)$data
       
-    # }else if(str_detect(infile1$datapath, ".tsv")){
-    #   
-    #   validate(
-    #     need(infile1 != "", message = F)
-    #   )
-    #   
-    #   a <- read.table(input$taxonomic_table$datapath, header = T, sep = "\t")
-    #   a_rownames <- a[,1]
-    #   rownames(a) <- a_rownames
-    #   a <- a[,-1]
-    #   return(a)
-    #   
-    # }else if(str_detect(infile1$datapath, ".csv")){
-    #   
-    #   validate(
-    #     need(infile1 != "", message = F)
-    #   )
-    #   
-    #   a <- read.csv(input$taxonomic_table$datapath, header = T)
-    #   a_rownames <- a[,1]
-    #   rownames(a) <- a_rownames
-    #   a <- a[,-1]
-    #   return(a)
-    # }
+      
+      
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      
+      req(input$table_upload_txt)
+      req(input$TA_start_txt)
+      
+      
+      a <- read.table(input$table_upload_txt$datapath, sep = "\t", header = T)
+      b <- a[,-1]
+      c <- cbind(taxonomy=b[,ncol(b)], b[,-ncol(b)])
+      d <- aggregate(c[,-1], by=list(c[,1]), FUN=sum)
+      
+      write.table(d, "/home/imuser/taxa_table_upload_txt.txt", sep = "\t", quote = F, row.names = F)
+      write.table(d, paste0("/home/imuser/web_version/users_files/", job_id(), "/taxa_table_upload_txt.txt"), sep = "\t", quote = F, row.names = F)
+      
+      qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
+      biom_cmd <- "/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/biom"
+      system(paste0(biom_cmd, " convert -i ", " /home/imuser/web_version/users_files/", job_id(),"/taxa_table_upload_txt.txt "," -o /home/imuser/web_version/users_files/", job_id(),"/uploaded_taxatable_.biom --table-type='OTU table' --to-hdf5"))
+      system(paste0(qiime_cmd, " tools import --input-path /home/imuser/web_version/users_files/", job_id(),"/uploaded_taxatable_.biom --type 'FeatureTable[Frequency]' --input-format BIOMV210Format --output-path /home/imuser/web_version/users_files/", job_id(),"/uploaded_taxatable_.qza"))
+      
+      read_qza(paste0("/home/imuser/web_version/users_files/", job_id(),"/uploaded_taxatable_.qza"))$data
+      
+     
+    }
+
     
     
   }) # read the input file (.qza)
@@ -1302,9 +1311,10 @@ server <- function(session, input, output) {
           sep = ";"
         )
       
-      # replace "__" to "Unassigned"
+      # replace "__", "NA" to "Unassigned"
       df_data<-replace(df_data, df_data=="", "Unassigned")
       df_data<-replace(df_data, df_data=="__", "Unassigned")
+      df_data <- df_data %>% replace(is.na(.), "Unassigned")
       
       return(as.data.frame(df_data))
     } # clean the taxatable 
@@ -1346,8 +1356,24 @@ server <- function(session, input, output) {
   
   
   asv_table <- reactive({
-    req(input$table_dada2_upload)
-    asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+    
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+      req(input$table_dada2_upload)
+      asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+      
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      
+      req(input$table_upload_txt)
+      a <- read.table(input$table_upload_txt$datapath, sep = "\t", header = T)
+      b <- a[,-ncol(a)] # remove taxa column
+      c <- as.matrix(b)
+      rownames(c) <- c[,1]
+      d <- c[,-1]
+      e <- apply(d, 2, as.numeric)
+      rownames(e) <- c[,1]
+      return(e)
+    }
+    
     return(asv_table)
   })
   
@@ -1367,12 +1393,12 @@ server <- function(session, input, output) {
       
       metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t")
       
-      req(input$table_dada2_upload)
-      asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+      # req(input$table_dada2_upload)
+      # asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
       
       colnames(metadata)[1] <- "SampleID"
       
-      metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+      metadata <- filter(metadata, SampleID %in% colnames(asv_table()))
       colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
       col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
@@ -1471,11 +1497,11 @@ server <- function(session, input, output) {
       
       metadata <- read.table(input$sample_data$datapath, header = T, na.strings = "", sep = "\t")
       
-      req(input$table_dada2_upload)
-      asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
+      # req(input$table_dada2_upload)
+      # asv_table <- read_qza(input$table_dada2_upload$datapath)[["data"]]
       
       colnames(metadata)[1] <- "SampleID"
-      metadata <- filter(metadata, SampleID %in% colnames(asv_table))
+      metadata <- filter(metadata, SampleID %in% colnames(asv_table()))
       colnames(metadata) <- stringr::str_replace_all(colnames(metadata), "-", ".")
       
       col_vector <- apply(as.data.frame(metadata[,2:ncol(metadata)]), MARGIN = 2, FUN = function(x){length(unique(x))})
@@ -1484,7 +1510,7 @@ server <- function(session, input, output) {
         
         position_non1 <- which(col_vector!=1)
         
-        metadata <- metadata[, c(1, position_non1+1)] %>% as.data.frame()
+        metadata <- metadata[,c(1, position_non1+1)] %>% as.data.frame()
         
       }
       
@@ -1503,10 +1529,9 @@ server <- function(session, input, output) {
         }
       }) %>% unlist()
       
-      metadata <- metadata[, c("SampleID", OKstats_col)] %>% as.data.frame()
+      metadata <- metadata[, c("SampleID", OKstats_col)]
       
       return(metadata)
-      
     }
   })
   
@@ -1859,9 +1884,10 @@ server <- function(session, input, output) {
           sep = ";"
         )
       
-      # replace "__" to "Unassigned"
+      # replace "__", "NA" to "Unassigned"
       df_data<-replace(df_data, df_data=="", "Unassigned")
       df_data<-replace(df_data, df_data=="__", "Unassigned")
+      df_data <- df_data %>% replace(is.na(.), "Unassigned")
       
       return(as.data.frame(df_data))
     } # clean the taxatable 
@@ -1886,54 +1912,75 @@ server <- function(session, input, output) {
     
   })
   
+  # show TA upload ui
+  observe({
+    if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
+      shinyjs::show("TA_MOCHI_ui")
+      shinyjs::hide("TA_txt_ui")
+    }else if(input$qza_or_txt == "Plain text table (.txt)"){
+      shinyjs::show("TA_txt_ui")
+      shinyjs::hide("TA_MOCHI_ui")
+    }
+  })
   
-  observeEvent(input$TA_start, {
+  
+  observeEvent(input$TA_start_MOCHI, {
     
     if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
-    
-    if(is.null(file_input_1()) || is.null(file_input_2()) || is_null(file_input_3())) {
       
-      showModal(modalDialog(title = strong("Error!", style = "color: red"), 
-                            "Please upload the files.", 
-                            footer = NULL, easyClose = T, size = "l"))
-    
-      shinyjs::hide("taxatable_ui")
-      
-      shinyjs::hide("taxabarplot_ui")
-      
-      shinyjs::hide("taxaheatmap_ui") 
-      
-      shinyjs::hide("krona_ui")
-      
-      shinyjs::hide("alpha_ui")
-      
-      shinyjs::hide("beta_ui")
-      
-      shinyjs::hide("phylo_ui")
-      
-      shinyjs::hide("ancom_ui")
-      
-      
-    }else{
-      shinyjs::show("taxatable_ui")
-      
-      shinyjs::show("taxabarplot_ui")
-      
-      shinyjs::show("taxaheatmap_ui") 
-      
-      shinyjs::show("krona_ui")
-      
-      shinyjs::show("alpha_ui")
-      
-      shinyjs::show("beta_ui")
-      
-      shinyjs::show("phylo_ui")
-      
-      shinyjs::show("ancom_ui")
-      
+      if(is.null(file_input_1()) || is.null(file_input_2()) || is_null(file_input_3())) {
+        
+        showModal(modalDialog(title = strong("Error!", style = "color: red"), 
+                              "Please upload the files.", 
+                              footer = NULL, easyClose = T, size = "l"))
+        
+        shinyjs::hide("taxatable_ui")
+        
+        shinyjs::hide("taxabarplot_ui")
+        
+        shinyjs::hide("taxaheatmap_ui") 
+        
+        shinyjs::hide("krona_ui")
+        
+        shinyjs::hide("alpha_ui")
+        
+        shinyjs::hide("beta_ui")
+        
+        shinyjs::hide("phylo_ui")
+        
+        shinyjs::hide("ancom_ui")
+        
+        
+      }else{
+        
+        shinyjs::hide("qza_or_txt")
+        
+        shinyjs::show("taxatable_ui")
+        
+        shinyjs::show("taxabarplot_ui")
+        
+        shinyjs::show("taxaheatmap_ui") 
+        
+        shinyjs::show("krona_ui")
+        
+        shinyjs::show("alpha_ui")
+        
+        shinyjs::show("beta_ui")
+        
+        shinyjs::show("phylo_ui")
+        
+        shinyjs::show("ancom_ui")
+        
+      }
     }
+    
+  })
+  
+  
+  observeEvent(input$TA_start_txt, {
+    
+    if(input$qza_or_txt == "Plain text table (.txt)"){
       
-    }else if(input$qza_or_txt == "Plain text table (.txt)"){
       if(is.null(file_input_1()) || is.null(file_input_4())) {
         
         showModal(modalDialog(title = strong("Error!", style = "color: red"), 
@@ -1958,6 +2005,9 @@ server <- function(session, input, output) {
         
         
       }else{
+        
+        shinyjs::hide("qza_or_txt")
+        
         shinyjs::show("taxatable_ui")
         
         shinyjs::show("taxabarplot_ui")
@@ -1976,30 +2026,9 @@ server <- function(session, input, output) {
         
       }
     }
-    
   })
   
-  # observeEvent(input$ANCOM_start, {
-  #   shinyjs::show("ancom_output_ui")
-  #   shinyjs::show("ancom_table_download")
-  # })
-  
-  # observeEvent(req(input$phylogenetic_tree, input$table_dada2_upload, input$rep_seq_dada2_upload), {
-  #   
-  #   # if(file.exists("/home/imuser/qiime_output/core-metrics-results/faith_pd_vector.qza")){
-  #     # if(file.exists(paste0("/home/imuser/web_version/users_files/",
-  #     #                        job_id(),
-  #     #                       "_DA_phylo",
-  #     #                       "/core-metrics-results/faith_pd_vector.qza"))){
-  #     shinyjs::show("phylo_output_ui")
-  #   # }
-  #   
-  #   
-  # })
-  
-  # observeEvent(input$checkbox_primer == F, {
-  #   shinyjs::toggle("primer_trim")
-  # })
+
   
   # functional analysis input file
   
@@ -12247,9 +12276,10 @@ server <- function(session, input, output) {
           sep = ";"
         )
       
-      # replace "__" to "Unassigned"
+      # replace "__", "NA" to "Unassigned"
       df_data<-replace(df_data, df_data=="", "Unassigned")
       df_data<-replace(df_data, df_data=="__", "Unassigned")
+      df_data <- df_data %>% replace(is.na(.), "Unassigned")
       
       return(as.data.frame(df_data))
     }
@@ -12799,7 +12829,7 @@ server <- function(session, input, output) {
     
     names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
       
-      sapply(1:length(unique(metadata_beta[, i])), function(j){
+      lapply(1:length(unique(metadata_beta[, i])), function(j){
         
         update_rownames(i, metadata_beta,j)
         
@@ -12875,7 +12905,7 @@ server <- function(session, input, output) {
     
     names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
       
-      sapply(1:length(unique(metadata_beta[, i])), function(j){
+      lapply(1:length(unique(metadata_beta[, i])), function(j){
         
         update_rownames(i, metadata_beta,j)
         
@@ -13086,28 +13116,51 @@ server <- function(session, input, output) {
   
   # Taxonomy analysis upload reset----
   
-  observeEvent(input$TA_reset,{
- 
-        shinyjs::reset("sample_data")
-        shinyjs::reset("taxonomic_table")
-        shinyjs::reset("table_dada2_upload")
-        shinyjs::hide("taxatable_ui")
-        shinyjs::hide("taxabarplot_ui")
-        shinyjs::hide("taxaheatmap_ui") 
-        shinyjs::hide("krona_ui")
-        shinyjs::hide("alpha_ui")
-        shinyjs::hide("beta_ui")
-        shinyjs::hide("phylo_ui")
-        shinyjs::hide("phylo_output_ui")
-        shinyjs::hide("ancom_ui")
-        shinyjs::hide("ancom_output_ui")
-        closeAlert(session, "sampleAlert")
-        shinyjs::reset("TA_start")
-        shinyjs::reset("phylogenetic_tree")
-        shinyjs::reset("rep_seq_dada2_upload")
-        shinyjs::reset("ANCOM_start")
+  observeEvent(input$TA_reset_MOCHI,{
     
- 
+    shinyjs::reset("sample_data")
+    shinyjs::reset("taxonomic_table")
+    shinyjs::reset("table_dada2_upload")
+    shinyjs::reset("table_upload_txt")
+    shinyjs::hide("taxatable_ui")
+    shinyjs::hide("taxabarplot_ui")
+    shinyjs::hide("taxaheatmap_ui") 
+    shinyjs::hide("krona_ui")
+    shinyjs::hide("alpha_ui")
+    shinyjs::hide("beta_ui")
+    shinyjs::hide("phylo_ui")
+    shinyjs::hide("phylo_output_ui")
+    shinyjs::hide("ancom_ui")
+    shinyjs::hide("ancom_output_ui")
+    closeAlert(session, "sampleAlert")
+    
+    shinyjs::reset("rep_seq_dada2_upload")
+    
+    shinyjs::show("qza_or_txt")
+    
+  })
+  
+  observeEvent(input$TA_reset_txt,{
+    
+    shinyjs::reset("sample_data")
+    shinyjs::reset("taxonomic_table")
+    shinyjs::reset("table_dada2_upload")
+    shinyjs::reset("table_upload_txt")
+    shinyjs::hide("taxatable_ui")
+    shinyjs::hide("taxabarplot_ui")
+    shinyjs::hide("taxaheatmap_ui") 
+    shinyjs::hide("krona_ui")
+    shinyjs::hide("alpha_ui")
+    shinyjs::hide("beta_ui")
+    shinyjs::hide("phylo_ui")
+    shinyjs::hide("phylo_output_ui")
+    shinyjs::hide("ancom_ui")
+    shinyjs::hide("ancom_output_ui")
+    closeAlert(session, "sampleAlert")
+    
+    shinyjs::reset("rep_seq_dada2_upload")
+    
+    shinyjs::show("qza_or_txt")
   })
   
   # FA reset
@@ -13357,7 +13410,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -13589,6 +13642,11 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      # Replace NA to "Unassigned"
+      barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+      
+      barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+      
       # Get Level
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
       
@@ -13668,7 +13726,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -13786,6 +13844,11 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      # Replace NA to "Unassigned"
+      barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+      
+      barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+      
       # Get Level
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
       
@@ -13834,7 +13897,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -14229,7 +14292,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
         
-        sapply(1:length(unique(metadata[, i])), function(j){
+        lapply(1:length(unique(metadata[, i])), function(j){
           
           update_rownames(i, metadata,j)
           
@@ -14394,6 +14457,11 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      # Replace NA to "Unassigned"
+      barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+      
+      barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+      
       # Get Level
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
       
@@ -14473,7 +14541,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -14586,6 +14654,11 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      # Replace NA to "Unassigned"
+      barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+      
+      barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+      
       # Get Level
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
       
@@ -14634,7 +14707,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(Metadata_stats())[1:ncol(Metadata_stats())], function(i){
         
-        sapply(1:length(unique(Metadata_stats()[, i])), function(j){
+        lapply(1:length(unique(Metadata_stats()[, i])), function(j){
           
           update_rownames(i, Metadata_stats(),j)
           
@@ -16494,7 +16567,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
         
-        sapply(1:length(unique(metadata_beta[, i])), function(j){
+        lapply(1:length(unique(metadata_beta[, i])), function(j){
           
           update_rownames(i, metadata_beta,j)
           
@@ -16655,7 +16728,7 @@ server <- function(session, input, output) {
       
       names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
         
-        sapply(1:length(unique(metadata_beta[, i])), function(j){
+        lapply(1:length(unique(metadata_beta[, i])), function(j){
           
           update_rownames(i, metadata_beta,j)
           
@@ -20274,9 +20347,11 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
+          
           
           return(as.data.frame(df_data))
         }
@@ -20491,9 +20566,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -20602,6 +20678,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -20681,7 +20762,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -20799,6 +20880,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -20847,7 +20933,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -21232,7 +21318,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -21355,9 +21441,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -21444,6 +21531,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -21523,7 +21615,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -21942,7 +22034,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -22726,7 +22818,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -22802,7 +22894,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -23991,7 +24083,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -24149,7 +24241,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -25593,9 +25685,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         }
@@ -25810,9 +25903,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -25921,6 +26015,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -26000,7 +26099,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -26118,6 +26217,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -26166,7 +26270,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -26551,7 +26655,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -26674,9 +26778,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -26763,6 +26868,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -26842,7 +26952,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -27261,7 +27371,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -28024,7 +28134,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -28100,7 +28210,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -29268,7 +29378,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -29426,7 +29536,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -30871,9 +30981,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         }
@@ -31088,9 +31199,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -31199,6 +31311,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -31278,7 +31395,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -31396,6 +31513,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -31444,7 +31566,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -31829,7 +31951,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(metadata)[1:ncol(metadata)], function(i){
             
-            sapply(1:length(unique(metadata[, i])), function(j){
+            lapply(1:length(unique(metadata[, i])), function(j){
               
               update_rownames(i, metadata,j)
               
@@ -31952,9 +32074,10 @@ server <- function(session, input, output) {
               sep = ";"
             )
           
-          # replace "__" to "Unassigned"
+          # replace "__", "NA" to "Unassigned"
           df_data<-replace(df_data, df_data=="", "Unassigned")
           df_data<-replace(df_data, df_data=="__", "Unassigned")
+          df_data <- df_data %>% replace(is.na(.), "Unassigned")
           
           return(as.data.frame(df_data))
         } # clean the taxatable 
@@ -32041,6 +32164,11 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          # Replace NA to "Unassigned"
+          barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
+          
+          barplot_taxa_table_data_percent <- as.tibble(barplot_taxa_table_data_percent_df)
+          
           # Get Level
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -32120,7 +32248,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -32539,7 +32667,7 @@ server <- function(session, input, output) {
           
           names_list <- lapply(colnames(Metadata_stats_demo())[1:ncol(Metadata_stats_demo())], function(i){
             
-            sapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
+            lapply(1:length(unique(Metadata_stats_demo()[, i])), function(j){
               
               update_rownames(i, Metadata_stats_demo(),j)
               
@@ -33301,7 +33429,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -33377,7 +33505,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -34545,7 +34673,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
@@ -34703,7 +34831,7 @@ server <- function(session, input, output) {
         
         names_list <- lapply(colnames(metadata_beta)[1:ncol(metadata_beta)], function(i){
           
-          sapply(1:length(unique(metadata_beta[, i])), function(j){
+          lapply(1:length(unique(metadata_beta[, i])), function(j){
             
             update_rownames(i, metadata_beta,j)
             
