@@ -950,9 +950,9 @@ shinyUI(
                                  accept = ".qza"),
                        tippy::tippy_this(elementId = "info_ASVs", tooltip = "<span style='font-size:16px;'>Downloaded from taxonomy classification</span>", placement = "right", allowHTML = T),
                        
-                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
+                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check_MOCHI"))),
                        
-                       tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
+                       tippy::tippy_this(elementId = "18S_check_MOCHI", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right", allowHTML = T),
                        
                        actionButton(inputId = "TA_start_MOCHI", 
                                     label = strong("Start!"), 
@@ -977,8 +977,9 @@ shinyUI(
                                          allowHTML = TRUE,
                                          placement = "right",
                                          themes = "light"),
-                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check"))),
-                       tippy::tippy_this(elementId = "18S_check", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right"),
+                       checkboxInput(inputId = "18S", label = p(HTML("<b>18S rRNA</b>"),span(shiny::icon("info-circle"), id = "18S_check_txt"))),
+                       
+                       tippy::tippy_this(elementId = "18S_check_txt", tooltip = "Select this checkbox if the sequences are 18S rRNA.", placement = "right", allowHTML = T),
                        
                        actionButton(inputId = "TA_start_txt", 
                                     label = strong("Start!"), 
@@ -2898,7 +2899,7 @@ shinyUI(
     tags$footer(
       tags$span(
         tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/28/2021"),
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/29/2021"),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 
