@@ -13758,6 +13758,7 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      
       # Replace NA to "Unassigned"
       barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
       
@@ -13960,6 +13961,7 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      
       # Replace NA to "Unassigned"
       barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
       
@@ -14119,6 +14121,8 @@ server <- function(session, input, output) {
       barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
+      
+      barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
       
       
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -14360,6 +14364,8 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
+      
       
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
       
@@ -14573,6 +14579,7 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      
       # Replace NA to "Unassigned"
       barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
       
@@ -14770,6 +14777,7 @@ server <- function(session, input, output) {
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
       
+      
       # Replace NA to "Unassigned"
       barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
       
@@ -14924,6 +14932,8 @@ server <- function(session, input, output) {
       barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
+      
+      barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
       
       
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -15164,6 +15174,8 @@ server <- function(session, input, output) {
       barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                barplot_taxa_table_data_percent=="",
                                                "Unassigned")
+      
+      barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
       
       
       barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -21283,6 +21295,7 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          
           # Replace NA to "Unassigned"
           barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
           
@@ -21434,6 +21447,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -21672,6 +21687,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -21934,6 +21951,7 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          
           # Replace NA to "Unassigned"
           barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
           
@@ -22135,6 +22153,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -26418,6 +26438,7 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          
           # Replace NA to "Unassigned"
           barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
           
@@ -26772,6 +26793,8 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
+          
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -27009,6 +27032,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -27271,6 +27296,7 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          
           # Replace NA to "Unassigned"
           barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
           
@@ -27472,6 +27498,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -32068,6 +32096,8 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
+          
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
           
@@ -32305,6 +32335,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]
@@ -32567,6 +32599,7 @@ server <- function(session, input, output) {
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
           
+          
           # Replace NA to "Unassigned"
           barplot_taxa_table_data_percent_df <- as.data.frame(barplot_taxa_table_data_percent) %>% replace(is.na(.), "Unassigned")
           
@@ -32768,6 +32801,8 @@ server <- function(session, input, output) {
           barplot_taxa_table_data_percent<-replace(barplot_taxa_table_data_percent,
                                                    barplot_taxa_table_data_percent=="",
                                                    "Unassigned")
+          
+          barplot_taxa_table_data_percent<-barplot_taxa_table_data_percent %>% replace(is.na(.), "Unassigned")
           
           
           barplot_taxa_table_data_percent_Level<-barplot_taxa_table_data_percent[,c(Level,"Sample_ID","read_percentage")]

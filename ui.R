@@ -969,11 +969,11 @@ shinyUI(
                                  multiple = F,
                                  accept = ".txt"),
                        tippy::tippy_this(elementId = "info_ASVs_txt",
-                                         tooltip = "<span style='font-size:20px;'> Example </span><br>
-                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxon </span><br>
-                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | 00001 </span><br>
-                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | 00002 </span><br>
-                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | 00003 </span>",
+                                         tooltip = "<span style='font-size:20px;left:0px;'> Example </span><br>
+                          <span style='font-size:16px;'> ASV | A | B | C | D | E | F | G | ... | Taxonomy </span><br>
+                          <span style='font-size:16px;'> 001 | 0 | 0 | 8 | 2 | 0 | 0 | 0 | ... | k_..;p_..</span><br>
+                          <span style='font-size:16px;'> 002 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | ... | k_..;p_..</span><br>
+                          <span style='font-size:16px;'> 003 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | ... | k_..;p_..</span>",
                                          allowHTML = TRUE,
                                          placement = "right",
                                          themes = "light"),
