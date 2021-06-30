@@ -2907,51 +2907,7 @@ server <- function(session, input, output) {
     }
   )
   
-  # Demo files ----
-  
-  observe({
-    req(input$seqs_type)
-    # if(input$seqs_type == "Single end"){
-      output$seqs_example_download <- downloadHandler(
-        filename = "single_seqs_example.zip",
-        content = function(file){
-          file.copy(from = "/home/imuser/seqs_demo/single_seqs_demo.zip", 
-                    to = file)
-        }
-      )
-    # }else if(input$seqs_type == "Paired end"){
-    #   output$seqs_example_download <- downloadHandler(
-    #     filename = "paired_seqs_demo.zip",
-    #     content = function(file){
-    #       file.copy(from = "/home/imuser/seqs_demo/paired_seqs_demo.zip", 
-    #                 to = file)
-    #     }
-    #   )
-    # }
-  })
-  
-    
-  
-  
-  
-  
-  output$metadata_demo_download_single <- downloadHandler(
-    filename = "demo_metadata_single.tsv",
-    content = function(file){
-      file.copy(from = "/home/imuser/metadata_demo/demo_metadata_single.tsv",
-                to = file)
-    }
-  )
-  
-  output$metadata_demo_download_paired <- downloadHandler(
-    filename = "demo_metadata_paired.tsv",
-    content = function(file){
-      file.copy(from = "/home/imuser/metadata_demo/demo_metadata_paired.tsv",
-                to = file)
-    }
-  )
-  
-  
+
   observeEvent(input$Q_sampling_depth, {
 
     showModal(modalDialog(title = strong("Message"),
