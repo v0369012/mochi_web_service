@@ -22,16 +22,7 @@ server <- function(session, input, output) {
     # system("sudo chmod -R 777 /var/www/html")
     system("sed -i 's/Eukaryota;//g' /home/imuser/taxa_database/PR2/18S/taxonomy/pr2_version_4.12.0_18S_mothur.tax")
   })
-  
-  # observe({
-  #   Sys.sleep(5)
-  #   showModal(modalDialog(
-  #     title = "Message",
-  #     HTML("<p>Welcome to MOCHI! Click <b> Sequecne Preprocessing/Step 1. Sequence summary</b> on top bar to start analysis.</p>"),
-  #     footer = NULL,
-  #     easyClose = T
-  #   ))
-  # })
+
   
   # Home page ----------------------------------------------------------------------------------------------------- 
   output$home_page <- renderUI({
@@ -41,12 +32,7 @@ server <- function(session, input, output) {
     qiime_cmd <- '/home/imuser/miniconda3/envs/qiime2-2021.4-Pacbio/bin/qiime'
     Sys.setenv(LANG="C.UTF-8")
     tagList(
-      # img(src = "https://mochi.life.nctu.edu.tw/mochi_title.png", height = 76, width = 300, 
-      #     style = "position:relative;margin: 10px;left: -20px"),
-      # span(" A 16S rRNA NGS data analytical tool for microbiota",
-      #      style = "position:relative;color: #009900; font-size: 16px; font-weight: 600; font-family: Comic Sans MS;bottom:-20px;"),
-      # span(strong("M"),"icrobiota amplic", strong("O"), "n ", strong("CH"),"aracterization ", strong("I"), "mplement",
-      #    style = "position:relative;color:#009900;font-family: Comic Sans MS;bottom:-20px;left: -20px;font-size: 20px;"),
+      
       h1("Welcome to MOCHI!", 
            span("(",strong("M", .noWS = "outside"),"icrobiota amplic",
                 strong("O", .noWS = "outside"),"n ",
@@ -78,32 +64,13 @@ server <- function(session, input, output) {
       
 )
     
-    
-    # dir_list <- list()
-    # dir_list[[1]] <- is_empty(parseDirPath(roots = c(raw_data ="/home/imuser/raw_data"), selection = input$dirs))
-    # return(dir_list)
-    # return(my_qiime_ip)
-    # return(getwd())
-    # return(system("whoami", intern = T))
-    # return(system("echo ~", intern = T))
-    # return(system("python /home/imuser/test.py", intern = T))
-    # return(system("locale -a", intern = T))
-    # use_virtualenv("qiime2-2019.10")
-    # return(Sys.getenv("PATH"))
-    # return(system("echo $PATH", intern = T))
-    # return(system("which qiime", intern = T))
-    # return(system(paste(qiime_cmd, "--version"), intern = T))
-    # return(system("echo $LANG", intern = T))
-    # print(as.character(file.exists("/home/imuser/www/Krona_rawdata.html")))
-    
+
   })
   
  
   
-  # shinyDirChoose(input,
-  #                id = 'dirs',
-  #                roots = c(raw_data ="/home/imuser/raw_data"))       # Browse server side dirs
   
+  # define level  
   level_group <- reactive({
     if(input$`18S`){
       return(c("Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7"))
@@ -112,7 +79,7 @@ server <- function(session, input, output) {
     }
   })
   
-  
+  # 18S button
   observeEvent(input$`18S`, {
     updateSelectInput(session, 
                       inputId = "select_level_bar",
@@ -11437,18 +11404,18 @@ server <- function(session, input, output) {
     file.remove(paste0("/home/imuser/web_version/users_files/", input$input_job_id_taxa, "/ref-seqs.qza"))
     if(input$primer_f != "other" & input$primer_r != "other"){
       if(input$seqs_type == "Single end"){
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
         system(paste0(qiime_cmd, 
                       " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
                       "/identity_otus.qza",
                       " --p-f-primer ", primer_list[[input$primer_f]], 
                       " --p-r-primer ", primer_list[[input$primer_r]], 
-                      " --p-trunc-len ", max_length,
+                      # " --p-trunc-len ", max_length,
                       " --p-min-length ", input$min_length, 
                       " --p-max-length ", input$max_length, 
                       " --p-n-jobs ", input$n_jobs, 
@@ -11475,18 +11442,18 @@ server <- function(session, input, output) {
     
     if(input$primer_f == "other" & input$primer_r != "other"){
       if(input$seqs_type == "Single end"){
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
         system(paste0(qiime_cmd, 
                       " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
                       "/identity_otus.qza",
                       " --p-f-primer ", input$primer_f_manu, 
                       " --p-r-primer ", primer_list[[input$primer_r]], 
-                      " --p-trunc-len ", max_length,
+                      # " --p-trunc-len ", max_length,
                       " --p-min-length ", input$min_length, 
                       " --p-max-length ", input$max_length, 
                       " --p-n-jobs ", input$n_jobs, 
@@ -11513,18 +11480,18 @@ server <- function(session, input, output) {
     
     if(input$primer_f != "other" & input$primer_r == "other"){
       if(input$seqs_type == "Single end"){
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
         system(paste0(qiime_cmd, 
                       " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
                       "/identity_otus.qza",
                       " --p-f-primer ", primer_list[[input$primer_f]], 
                       " --p-r-primer ", input$primer_r_manu, 
-                      " --p-trunc-len ", max_length,
+                      # " --p-trunc-len ", max_length,
                       " --p-min-length ", input$min_length, 
                       " --p-max-length ", input$max_length, 
                       " --p-n-jobs ", input$n_jobs, 
@@ -11551,18 +11518,18 @@ server <- function(session, input, output) {
     
     if(input$primer_f == "other" & input$primer_r == "other"){
       if(input$seqs_type == "Single end"){
-        max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
-                                        input$input_job_id_taxa,
-                                        "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
-                                 sep = "\t",
-                                 stringsAsFactors = F)[4,2]
+        # max_length <- read.table(paste0("/home/imuser/web_version/users_files/",
+        #                                 input$input_job_id_taxa,
+        #                                 "/denoise_single_seqs/new_dirname/data/descriptive_stats.tsv"),
+        #                          sep = "\t",
+        #                          stringsAsFactors = F)[4,2]
         system(paste0(qiime_cmd, 
                       " feature-classifier extract-reads --i-sequences /home/imuser/web_version/users_files/",
                       input$input_job_id_taxa,
                       "/identity_otus.qza",
                       " --p-f-primer ", input$primer_f_manu, 
                       " --p-r-primer ", input$primer_r_manu, 
-                      " --p-trunc-len ", max_length,
+                      # " --p-trunc-len ", max_length,
                       " --p-min-length ", input$min_length, 
                       " --p-max-length ", input$max_length, 
                       " --p-n-jobs ", input$n_jobs, 
