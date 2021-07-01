@@ -301,8 +301,8 @@ shinyUI(
                                         tableOutput("demux_parameter_table_single"),
                                         downloadButton("demux_parameter_table_single_dl")
                                       )
-                                    )
-                                    
+                                    ),
+                                    br(),br()
                                     
                                   ) %>% shinyjs::hidden(),
                                  
@@ -366,7 +366,8 @@ shinyUI(
                                         tableOutput("demux_parameter_table_paired"),
                                         downloadButton("demux_parameter_table_paired_dl")
                                       )
-                                    )
+                                    ),
+                                    br(),br()
                                   ) %>% shinyjs::hidden()
                                   
                                
@@ -416,7 +417,8 @@ shinyUI(
                                              tableOutput("demux_parameter_table_Pacbio"),
                                              downloadButton("demux_parameter_table_Pacbio_dl")
                                            )
-                                         )
+                                         ),
+                                         br(),br()
                                          
                                          
                                        ) %>% shinyjs::hidden()
@@ -425,7 +427,6 @@ shinyUI(
                               
                               div(
                                 id = "primer_table_hide",
-                                hr(),
                                 h2("Primer sequences table"),
                                 # p('If your primers could not be found from the table, you can manually input your primer sequences by choosing',
                                   p("Select",strong("other")," and enter your primer sequences if you can't  find your primer sequence in this table."),
@@ -537,7 +538,8 @@ shinyUI(
                                       tableOutput("dada2_log_table_single"),
                                       downloadButton("dada2_log_table_single_dl")
                                     )
-                                  )
+                                  ),
+                                  br(),br()
                                 ) %>% shinyjs::hidden()
                                 
                                 
@@ -620,7 +622,8 @@ shinyUI(
                                       tableOutput("dada2_log_table_paired"),
                                       downloadButton("dada2_log_table_paired_dl")
                                     )
-                                  )
+                                  ),
+                                  br(),br()
                                   ) %>% shinyjs::hidden()
                                 
                                 
@@ -699,7 +702,8 @@ shinyUI(
                                              tableOutput("dada2_log_table_Pacbio"),
                                              downloadButton("dada2_log_table_Pacbio_dl")
                                            )
-                                         )
+                                         ),
+                                         br(),br()
                                        ) %>% shinyjs::hidden()
                                 )
                               ),
@@ -863,7 +867,8 @@ shinyUI(
                                                   placement = "bottom"),
                                 
                                 downloadButton(outputId = "rep_seq_dada2_download",
-                                               label = "The seqs data  ")
+                                               label = "The seqs data  "),
+                                br(),br()
                               ) %>% shinyjs::hidden(),
                               
                               # br(),br(),
@@ -1341,7 +1346,7 @@ shinyUI(
                                           #     style = "margin: 5px;color: #317EAC")),
                                           # br(),br(),
                                           textInput(inputId = "sampling_depth", 
-                                                    label = "sampling depth"),
+                                                    label = "Sampling depth"),
                                           actionButton(inputId = "Q_sampling_depth", 
                                                        label = "learn more", 
                                                        icon = icon("question-circle")
@@ -2043,7 +2048,8 @@ shinyUI(
                                               placement = "bottom"),
                             
                             downloadButton(outputId = "rep_seq_dada2_download_demo",
-                                           label = "The seqs data  ")
+                                           label = "The seqs data  "),
+                            br(),br()
                           )
                    )
                  ),
@@ -2641,7 +2647,8 @@ shinyUI(
                                                               choices = " ",
                                                               inline = T),
                                                  downloadButton(outputId = "FA_plot_download_demo",
-                                                                label = "Download the function barplot")
+                                                                label = "Download the function barplot"),
+                                                 br(),br()
                                                )
                                       )
                           )
@@ -2696,7 +2703,8 @@ shinyUI(
                                 tableOutput("demux_parameter_table_paired_demo"),
                                 downloadButton("demux_parameter_table_paired_demo_dl")
                               )
-                            )
+                            ),
+                            br(),br()
                           )
                    )
                  ),
@@ -2761,7 +2769,8 @@ shinyUI(
                                 tableOutput("dada2_log_table_paired_demo"),
                                 downloadButton("dada2_log_table_paired_demo_dl")
                               )
-                            )
+                            ),
+                            br(),br()
                           )
                    )
                  ),
@@ -2805,7 +2814,8 @@ shinyUI(
                                 tableOutput("demux_parameter_table_Pacbio_demo"),
                                 downloadButton("demux_parameter_table_Pacbio_demo_dl")
                               )
-                            )
+                            ),
+                            br(),br()
                             
                             
                           )
@@ -2873,7 +2883,8 @@ shinyUI(
                                 tableOutput("dada2_log_table_Pacbio_demo"),
                                 downloadButton("dada2_log_table_Pacbio_demo_dl")
                               )
-                            )
+                            ),
+                            br(),br()
                           )
                    )
                  )
