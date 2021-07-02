@@ -1769,7 +1769,7 @@ shinyUI(
                  width = 12,
 
                  tags$iframe(style="height: 800px; width:90%; scrolling=yes;margin:0 100px", id = "ch2",
-                             src=paste0("https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Ch_2_Web_new.pdf")
+                             src=paste0("https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Web_20210702.pdf")
 
                  )
                  
