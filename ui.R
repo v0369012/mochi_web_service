@@ -206,13 +206,15 @@ shinyUI(
                                 selectInput(inputId = "primer_f", 
                                             label = span("Choose the forward primer sequence", style = "font-size: 20px; font-weight: 300; color: white; margin-top: 5px;"), 
                                             choice = c("8F", "27F", "CC [F]", "341F","357F", "515F", "533F", "16S.1100.F16", "1237F", "other"),
-                                            width = "400px"
+                                            width = "400px",
+                                            selected = "515F"
                                 ),
                                 
                                 selectInput(inputId = "primer_r", 
                                             label = span("Choose the reverse primer sequence", style = "font-size: 20px; font-weight: 300; color: white; margin-top: 5px;"), 
                                             choice = c("519R", "CD [R]", "806R","907R", "1100R", "1391R", "1492R (l)", "1492R (s)", "other"),
-                                            width = "400px"
+                                            width = "400px",
+                                            selected = "806R"
                                 ),
                               
                               # uiOutput(outputId = "in_r"),
@@ -2910,7 +2912,7 @@ shinyUI(
     tags$footer(
       tags$span(
         tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 06/29/2021"),
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 07/03/2021"),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 
