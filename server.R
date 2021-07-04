@@ -15550,7 +15550,7 @@ server <- function(session, input, output) {
   # When length(group_names)<=2, hide the download button of pair table
   observe({
 
-    req(input$sample_data, input$taxonomic_table, input$table_dada2_upload)
+    req(input$sample_data)
 
     selection_position <- which(colnames(Metadata_stats())==input$metadata_beta)
     nonNA_position <- which(Metadata_stats()[,selection_position] != "NA")
