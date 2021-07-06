@@ -16584,8 +16584,13 @@ server <- function(session, input, output) {
       filename = "unifrac_distance_matrix.csv",
       content = function(file) {
         
+        if(input$UnW_or_W_demo=="Unweighted"){
         write.csv(as.matrix(read_qza(paste0("/home/imuser/web_version/users_files/",
-                                            job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]), file, row.names = T)
+                                            job_id(),"_DA_phylo","/core-metrics-results/unweighted_unifrac_distance_matrix.qza"))[["data"]]), file, row.names = T)
+        }else if(input$UnW_or_W=="Weighted"){
+          write.csv(as.matrix(read_qza(paste0("/home/imuser/web_version/users_files/",
+                                              job_id(),"_DA_phylo","/core-metrics-results/weighted_unifrac_distance_matrix.qza"))[["data"]]), file, row.names = T)
+        }
         
       }
     )
@@ -18466,7 +18471,7 @@ server <- function(session, input, output) {
     T_SampleID <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data %>% colnames() %>% sort()
     
     
-    all_equal_T <- sum(M_SampleID == T_SampleID) == length(M_SampleID)
+    all_equal_T <- identical(M_SampleID, T_SampleID)
     
     if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
@@ -18652,9 +18657,9 @@ server <- function(session, input, output) {
     M_SampleID <- Metadata_FA()[,1] %>% sort() %>% as.character()
     
     a <- read.table(input$taxonomic_table_FA_txt$datapath, sep = "\t", header = T)
-    T_SampleID <- colnames(a)[-1] %>% sort()
+    T_SampleID <- colnames(a)[-c(1, ncol(a))] %>% sort()
     
-    all_equal_T <- sum(M_SampleID == T_SampleID) == length(M_SampleID)
+    all_equal_T <- identical(M_SampleID, T_SampleID)
     
     if(is.null(file_input_1_FA()) || is.null(file_input_3_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
@@ -24391,7 +24396,7 @@ server <- function(session, input, output) {
         content = function(file) {
           if(input$UnW_or_W_demo=="Unweighted"){
           write.csv(as.matrix(read_qza("/home/imuser/example_files/single/unweighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
-          }else if(input$UnW_or_W_demo=="weighted"){
+          }else if(input$UnW_or_W_demo=="Weighted"){
             write.csv(as.matrix(read_qza("/home/imuser/example_files/single/weighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
           }
         }
@@ -29727,7 +29732,7 @@ server <- function(session, input, output) {
         content = function(file) {
           if(input$UnW_or_W_demo=="Unweighted"){
             write.csv(as.matrix(read_qza("/home/imuser/example_files/paired/unweighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
-          }else if(input$UnW_or_W_demo=="weighted"){
+          }else if(input$UnW_or_W_demo=="Weighted"){
             write.csv(as.matrix(read_qza("/home/imuser/example_files/paired/weighted_unifrac_distance_matrix.qza")[["data"]]), file, row.names = T)
           }
         }
