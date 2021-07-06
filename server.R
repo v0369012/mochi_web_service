@@ -1903,11 +1903,7 @@ server <- function(session, input, output) {
     ASV_table_SampleID <- asv_table() %>% colnames() %>% sort()
     Taxa_table_SampleID <- TaxaTable() %>% colnames() %>% sort()
     
-    M_n <- length(Metadata_sampleID)
-    A_n <- length(ASV_table_SampleID)
-    T_n <- length(Taxa_table_SampleID)
-    
-    all_equal_T <- sum(Reduce(intersect, list(M_n, A_n, T_n)) == M_n) == length(M_n)
+    all_equal_T <- sum(Reduce(intersect, list(Metadata_sampleID, ASV_table_SampleID, Taxa_table_SampleID)) == M_SampleID) == length(M_SampleID)
     
     if(input$qza_or_txt == "MOCHI/QIIME2 output (.qza)"){
       
@@ -18469,10 +18465,8 @@ server <- function(session, input, output) {
     M_SampleID <- Metadata_FA()[,1] %>% sort()
     T_SampleID <- read_qza(input$taxonomic_table_FA_MOCHI$datapath)$data %>% colnames() %>% sort()
     
-    M_n <- M_SampleID %>% length()
-    T_n <- T_SampleID %>% length()
     
-    all_equal_T <- sum(Reduce(intersect, list(M_n, T_n)) == M_n) == length(M_n)
+    all_equal_T <- sum(M_SampleID == T_SampleID) == length(M_SampleID)
     
     if(is.null(file_input_1_FA()) || is.null(file_input_2_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
@@ -18655,19 +18649,12 @@ server <- function(session, input, output) {
   
   observeEvent(input$function_analysis_txt, {
     
-    M_SampleID <- Metadata_FA()[,1] %>% sort()
+    M_SampleID <- Metadata_FA()[,1] %>% sort() %>% as.character()
     
-    # transform file
     a <- read.table(input$taxonomic_table_FA_txt$datapath, sep = "\t", header = T)
-    b <- a[,-1]
-    c <- cbind(taxonomy=b[,ncol(b)], b[,-ncol(b)])
-    d <- aggregate(c[,-1], by=list(c[,1]), FUN=sum)
-    T_SampleID <- colnames(d) %>% sort()
+    T_SampleID <- colnames(a)[-1] %>% sort()
     
-    M_n <- M_SampleID %>% length()
-    T_n <- T_SampleID %>% length()
-    
-    all_equal_T <- sum(Reduce(intersect, list(M_n, T_n)) == M_n) == length(M_n)
+    all_equal_T <- sum(M_SampleID == T_SampleID) == length(M_SampleID)
     
     if(is.null(file_input_1_FA()) || is.null(file_input_3_FA())){
       showModal(modalDialog(title = strong("Error!", style = "color: red"), 
