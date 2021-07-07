@@ -19806,7 +19806,7 @@ server <- function(session, input, output) {
   output$dada2_log_table_single_demo_dl <- downloadHandler(
     filename = "parameter_denoise_single_demo.csv",
     content = function(file){
-      file.copy("/home/imuser/parameter_denoise_single.csv", file)
+      file.copy("/home/imuser/example_files/single/parameter_denoise_single.csv", file)
     }
   )
   
@@ -20132,7 +20132,7 @@ server <- function(session, input, output) {
   output$dada2_log_table_paired_demo_dl <- downloadHandler(
     filename = "parameter_denoise_paired_demo.csv",
     content = function(file){
-      file.copy("/home/imuser/parameter_denoise_paired.csv", file)
+      file.copy("/home/imuser/example_files/paired/parameter_denoise_paired.csv", file)
     }
   )
   
@@ -20457,7 +20457,7 @@ server <- function(session, input, output) {
   output$dada2_log_table_Pacbio_demo_dl <- downloadHandler(
     filename = "parameter_denoise_Pacbio_demo.csv",
     content = function(file){
-      file.copy("/home/imuser/parameter_denoise_Pacbio.csv", file)
+      file.copy("/home/imuser/example_files/Pacbio/parameter_denoise_Pacbio.csv", file)
     }
   )
   
