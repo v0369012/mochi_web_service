@@ -20397,7 +20397,6 @@ server <- function(session, input, output) {
       )
       
       colnames(filter_table_new) <- c("SampleID", "Input read", "Primer-removed read", "Primer-removed read (%)", "Filtered read", "Filtered read (%)", "Denoised read", "Denoised read (%)", "Non-chimeric read", "Non-chimeric read (%)")
-      return(filter_table_new)
       write.csv(filter_table_new, file, quote = F, row.names = F)
       
     }
