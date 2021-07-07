@@ -16079,7 +16079,8 @@ server <- function(session, input, output) {
     writeLines(krona_html_new, con="/home/imuser/Krona_files/Krona_rawdata.html")
     
       
-    system("sudo rm /srv/shiny-server/www/*.html")
+    system("sudo rm /srv/shiny-server/www/Krona_rawdata.html")
+    system("sudo rm /srv/shiny-server/www/iframe.html")
     system("sudo cp /home/imuser/Krona_files/Krona_rawdata.html /srv/shiny-server/www/Krona_rawdata.html")
     system("sudo cp /home/imuser/www/iframe.html /srv/shiny-server/www/")
     # system("sudo cp /home/imuser/www/Krona_rawdata.html /srv/shiny-server/www/")
