@@ -22711,7 +22711,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_single_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/krona_demo/iframe_krona_single_example.html")
         # includeHTML(path = "/home/imuser/example_files/single/iframe_krona.html")
       })
       
@@ -22722,7 +22722,7 @@ server <- function(session, input, output) {
         
         content = function(file){
           
-          file.copy("/home/imuser/example_files/single/Krona.zip", file)
+          file.copy("/home/imuser/example_files/single/Krona_single_example.zip", file)
           
         }
       )
@@ -28089,7 +28089,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_paired_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/krona_demo/iframe_krona_paired_example.html")
         # includeHTML(path = "/home/imuser/example_files/paired/iframe_krona.html")
       })
       
@@ -28100,7 +28100,7 @@ server <- function(session, input, output) {
         
         content = function(file){
           
-          file.copy("/home/imuser/example_files/paired/Krona.zip", file)
+          file.copy("/home/imuser/example_files/paired/Krona_paired_example.zip", file)
           
         }
       )
@@ -33425,7 +33425,7 @@ server <- function(session, input, output) {
       
       # Krona
       output$krona_output_demo <- renderUI({
-        includeHTML(path = "https://mochi.life.nctu.edu.tw/iframe_krona_Pacbio_example.html")
+        includeHTML(path = "https://mochi.life.nctu.edu.tw/krona_demo/iframe_krona_Pacbio_example.html")
         # includeHTML(path = "/home/imuser/example_files/Pacbio/iframe_krona.html")
       })
       
@@ -33436,7 +33436,7 @@ server <- function(session, input, output) {
         
         content = function(file){
           
-          file.copy("/home/imuser/example_files/Pacbio/Krona.zip", file)
+          file.copy("/home/imuser/example_files/Pacbio/Krona_Pacbio_example.zip", file)
           
         }
       )
