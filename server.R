@@ -20382,7 +20382,7 @@ server <- function(session, input, output) {
   output$dada2_filter_table_Pacbio_demo_dl <- downloadHandler(
     filename = "filter_info_table_demo.csv",
     content = function(file){
-      read.table("/home/imuser/example_files/Pacbio/denoise_Pacbio_stats/new_dirname/data/metadata.tsv", header = T, sep = "\t")
+      filter_table <- read.table("/home/imuser/example_files/Pacbio/denoise_Pacbio_stats/new_dirname/data/metadata.tsv", header = T, sep = "\t")
       filter_table_new <- data.frame(
         "SampleID" = filter_table[,1],
         "Input read" = filter_table[,2],
