@@ -7923,7 +7923,7 @@ server <- function(session, input, output) {
           "quality_score_truncate" = input$qvalue_single,
           "chimeric_reads_min_fold_change" = input$chimera_single,
           # "reads_error_model" = input$n_reads_single,
-          "metadata_upload" = is.null(input$sample_data_single),
+          # "metadata_upload" = is.null(input$sample_data_single),
           "computing_setting" = input$threads_single
         )
         write.csv(parameter_table,
@@ -9118,7 +9118,7 @@ server <- function(session, input, output) {
       "quality_score_truncate" = input$qvalue_paired,
       "chimeric_reads_min_fold_change" = input$chimera_paired,
       # "reads_error_model" = input$n_reads_paired,
-      "metadata_upload" = is.null(input$sample_data_paired),
+      # "metadata_upload" = is.null(input$sample_data_paired),
       "computing_setting" = input$threads_paired
     )
     write.csv(parameter_table,
