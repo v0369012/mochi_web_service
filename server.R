@@ -28514,6 +28514,27 @@ server <- function(session, input, output) {
         
       })
       
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)>2){
+          
+          shinyjs::show("post_hoc_ui_demo")
+          
+        }else if(length(group_names)<=2){
+          shinyjs::hide("post_hoc_ui_demo")
+        }
+        
+      })
+      
       output$Alpha_posttest_DL_demo <- downloadHandler(
         
         filename = function(){
@@ -29681,6 +29702,27 @@ server <- function(session, input, output) {
         }else{
           return(faith_PD_post_test_Dunn_demo())
         }
+      })
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_phylo_alpha_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)>2){
+          
+          shinyjs::show("post_hoc_ui_phylo_demo")
+          
+        }else if(length(group_names)<=2){
+          shinyjs::hide("post_hoc_ui_phylo_demo")
+        }
+        
       })
       
       output$download_faithPD_posttest_demo <- downloadHandler(
@@ -33849,6 +33891,27 @@ server <- function(session, input, output) {
         
       })
       
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)>2){
+          
+          shinyjs::show("post_hoc_ui_demo")
+          
+        }else if(length(group_names)<=2){
+          shinyjs::hide("post_hoc_ui_demo")
+        }
+        
+      })
+      
       output$Alpha_posttest_DL_demo <- downloadHandler(
         
         filename = function(){
@@ -35016,6 +35079,27 @@ server <- function(session, input, output) {
         }else{
           return(faith_PD_post_test_Dunn_demo())
         }
+      })
+      
+      observe({
+        
+        selection_position <- which(colnames(Metadata_stats_demo())==input$metadata_phylo_alpha_demo)
+        nonNA_position <- which(Metadata_stats_demo()[,selection_position] != "NA")
+        nonNA_sampleid <- Metadata_stats_demo()[,1][nonNA_position]
+        
+        
+        nonNA_metadata <- Metadata_stats_demo()[nonNA_position, ]
+        
+        group_names <- unique(nonNA_metadata[,selection_position])
+        
+        if(length(group_names)>2){
+          
+          shinyjs::show("post_hoc_ui_phylo_demo")
+          
+        }else if(length(group_names)<=2){
+          shinyjs::hide("post_hoc_ui_phylo_demo")
+        }
+        
       })
       
       output$download_faithPD_posttest_demo <- downloadHandler(
