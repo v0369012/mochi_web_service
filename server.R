@@ -18620,7 +18620,8 @@ server <- function(session, input, output) {
       
       y <- list(
         title = list(text="Function types",standoff=20),
-        tickfont = list(size = 20)
+        tickfont = list(size = 20),
+        automargin = TRUE
       )
       
       a <- read_table(paste0("/home/imuser/web_version/users_files/",
@@ -18842,7 +18843,8 @@ server <- function(session, input, output) {
         
         y <- list(
           title = list(text="Function types",standoff=20),
-          tickfont = list(size = 20)
+          tickfont = list(size = 20),
+          automargin = TRUE
         )
         
         a <- read_table(paste0("/home/imuser/web_version/users_files/",
@@ -25969,7 +25971,8 @@ server <- function(session, input, output) {
         
         y <- list(
           title = list(text="Function types",standoff=20),
-          tickfont = list(size = 24)
+          tickfont = list(size = 20),
+          automargin = TRUE
         )
         
         a <- read_table("/home/imuser/example_files/single/report7-record.txt") %>% as.data.frame()
@@ -31351,7 +31354,8 @@ server <- function(session, input, output) {
         
         y <- list(
           title = list(text="Function types",standoff=20),
-          tickfont = list(size = 24)
+          tickfont = list(size = 24),
+          automargin = TRUE
         )
         
         a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
@@ -36732,7 +36736,8 @@ server <- function(session, input, output) {
         
         y <- list(
           title = list(text="Function types",standoff=20),
-          tickfont = list(size = 24)
+          tickfont = list(size = 20),
+          automargin = TRUE
         )
         
         a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
