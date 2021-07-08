@@ -31354,7 +31354,7 @@ server <- function(session, input, output) {
         
         y <- list(
           title = list(text="Function types",standoff=20),
-          tickfont = list(size = 24),
+          tickfont = list(size = 20),
           automargin = TRUE
         )
         
