@@ -1746,7 +1746,7 @@ shinyUI(
                                         h3("Function barplot"),
                                         withSpinner(
                                           plotlyOutput(outputId = "Function_barplot", 
-                                                   height = "auto"), 
+                                                   height = "auto", width = "auto"), 
                                           type = spinner_type, 
                                           color.background = spinner_bg_color
                                         ),
@@ -2640,7 +2640,7 @@ shinyUI(
                                                  h3("Function barplot"),
                                                  withSpinner(
                                                    plotlyOutput(outputId = "Function_barplot_demo", 
-                                                                height = "auto"), 
+                                                                height = "auto", width = "auto"), 
                                                    type = spinner_type, 
                                                    color.background = spinner_bg_color
                                                  ),
