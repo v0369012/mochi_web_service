@@ -18641,7 +18641,14 @@ server <- function(session, input, output) {
       a_report <- a[104:106,2]
       func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
       
-      ggplotly(FA_ggplot, height = 25*func_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 18)))
+      if(25*func_number < 500){
+        height_number <- 500
+      }else{
+        height_number <- 25*func_number
+      }
+      
+      
+      ggplotly(FA_ggplot, height = height_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 18)))
       
     })
     
@@ -18864,7 +18871,13 @@ server <- function(session, input, output) {
         a_report <- a[104:106,2]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
-        ggplotly(FA_ggplot, height = 25*func_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 18)))
+        if(25*func_number < 500){
+          height_number <- 500
+        }else{
+          height_number <- 25*func_number
+        }
+        
+        ggplotly(FA_ggplot, height = height_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA, font = list(size = 26)) , font = list(size = 18)))
         
       })
       
@@ -25990,7 +26003,13 @@ server <- function(session, input, output) {
         a_report <- a[104:106,2]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
-        ggplotly(FA_ggplot, height = 25*func_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
+        if(25*func_number < 500){
+          height_number <- 500
+        }else{
+          height_number <- 25*func_number
+        }
+        
+        ggplotly(FA_ggplot, height = height_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
         
       })
       
@@ -31373,7 +31392,13 @@ server <- function(session, input, output) {
         a_report <- a[104:106,2]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
-        ggplotly(FA_ggplot, height = 25*func_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
+        if(25*func_number < 500){
+          height_number <- 500
+        }else{
+          height_number <- 25*func_number
+        }
+        
+        ggplotly(FA_ggplot, height = height_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
         
       })
       
@@ -36755,7 +36780,13 @@ server <- function(session, input, output) {
         a_report <- a[104:106,2]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
-        ggplotly(FA_ggplot, height = 25*func_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
+        if(25*func_number < 500){
+          height_number <- 500
+        }else{
+          height_number <- 25*func_number
+        }
+        
+        ggplotly(FA_ggplot, height = height_number) %>% layout(yaxis=y) %>% layout(legend=list(title=list(text= input$metadata_FA_demo, font = list(size = 26)) , font = list(size = 18)))
         
       })
       
