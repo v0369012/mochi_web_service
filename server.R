@@ -2909,6 +2909,13 @@ server <- function(session, input, output) {
 
   })
   
+  output$seqs_example_download <- downloadHandler(
+    filename = "single_seqs_demo.zip",
+    content = function(file){
+      file.copy("/home/imuser/seqs_demo/single_seqs_demo.zip", file)
+    }
+  )
+  
   observeEvent(input$load_parameter_denoise_single, {
     showModal(modalDialog(title = strong("Message"),
                           HTML("<p>1. The parameters for the example have been loaded. Click the button <b>Start!</b> to begin sequence denoising.</p>",
