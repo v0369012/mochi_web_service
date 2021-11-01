@@ -12575,7 +12575,7 @@ server <- function(session, input, output) {
       alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
         round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
       
-      return(alpha_diversity_table)
+      return(alpha_diversity_table[, c(-2,-3,-10)])
     }
     
     return(as_alpha_diversity_table(asv_table()))
@@ -12589,14 +12589,14 @@ server <- function(session, input, output) {
     colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
     A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
     
-    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
       
       A_diversity_metadata_merge <- merge(A_diversity,
                                           Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
                                           by= colnames(Metadata_stats())[1])
     })
     
-    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
     
     library(reshape2)
     i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
@@ -12652,14 +12652,14 @@ server <- function(session, input, output) {
     colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
     A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
     
-    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
       
       A_diversity_metadata_merge <- merge(A_diversity,
                                           Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
                                           by= colnames(Metadata_stats())[1])
     })
     
-    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
     
     library(reshape2)
     i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
@@ -12699,14 +12699,14 @@ server <- function(session, input, output) {
     colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
     A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
     
-    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
       
       A_diversity_metadata_merge <- merge(A_diversity,
                                           Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
                                           by= colnames(Metadata_stats())[1])
     })
     
-    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
     
     library(reshape2)
     i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
@@ -12759,14 +12759,14 @@ server <- function(session, input, output) {
     colnames(A_diversity)[1] <- colnames(Metadata_stats())[1]
     A_diversity_metadata <- merge(A_diversity, Metadata_stats(), by= colnames(Metadata_stats())[1])
     
-    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+    A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
       
       A_diversity_metadata_merge <- merge(A_diversity,
                                           Metadata_stats()[, c(colnames(A_diversity_metadata)[1], x)],
                                           by= colnames(Metadata_stats())[1])
     })
     
-    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+    names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
     
     library(reshape2)
     i <- which(colnames(Metadata_stats())==input$metadata_alpha)-1
@@ -18635,10 +18635,14 @@ server <- function(session, input, output) {
         automargin = TRUE
       )
       
-      a <- read_table(paste0("/home/imuser/web_version/users_files/",
-                             job_id(), "_FA",
-                             "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
-      a_report <- a[104:106,2]
+      # a <- read_table(paste0("/home/imuser/web_version/users_files/",
+      #                        job_id(), "_FA",
+      #                        "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+      # a_report <- a[104:106,2]
+      a_1 <- readLines(paste0("/home/imuser/web_version/users_files/",
+                              job_id(), "_FA",
+                              "/FAPROTAX_output/report7-record.txt")) %>% str_remove_all("# ")
+      a_report <- a_1[105:107]
       func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
       
       if(25*func_number < 500){
@@ -18654,10 +18658,14 @@ server <- function(session, input, output) {
     
     output$function_report <- renderUI({
       
-      a <- read_table(paste0("/home/imuser/web_version/users_files/",
-                      job_id(), "_FA",
-                      "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
-      a_report <- a[104:106,2]
+      # a <- read_table(paste0("/home/imuser/web_version/users_files/",
+      #                 job_id(), "_FA",
+      #                 "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+      # a_report <- a[104:106,2]
+      a_1 <- readLines(paste0("/home/imuser/web_version/users_files/",
+                                              job_id(), "_FA",
+                                              "/FAPROTAX_output/report7-record.txt")) %>% str_remove_all("# ")
+      a_report <- a_1[105:107]
       a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
       a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
       a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
@@ -18865,10 +18873,14 @@ server <- function(session, input, output) {
           automargin = TRUE
         )
         
-        a <- read_table(paste0("/home/imuser/web_version/users_files/",
-                               job_id(), "_FA",
-                               "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table(paste0("/home/imuser/web_version/users_files/",
+        #                        job_id(), "_FA",
+        #                        "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines(paste0("/home/imuser/web_version/users_files/",
+                                job_id(), "_FA",
+                                "/FAPROTAX_output/report7-record.txt")) %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
         if(25*func_number < 500){
@@ -18883,10 +18895,14 @@ server <- function(session, input, output) {
       
       output$function_report <- renderUI({
         
-        a <- read_table(paste0("/home/imuser/web_version/users_files/",
-                               job_id(), "_FA",
-                               "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table(paste0("/home/imuser/web_version/users_files/",
+        #                        job_id(), "_FA",
+        #                        "/FAPROTAX_output/report7-record.txt")) %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines(paste0("/home/imuser/web_version/users_files/",
+                                                       job_id(), "_FA",
+                                                       "/FAPROTAX_output/report7-record.txt")) %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
         a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
         a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
@@ -22880,7 +22896,7 @@ server <- function(session, input, output) {
           alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
             round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
           
-          return(alpha_diversity_table)
+          return(alpha_diversity_table[, c(-2,-3,-10)])
         }
         
         return(as_alpha_diversity_table(asv_table_demo()))
@@ -22896,14 +22912,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -22959,14 +22975,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -23006,14 +23022,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -23066,14 +23082,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -25892,8 +25908,10 @@ server <- function(session, input, output) {
       
       output$function_report_demo <- renderUI({
         
-        a <- read_table("/home/imuser/example_files/single/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/single/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/single/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
         a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
         a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
@@ -25999,8 +26017,10 @@ server <- function(session, input, output) {
           automargin = TRUE
         )
         
-        a <- read_table("/home/imuser/example_files/single/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/single/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/single/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
         if(25*func_number < 500){
@@ -28269,7 +28289,7 @@ server <- function(session, input, output) {
           alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
             round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
           
-          return(alpha_diversity_table)
+          return(alpha_diversity_table[, c(-2,-3,-10)])
         }
         
         return(as_alpha_diversity_table(asv_table_demo()))
@@ -28285,14 +28305,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -28348,14 +28368,18 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        print(A_diversity_metadata)
+        
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
+        
+        print(A_diversity_metadata_list)
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -28395,14 +28419,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -28455,14 +28479,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -31281,8 +31305,10 @@ server <- function(session, input, output) {
       
       output$function_report_demo <- renderUI({
         
-        a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/paired/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
         a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
         a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
@@ -31388,8 +31414,10 @@ server <- function(session, input, output) {
           automargin = TRUE
         )
         
-        a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/paired/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/paired/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
         if(25*func_number < 500){
@@ -33658,7 +33686,7 @@ server <- function(session, input, output) {
           alpha_diversity_table[,2:ncol(alpha_diversity_table)]<-
             round(alpha_diversity_table[,2:ncol(alpha_diversity_table)], 4)  
           
-          return(alpha_diversity_table)
+          return(alpha_diversity_table[, c(-2,-3,-10)])
         }
         
         return(as_alpha_diversity_table(asv_table_demo()))
@@ -33674,14 +33702,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -33736,14 +33764,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -33783,20 +33811,22 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
         A_diversity_metadata_list_melt <- melt(A_diversity_metadata_list[[i]],
                                                id.vars=c("SampleID",
                                                          names(A_diversity_metadata_list)[i]))
+        
+        print(A_diversity_metadata_list_melt)
         
         colnames(A_diversity_metadata_list_melt)[2] <- "feature_name"
         
@@ -33843,14 +33873,14 @@ server <- function(session, input, output) {
         colnames(A_diversity)[1] <- colnames(Metadata_stats_demo())[1]
         A_diversity_metadata <- merge(A_diversity, Metadata_stats_demo(), by= colnames(Metadata_stats_demo())[1])
         
-        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)], function(x){
+        A_diversity_metadata_list <- lapply(colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)], function(x){
           
           A_diversity_metadata_merge <- merge(A_diversity,
                                               Metadata_stats_demo()[, c(colnames(A_diversity_metadata)[1], x)],
                                               by= colnames(Metadata_stats_demo())[1])
         })
         
-        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[11:ncol(A_diversity_metadata)]
+        names(A_diversity_metadata_list) <- colnames(A_diversity_metadata)[8:ncol(A_diversity_metadata)]
         
         library(reshape2)
         i <- which(colnames(Metadata_stats_demo())==input$metadata_alpha_demo)-1
@@ -36669,8 +36699,10 @@ server <- function(session, input, output) {
       
       output$function_report_demo <- renderUI({
         
-        a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/Pacbio/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         a_report[1] <- str_replace_all(a_report[1], pattern = "records", replacement = "taxa")
         a_report[1] <- str_replace_all(a_report[1], pattern = "group", replacement = "function type.")
         a_report[2] <- str_replace_all(a_report[2], pattern = "records", replacement = "taxa")
@@ -36776,8 +36808,10 @@ server <- function(session, input, output) {
           automargin = TRUE
         )
         
-        a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
-        a_report <- a[104:106,2]
+        # a <- read_table("/home/imuser/example_files/Pacbio/report7-record.txt") %>% as.data.frame()
+        # a_report <- a[104:106,2]
+        a_1 <- readLines("/home/imuser/example_files/Pacbio/report7-record.txt") %>% str_remove_all("# ")
+        a_report <- a_1[105:107]
         func_number <- a_report[3] %>% str_remove_all(pattern = "[^0-9]") %>% as.numeric()
         
         if(25*func_number < 500){
