@@ -1771,7 +1771,7 @@ shinyUI(
                  width = 12,
 
                  tags$iframe(style="height: 800px; width:90%; scrolling=yes;margin:0 100px", id = "ch2",
-                             src=paste0("https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Web_20210702.pdf")
+                             src=paste0("https://mochi.life.nctu.edu.tw/MOCHI_Tutorial_Web_20210705.pdf")
 
                  )
                  
@@ -2912,7 +2912,7 @@ shinyUI(
     tags$footer(
       tags$span(
         tags$a("Molecular Bioinformatics Lab,", href = "https://fullofbeans.nctu.edu.tw/?page_id=333&lang=en", style = "color: white", target = "_blank"), 
-        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 11/01/2021"),
+        " National Yang Ming Chiao Tung University, Taiwan 300, R.O.C.,", " last updated on 11/05/2021"),
       # tags$a(href="https://ibs.nctu.edu.tw/faculty/%E9%99%B3%E4%BA%AD%E5%A6%8F/", tags$span("Contact us!"), 
       #        target = "_blank",
       #        class="externallink", 
