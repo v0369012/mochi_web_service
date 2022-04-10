@@ -1,0 +1,13 @@
+# MOCHI
+
+[MOCHI](https://mochi.life.nctu.edu.tw/) is a 16S or 18S microbiota amplicon rRNA analytical tool for microbiota based primarily on [QIIME2 (2021.4)](https://qiime2.org/) with a friendly web interface powered by the R package of [Shiny](https://shiny.rstudio.com/).
+
+**The advantages of MOCHI**
+1. Friendly user interface: point-and-click and fill-in inputs, no programming required.
+2. Cross-platform: simple set-up with Docker containers on Linux, Windows, or MacOS.
+3. Local computing resource: runs on your premise with privacy. not subject to network reliability and limitation.
+4. Compatible with other downstream analytical tools
+5. Publishable plots and charts generated with chosen parameters
+
+
+<img src="https://github.com/v0369012/mochi_web_www/blob/main/mochi_pipeline_new_3.png?raw=true" width="900" height="500" />
